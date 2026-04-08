@@ -1,0 +1,139 @@
+<div class="landing">
+  <app-site-header [scrolled]="headerScrolled()" />
+
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="app-shell hero-inner">
+      <p class="eyebrow">Discover & compare with confidence</p>
+      <h1 id="hero-title" class="hero-title">Discover the Best AI Tools That Actually Work</h1>
+      <p class="hero-sub">
+        Explore, compare, and review AI tools for real-world use cases.
+      </p>
+
+      <div class="hero-ctas">
+        <button mat-flat-button color="primary" class="cta-primary" type="button" (click)="scrollToFeatured()">
+          Explore Tools
+        </button>
+        <button mat-stroked-button color="primary" class="cta-secondary" type="button" (click)="onSubmitTool()">
+          Submit a Tool
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section id="why-us" class="section section-alt" aria-labelledby="value-heading">
+    <div class="app-shell">
+      <div class="section-head">
+        <h2 id="value-heading" class="section-title">Built for builders, teams, and curious minds</h2>
+        <p class="section-lead">
+          A focused place to find tools you can trust—without wading through endless hype.
+        </p>
+      </div>
+
+      <div class="feature-grid">
+        @for (f of features; track f.title; let i = $index) {
+          <app-feature-card
+            class="stagger-in"
+            [style.--stagger-ms]="i * 75 + 'ms'"
+            [icon]="f.icon"
+            [title]="f.title"
+            [blurb]="f.blurb"
+          />
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="top-rated-heading">
+    <div class="app-shell">
+      <app-top-rated-tools />
+    </div>
+  </section>
+
+  <section id="featured-tools" class="section section-alt" aria-labelledby="featured-heading">
+    <div class="app-shell">
+      <app-category-filter (categoryChange)="onCategoryChange($event)" />
+
+      <div class="section-head tw-mt-8">
+        <h2 id="featured-heading" class="section-title">Featured tools</h2>
+        <p class="section-lead">
+          Open a listing for ratings, reviews, and full details. Filter by category above—updates instantly without a
+          full page reload.
+        </p>
+      </div>
+
+      @if (toolsLoading()) {
+        <p class="tw-text-sm tw-text-slate-600">Loading tools…</p>
+      } @else if (toolsError()) {
+        <p class="tw-text-sm tw-text-amber-900">We could not load the tool directory. Try again shortly.</p>
+      } @else {
+        <div class="tools-grid">
+          @for (t of tools(); track t.id; let i = $index) {
+            <div
+              class="tool-slot stagger-in"
+              [style.--stagger-ms]="i * 60 + 'ms'"
+            >
+              <app-tool-card [tool]="t" />
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </section>
+
+  <section id="how-it-works" class="section" aria-labelledby="how-heading">
+    <div class="app-shell">
+      <div class="section-head">
+        <h2 id="how-heading" class="section-title">How it works</h2>
+        <p class="section-lead">Three simple steps from discovery to decision.</p>
+      </div>
+      <ol class="steps">
+        @for (s of steps; track s.n; let i = $index) {
+          <li
+            class="step stagger-in"
+            [style.--stagger-ms]="i * 90 + 'ms'"
+            tabindex="0"
+          >
+            <span class="step-badge" aria-hidden="true">{{ s.n }}</span>
+            <div class="step-body">
+              <h3 class="step-title">{{ s.title }}</h3>
+              <p class="step-text">{{ s.text }}</p>
+            </div>
+          </li>
+        }
+      </ol>
+    </div>
+  </section>
+
+  <section id="join-community" class="section cta-band" aria-labelledby="join-heading">
+    <div class="app-shell cta-inner">
+      <div class="cta-copy">
+        <h2 id="join-heading" class="cta-title">Join the AI Community</h2>
+        <p class="cta-sub">Be the first to access new tools and features</p>
+      </div>
+      <form class="cta-form" (ngSubmit)="onEarlyAccess()">
+        <mat-form-field appearance="outline" class="email-field" subscriptSizing="dynamic">
+          <mat-label>Email</mat-label>
+          <input
+            matInput
+            type="email"
+            name="email"
+            autocomplete="email"
+            placeholder="you@company.com"
+            [(ngModel)]="email"
+          />
+        </mat-form-field>
+        <button mat-flat-button color="primary" class="cta-submit" type="submit">Get Early Access</button>
+      </form>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="app-shell footer-inner">
+      <span class="footer-brand">AI Community Lab</span>
+      <nav class="footer-nav" aria-label="Footer">
+        <a href="#" (click)="$event.preventDefault()">Privacy</a>
+        <a href="#" (click)="$event.preventDefault()">Contact</a>
+      </nav>
+    </div>
+  </footer>
+</div>

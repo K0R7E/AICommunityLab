@@ -1,0 +1,14 @@
+# Netlify build — set site “Base directory” to: ai-community-lab-frontend
+
+[build]
+  # Uses NETLIFY_API_BASE_URL when set (see scripts/netlify-env.cjs); otherwise keeps mock API.
+  command = "npm run build:netlify"
+  publish = "dist/ai-community-lab/browser"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[build.environment]
+  NODE_VERSION = "22"

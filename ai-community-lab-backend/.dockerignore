@@ -1,0 +1,10 @@
+bin/
+obj/
+out/
+.vs/
+*.user
+*.suo
+**/appsettings.Local.json
+**/appsettings.*.Local.json
+.git/
+.gitignore

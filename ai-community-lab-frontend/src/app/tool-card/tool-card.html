@@ -1,0 +1,20 @@
+<a
+  [routerLink]="['/tools', tool().id]"
+  class="tool-card-link tw-block tw-h-full tw-no-underline tw-text-inherit focus-visible:tw-rounded-[18px] focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-[var(--mat-sys-primary)]"
+>
+  <mat-card class="tool-card tw-h-full" appearance="outlined">
+    <mat-card-content>
+      <div class="tool-head">
+        <h3 class="name">{{ tool().name }}</h3>
+        <mat-chip-set aria-label="Category">
+          <mat-chip class="category-chip">{{ tool().category }}</mat-chip>
+        </mat-chip-set>
+      </div>
+      <p class="desc">{{ tool().description }}</p>
+      <div class="rating-row">
+        <app-star-rating [rating]="tool().rating" />
+        <span class="rating-num">{{ tool().rating | number: '1.1-1' }}</span>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</a>

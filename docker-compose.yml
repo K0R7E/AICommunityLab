@@ -1,0 +1,56 @@
+# Full stack: PostgreSQL + ASP.NET Core API + Angular (nginx, proxies /api → api)
+#
+# Usage:
+#   docker compose up --build
+#   UI:  http://localhost:8080
+#   API (direct, Swagger): http://localhost:5080/swagger
+#   DB:  localhost:5432  user postgres / postgres  database ai_community_lab
+#
+# First start creates DB tables + seed from ai-community-lab-backend/*.sql
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ai_community_lab
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./ai-community-lab-backend/database_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./ai-community-lab-backend/seed_data.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ai_community_lab"]
+      interval: 3s
+      timeout: 5s
+      retries: 15
+      start_period: 20s
+
+  api:
+    build:
+      context: ./ai-community-lab-backend
+      dockerfile: Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=ai_community_lab;Username=postgres;Password=postgres"
+      Cors__AllowedOrigins: "http://localhost:8080;http://127.0.0.1:8080;http://localhost;http://127.0.0.1;http://localhost:4200;http://localhost:5080;https://aicommunitylab.netlify.app"
+    ports:
+      - "5080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./ai-community-lab-frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:

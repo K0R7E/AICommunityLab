@@ -1,0 +1,38 @@
+<section
+  class="tw-rounded-2xl tw-border tw-border-slate-200/90 tw-bg-white tw-p-5 tw-shadow-sm"
+  aria-labelledby="tool-rating-heading"
+>
+  <h2 id="tool-rating-heading" class="tw-m-0 tw-text-lg tw-font-semibold tw-tracking-tight tw-text-slate-900">
+    Community rating
+  </h2>
+  <p class="tw-mt-1 tw-mb-4 tw-text-sm tw-text-slate-600">
+    Average from anonymous star ratings for this tool. No account required.
+  </p>
+
+  @if (loading()) {
+    <p class="tw-text-sm tw-text-slate-500">Loading…</p>
+  } @else {
+    <div class="tw-flex tw-flex-wrap tw-items-center tw-gap-3">
+      <app-star-rating [rating]="average()" [max]="5" />
+      <span class="tw-text-base tw-font-semibold tw-tabular-nums tw-text-slate-900">
+        {{ average() | number: '1.1-1' }}
+      </span>
+      <span class="tw-text-sm tw-text-slate-500">({{ count() }} rating{{ count() === 1 ? '' : 's' }})</span>
+    </div>
+  }
+
+  <div class="tw-mt-6 tw-border-t tw-border-slate-100 tw-pt-5">
+    <p id="rate-label" class="tw-m-0 tw-mb-2 tw-text-sm tw-font-medium tw-text-slate-800">Your rating</p>
+    <app-star-rating-interactive [(value)]="draftStars" [disabled]="submitting()" labelledBy="rate-label" />
+    <button
+      mat-flat-button
+      color="primary"
+      class="tw-mt-4 tw-rounded-full"
+      type="button"
+      [disabled]="submitting()"
+      (click)="submitRating()"
+    >
+      Submit rating
+    </button>
+  </div>
+</section>

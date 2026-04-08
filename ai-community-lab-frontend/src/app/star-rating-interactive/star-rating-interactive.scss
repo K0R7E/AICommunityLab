@@ -1,0 +1,18 @@
+.star-btn {
+  width: 40px;
+  height: 40px;
+  padding: 0 !important;
+
+  mat-icon {
+    color: color-mix(in srgb, var(--mat-sys-on-surface) 45%, var(--mat-sys-primary));
+    transition: color 0.15s ease, transform 0.15s ease;
+  }
+
+  &.is-selected mat-icon {
+    color: var(--mat-sys-primary);
+  }
+
+  &:not(:disabled):hover mat-icon {
+    transform: scale(1.08);
+  }
+}

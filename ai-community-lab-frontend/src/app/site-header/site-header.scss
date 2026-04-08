@@ -1,0 +1,49 @@
+.site-header {
+  &.is-scrolled {
+    background: color-mix(in srgb, var(--mat-sys-surface) 94%, transparent);
+    border-bottom-color: color-mix(in srgb, var(--mat-sys-outline) 26%, transparent);
+    box-shadow: 0 10px 32px color-mix(in srgb, var(--mat-sys-shadow) 12%, transparent);
+  }
+}
+
+.header-inner {
+  max-width: 1120px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  min-height: clamp(72px, 16vw, 112px);
+  padding-block: 0.35rem;
+
+  @media (min-width: 768px) {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+a:has(.brand-logo) {
+  transition: transform 0.2s ease;
+
+  &:hover .brand-logo,
+  &:focus-visible .brand-logo {
+    transform: scale(1.04);
+  }
+}
+
+.brand-logo {
+  max-width: min(420px, 82vw);
+  object-fit: contain;
+  display: block;
+  transition: transform 0.2s ease;
+}
+
+.nav-link {
+  font-weight: 500 !important;
+  letter-spacing: 0.01em;
+  border-radius: 999px !important;
+}
+
+.nav-link--cta {
+  margin-left: 0.25rem;
+  border: 1px solid color-mix(in srgb, var(--mat-sys-primary) 42%, transparent) !important;
+}

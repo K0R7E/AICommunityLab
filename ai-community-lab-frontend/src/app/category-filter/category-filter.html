@@ -1,0 +1,19 @@
+<div class="tw-flex tw-flex-col tw-gap-2 sm:tw-flex-row sm:tw-items-end sm:tw-justify-between">
+  <div>
+    <h2 class="tw-m-0 tw-text-xl tw-font-semibold tw-tracking-tight tw-text-slate-900">Browse tools</h2>
+    <p class="tw-mt-1 tw-mb-0 tw-text-sm tw-text-slate-600">Filter the directory by category.</p>
+  </div>
+  <mat-form-field appearance="outline" class="tw-min-w-[220px] tw-w-full sm:tw-w-auto" subscriptSizing="dynamic">
+    <mat-label>Category</mat-label>
+    <mat-select
+      [value]="selected"
+      (selectionChange)="onSelect($event)"
+      aria-label="Filter tools by category"
+    >
+      <mat-option [value]="null">All categories</mat-option>
+      @for (c of categories(); track c.id) {
+        <mat-option [value]="c.id">{{ c.name }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</div>

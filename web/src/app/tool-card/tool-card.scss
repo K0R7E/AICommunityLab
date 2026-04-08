@@ -1,0 +1,62 @@
+.tool-card {
+  height: 100%;
+  border-radius: 16px;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 36px color-mix(in srgb, var(--mat-sys-shadow) 16%, transparent);
+  }
+}
+
+mat-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.35rem !important;
+  height: 100%;
+}
+
+.tool-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+}
+
+.name {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.category-chip {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.desc {
+  margin: 0;
+  flex: 1;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--mat-sys-on-surface) 70%, transparent);
+}
+
+.rating-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: auto;
+  padding-top: 0.25rem;
+}
+
+.rating-num {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--mat-sys-on-surface) 78%, transparent);
+}

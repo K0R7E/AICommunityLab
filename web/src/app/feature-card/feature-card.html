@@ -1,0 +1,11 @@
+<mat-card class="feature-card" appearance="outlined">
+  <mat-card-content>
+    <div class="icon-wrap" aria-hidden="true">
+      <mat-icon>{{ icon() }}</mat-icon>
+    </div>
+    <h3 class="title">{{ title() }}</h3>
+    @if (blurb()) {
+      <p class="blurb">{{ blurb() }}</p>
+    }
+  </mat-card-content>
+</mat-card>

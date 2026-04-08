@@ -1,0 +1,15 @@
+<mat-card class="tool-card" appearance="outlined">
+  <mat-card-content>
+    <div class="tool-head">
+      <h3 class="name">{{ tool().name }}</h3>
+      <mat-chip-set aria-label="Category">
+        <mat-chip class="category-chip">{{ tool().category }}</mat-chip>
+      </mat-chip-set>
+    </div>
+    <p class="desc">{{ tool().description }}</p>
+    <div class="rating-row">
+      <app-star-rating [rating]="tool().rating" />
+      <span class="rating-num">{{ tool().rating | number: '1.1-1' }}</span>
+    </div>
+  </mat-card-content>
+</mat-card>

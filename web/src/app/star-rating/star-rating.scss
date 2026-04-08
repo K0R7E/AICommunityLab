@@ -1,0 +1,21 @@
+.star-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  vertical-align: middle;
+}
+
+.star {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+
+  &.full,
+  &.half {
+    color: var(--mat-sys-primary);
+  }
+
+  &.empty {
+    color: color-mix(in srgb, var(--mat-sys-on-surface) 35%, transparent);
+  }
+}

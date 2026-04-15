@@ -1,7 +1,7 @@
 .star-rating {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
   vertical-align: middle;
 }
 
@@ -9,6 +9,7 @@
   width: 18px;
   height: 18px;
   font-size: 18px;
+  flex-shrink: 0;
 
   &.full,
   &.half {

@@ -133,14 +133,16 @@ describe('LandingPage', () => {
     openSpy.mockRestore();
   });
 
-  it('should open snackbar when early access submitted with empty email', () => {
+  it('should not open snackbar when early access submitted with empty email', () => {
+    const host = fixture.componentInstance as unknown as { email: string };
+    host.email = '';
     fixture.detectChanges();
     const snackBar = fixture.debugElement.injector.get(MatSnackBar);
     const openSpy = vi.spyOn(snackBar, 'open').mockReturnValue({} as ReturnType<MatSnackBar['open']>);
-    const form = fixture.nativeElement.querySelector('.cta-form') as HTMLFormElement;
-    form.requestSubmit();
-    expect(openSpy).toHaveBeenCalled();
-    expect(openSpy.mock.calls[0][0]).toContain('email');
+    const submit = fixture.nativeElement.querySelector('.cta-submit') as HTMLButtonElement;
+    submit.click();
+    fixture.detectChanges();
+    expect(openSpy).not.toHaveBeenCalled();
     openSpy.mockRestore();
   });
 
@@ -151,8 +153,9 @@ describe('LandingPage', () => {
 
     const snackBar = fixture.debugElement.injector.get(MatSnackBar);
     const openSpy = vi.spyOn(snackBar, 'open').mockReturnValue({} as ReturnType<MatSnackBar['open']>);
-    const form = fixture.nativeElement.querySelector('.cta-form') as HTMLFormElement;
-    form.requestSubmit();
+    const submit = fixture.nativeElement.querySelector('.cta-submit') as HTMLButtonElement;
+    submit.click();
+    fixture.detectChanges();
     expect(openSpy).toHaveBeenCalled();
     expect(openSpy.mock.calls[0][0]).toContain('early-access');
     openSpy.mockRestore();

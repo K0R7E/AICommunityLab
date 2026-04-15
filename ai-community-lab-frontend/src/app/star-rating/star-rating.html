@@ -5,11 +5,11 @@
 >
   @for (kind of sequence(); track $index) {
     @if (kind === 'full') {
-      <mat-icon class="star full">star</mat-icon>
+      <mat-icon class="star full" aria-hidden="true">star</mat-icon>
     } @else if (kind === 'half') {
-      <mat-icon class="star half">star_half</mat-icon>
+      <mat-icon class="star half" aria-hidden="true">star_half</mat-icon>
     } @else {
-      <mat-icon class="star empty">star_border</mat-icon>
+      <mat-icon class="star empty" aria-hidden="true">star_border</mat-icon>
     }
   }
 </span>

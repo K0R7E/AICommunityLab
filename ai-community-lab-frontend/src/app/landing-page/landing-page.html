@@ -53,7 +53,7 @@
     <div class="app-shell">
       <app-category-filter (categoryChange)="onCategoryChange($event)" />
 
-      <div class="section-head tw-mt-8">
+      <div class="section-head section-head--after-filter">
         <h2 id="featured-heading" class="section-title">Featured tools</h2>
         <p class="section-lead">
           Open a listing for ratings, reviews, and full details. Filter by category above—updates instantly without a
@@ -62,16 +62,13 @@
       </div>
 
       @if (toolsLoading()) {
-        <p class="tw-text-sm tw-text-slate-600">Loading tools…</p>
+        <p class="tools-status">Loading tools…</p>
       } @else if (toolsError()) {
-        <p class="tw-text-sm tw-text-amber-900">We could not load the tool directory. Try again shortly.</p>
+        <p class="tools-error">We could not load the tool directory. Try again shortly.</p>
       } @else {
         <div class="tools-grid">
           @for (t of tools(); track t.id; let i = $index) {
-            <div
-              class="tool-slot stagger-in"
-              [style.--stagger-ms]="i * 60 + 'ms'"
-            >
+            <div class="tool-slot stagger-in" [style.--stagger-ms]="i * 60 + 'ms'">
               <app-tool-card [tool]="t" />
             </div>
           }
@@ -88,11 +85,7 @@
       </div>
       <ol class="steps">
         @for (s of steps; track s.n; let i = $index) {
-          <li
-            class="step stagger-in"
-            [style.--stagger-ms]="i * 90 + 'ms'"
-            tabindex="0"
-          >
+          <li class="step stagger-in" [style.--stagger-ms]="i * 90 + 'ms'">
             <span class="step-badge" aria-hidden="true">{{ s.n }}</span>
             <div class="step-body">
               <h3 class="step-title">{{ s.title }}</h3>
@@ -110,7 +103,7 @@
         <h2 id="join-heading" class="cta-title">Join the AI Community</h2>
         <p class="cta-sub">Be the first to access new tools and features</p>
       </div>
-      <form class="cta-form" (ngSubmit)="onEarlyAccess()">
+      <form class="cta-form" #earlyForm="ngForm" (ngSubmit)="onEarlyAccess(earlyForm)">
         <mat-form-field appearance="outline" class="email-field" subscriptSizing="dynamic">
           <mat-label>Email</mat-label>
           <input
@@ -120,7 +113,19 @@
             autocomplete="email"
             placeholder="you@company.com"
             [(ngModel)]="email"
+            required
+            email
+            #emailCtrl="ngModel"
           />
+          @if (emailCtrl.invalid && (emailCtrl.touched || earlyForm.submitted)) {
+            <mat-error>
+              @if (emailCtrl.hasError('required')) {
+                <span>Please enter your email address.</span>
+              } @else if (emailCtrl.hasError('email')) {
+                <span>Enter a valid email address.</span>
+              }
+            </mat-error>
+          }
         </mat-form-field>
         <button mat-flat-button color="primary" class="cta-submit" type="submit">Get Early Access</button>
       </form>

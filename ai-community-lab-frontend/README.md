@@ -29,6 +29,12 @@ Set the site **Base directory** to `ai-community-lab-frontend`. See `netlify.tom
 
 To point production at a real API, replace `environment.ts` at build time (e.g. CI env → `sed` or a small script) so `apiBaseUrl` is your API origin (no trailing slash).
 
+## UI refinements (landing + shared components)
+
+Recent polish focused on **visual consistency with Angular Material system tokens** (`--mat-sys-*`) instead of ad hoc Tailwind slate colors in the top-rated and category-filter blocks, **clearer hover/focus states** in the header and hero CTAs, **single-level card hover** on featured tools (removed duplicate motion on the grid wrapper), and **accessible** star ratings (`aria-hidden` on decorative icons) plus removal of spurious `tabindex` on non-interactive “How it works” steps.
+
+The **early-access form** uses template validation with `mat-error` for empty/invalid email; successful submit clears the field. The **header logo** asset was resized (large PNG replaced with a ~640px max-edge version) to cut transfer size while keeping the same CSS display size.
+
 ## UX notes (anonymous phase)
 
 - **No login** — header has navigation only.

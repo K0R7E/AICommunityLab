@@ -1,23 +1,18 @@
-<header
-  class="site-header tw-sticky tw-top-0 tw-z-[100] tw-border-b tw-border-transparent tw-bg-white/85 tw-backdrop-blur-md tw-transition-[box-shadow,border-color,background-color] tw-duration-200"
-  [class.is-scrolled]="scrolled() || compactNav()"
->
-  <div class="app-shell header-inner tw-flex tw-min-h-[72px] tw-items-center tw-gap-3 tw-py-2">
-    <a
-      routerLink="/"
-      class="tw-mr-auto tw-flex tw-items-center tw-rounded-lg tw-outline-offset-4 focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-[var(--mat-sys-primary)]"
-      aria-label="AI Community Lab — home"
-    >
+<header class="site-header" [class.is-scrolled]="scrolled() || compactNav()">
+  <div class="header-inner">
+    <a routerLink="/" class="brand-link" aria-label="AI Community Lab — home">
       <img
-        class="brand-logo tw-h-12 tw-w-auto max-md:tw-h-10"
+        class="brand-logo"
         src="/logo.png"
-        width="400"
-        height="112"
+        width="640"
+        height="426"
         alt="AI Community Lab"
+        fetchpriority="high"
+        decoding="async"
       />
     </a>
 
-    <nav class="tw-hidden tw-items-center tw-gap-1 md:tw-flex" aria-label="Primary">
+    <nav class="header-nav" aria-label="Primary">
       @if (!compactNav()) {
         <button mat-button type="button" class="nav-link" routerLink="/" fragment="why-us">Why us</button>
         <button mat-button type="button" class="nav-link" routerLink="/" fragment="featured-tools">Tools</button>
@@ -26,14 +21,14 @@
           Join
         </button>
       } @else {
-        <a mat-button routerLink="/" fragment="featured-tools">All tools</a>
+        <a mat-button class="nav-link" routerLink="/" fragment="featured-tools">All tools</a>
       }
     </nav>
 
     <button
       mat-icon-button
       type="button"
-      class="md:tw-hidden"
+      class="header-menu-btn"
       [matMenuTriggerFor]="mobileNav"
       aria-label="Open navigation menu"
     >

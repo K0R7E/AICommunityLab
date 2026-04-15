@@ -1,5 +1,5 @@
 import { Component, HostListener, inject, OnInit, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -129,10 +129,14 @@ export class LandingPage implements OnInit {
     );
   }
 
-  protected onEarlyAccess(): void {
-    const value = this.email.trim();
-    if (!value) {
-      this.snackBar.open('Please add your email address.', 'OK', { duration: 3500 });
+  protected onEarlyAccess(form: NgForm): void {
+    form.form.markAllAsTouched();
+    const trimmed = this.email.trim();
+    if (!trimmed) {
+      return;
+    }
+    const emailControl = form.form.get('email');
+    if (emailControl?.invalid) {
       return;
     }
     this.snackBar.open(
@@ -140,5 +144,7 @@ export class LandingPage implements OnInit {
       'Great',
       { duration: 5000 },
     );
+    this.email = '';
+    form.resetForm();
   }
 }

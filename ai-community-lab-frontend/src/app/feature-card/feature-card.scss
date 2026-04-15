@@ -1,13 +1,15 @@
 .feature-card {
   height: 100%;
   border-radius: 16px;
+  border-color: color-mix(in srgb, var(--mat-sys-outline) 35%, transparent);
+  background: var(--mat-sys-surface);
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease;
 
   &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 40px color-mix(in srgb, var(--mat-sys-shadow) 18%, transparent);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 36px color-mix(in srgb, var(--mat-sys-shadow) 16%, transparent);
   }
 }
 

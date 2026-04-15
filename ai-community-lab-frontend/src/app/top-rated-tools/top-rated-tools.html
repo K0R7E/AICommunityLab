@@ -1,34 +1,26 @@
-<section class="tw-mt-12" aria-labelledby="top-rated-heading">
-  <div class="tw-mb-5">
-    <h2 id="top-rated-heading" class="tw-m-0 tw-text-xl tw-font-semibold tw-tracking-tight tw-text-slate-900">
-      Top rated this week
-    </h2>
-    <p class="tw-mt-1 tw-mb-0 tw-text-sm tw-text-slate-600">
+<section class="top-rated" aria-labelledby="top-rated-heading">
+  <div class="top-rated__head">
+    <h2 id="top-rated-heading" class="top-rated__title">Top rated this week</h2>
+    <p class="top-rated__lead">
       Tools with the strongest recent community ratings (demo uses mock data when no API is configured).
     </p>
   </div>
 
   @if (loading()) {
-    <p class="tw-text-sm tw-text-slate-500">Loading highlights…</p>
+    <p class="top-rated__status">Loading highlights…</p>
   } @else if (error()) {
-    <p class="tw-text-sm tw-text-amber-800">Could not load top-rated tools.</p>
+    <p class="top-rated__error">Could not load top-rated tools.</p>
   } @else {
-    <div class="tw-grid tw-gap-4 sm:tw-grid-cols-2 lg:tw-grid-cols-3">
+    <div class="top-rated__grid">
       @for (t of tools(); track t.id) {
-        <a
-          [routerLink]="['/tools', t.id]"
-          class="tw-block tw-h-full tw-no-underline tw-text-inherit focus-visible:tw-rounded-2xl focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-[var(--mat-sys-primary)]"
-        >
-          <mat-card
-            appearance="outlined"
-            class="tw-h-full tw-rounded-2xl tw-border-slate-200/90 tw-bg-white tw-transition-transform hover:tw--translate-y-0.5 hover:tw-shadow-md"
-          >
-            <mat-card-content class="tw-p-5">
-              <h3 class="tw-m-0 tw-text-base tw-font-semibold tw-text-slate-900">{{ t.name }}</h3>
-              <p class="tw-mt-1 tw-line-clamp-2 tw-text-sm tw-text-slate-600">{{ t.description }}</p>
-              <div class="tw-mt-3 tw-flex tw-items-center tw-gap-2">
+        <a [routerLink]="['/tools', t.id]" class="top-rated__link">
+          <mat-card appearance="outlined" class="top-rated__card">
+            <mat-card-content class="top-rated__card-inner">
+              <h3 class="top-rated__card-title">{{ t.name }}</h3>
+              <p class="top-rated__card-desc">{{ t.description }}</p>
+              <div class="top-rated__rating-row">
                 <app-star-rating [rating]="t.rating" [max]="5" />
-                <span class="tw-text-sm tw-font-medium tw-tabular-nums tw-text-slate-800">
+                <span class="top-rated__rating-num">
                   {{ t.rating | number: '1.1-1' }}
                 </span>
               </div>

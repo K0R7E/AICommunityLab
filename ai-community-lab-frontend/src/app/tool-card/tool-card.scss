@@ -1,6 +1,8 @@
 .tool-card {
   height: 100%;
   border-radius: 16px;
+  border-color: color-mix(in srgb, var(--mat-sys-outline) 35%, transparent);
+  background: var(--mat-sys-surface);
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease;

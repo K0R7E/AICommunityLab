@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ExternalLink, MessageCircle } from "lucide-react";
-import { VoteButton } from "@/components/vote/vote-button";
+import { RatingControl } from "@/components/vote/rating-control";
 import { formatRelativeTime } from "@/lib/format";
 import {
   getCommentsForPost,
   getPostById,
-  getVoteStateForPost,
+  getMyRatingForPost,
 } from "@/lib/data/post-detail";
 import { createClient } from "@/lib/supabase/server";
 import { CommentForm } from "./comment-form";
@@ -30,9 +30,9 @@ export default async function PostDetailPage({ params }: Props) {
     data: { user: currentUser },
   } = await supabase.auth.getUser();
 
-  const [comments, voteState] = await Promise.all([
+  const [comments, ratingState] = await Promise.all([
     getCommentsForPost(id),
-    getVoteStateForPost(id),
+    getMyRatingForPost(id),
   ]);
 
   const canAct = !!currentUser;
@@ -40,12 +40,13 @@ export default async function PostDetailPage({ params }: Props) {
   return (
     <article>
       <div className="flex gap-4">
-        <VoteButton
-          key={`${post.id}-${post.votes_count}-${voteState.hasVoted}`}
+        <RatingControl
+          key={`${post.id}-${post.rating_sum}-${post.rating_count}-${ratingState.myRating ?? "x"}`}
           postId={post.id}
-          initialVotes={post.votes_count}
-          initialHasVoted={voteState.hasVoted}
-          canVote={canAct}
+          initialRatingSum={post.rating_sum}
+          initialRatingCount={post.rating_count}
+          initialMyRating={ratingState.myRating}
+          canRate={canAct}
         />
         <div className="min-w-0 flex-1">
           <h1 className="text-2xl font-bold leading-tight text-zinc-100">

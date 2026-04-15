@@ -16,3 +16,18 @@ export function formatRelativeTime(iso: string): string {
     year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
   });
 }
+
+export function formatRatingDisplay(
+  ratingSum: number,
+  ratingCount: number,
+): { avg: string; countLabel: string } {
+  if (ratingCount <= 0) {
+    return { avg: "—", countLabel: "no ratings" };
+  }
+  const avg = (ratingSum / ratingCount).toFixed(1);
+  return {
+    avg,
+    countLabel:
+      ratingCount === 1 ? "1 rating" : `${ratingCount} ratings`,
+  };
+}

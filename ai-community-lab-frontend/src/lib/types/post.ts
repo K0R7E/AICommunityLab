@@ -5,9 +5,14 @@ export type PostRow = {
   url: string;
   description: string | null;
   category: string;
-  votes_count: number;
+  /** Sum of all user ratings (1–5 each). */
+  rating_sum: number;
+  /** Number of users who rated. */
+  rating_count: number;
+  /** Denormalized average; may be null if rating_count is 0. */
+  rating_avg: number | null;
   comments_count: number;
   created_at: string;
 };
 
-export type PostWithVote = PostRow & { hasVoted: boolean };
+export type PostWithMyRating = PostRow & { myRating: number | null };

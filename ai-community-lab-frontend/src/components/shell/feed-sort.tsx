@@ -7,17 +7,20 @@ export function FeedSortBar() {
   const sp = useSearchParams();
   const sort = sp.get("sort") === "top" ? "top" : "new";
   const category = sp.get("category");
+  const q = sp.get("q");
 
   const newHref = (() => {
     const p = new URLSearchParams();
     p.set("sort", "new");
     if (category) p.set("category", category);
+    if (q) p.set("q", q);
     return `/?${p.toString()}`;
   })();
   const topHref = (() => {
     const p = new URLSearchParams();
     p.set("sort", "top");
     if (category) p.set("category", category);
+    if (q) p.set("q", q);
     return `/?${p.toString()}`;
   })();
 

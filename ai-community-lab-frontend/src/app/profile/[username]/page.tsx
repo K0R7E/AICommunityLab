@@ -36,17 +36,22 @@ export default async function ProfilePage({ params }: Props) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  let votedIds = new Set<string>();
+  const myRatings = new Map<string, number>();
   if (user && posts.length > 0) {
-    const { data: votes } = await supabase
-      .from("votes")
-      .select("post_id")
+    const { data: rows } = await supabase
+      .from("ratings")
+      .select("post_id, value")
       .eq("user_id", user.id)
       .in(
         "post_id",
         posts.map((p) => p.id),
       );
-    votedIds = new Set(votes?.map((v) => v.post_id as string) ?? []);
+    for (const row of rows ?? []) {
+      myRatings.set(
+        (row as { post_id: string }).post_id,
+        (row as { value: number }).value,
+      );
+    }
   }
 
   const canVote = !!user;
@@ -105,9 +110,9 @@ export default async function ProfilePage({ params }: Props) {
             </div>
             <div className="flex items-center gap-2">
               <Award className="size-4 text-zinc-500" aria-hidden />
-              <dt className="text-zinc-500">Upvotes received</dt>
+              <dt className="text-zinc-500">Rating points</dt>
               <dd className="font-semibold tabular-nums text-zinc-200">
-                {stats.totalUpvotesReceived}
+                {stats.totalRatingPoints}
               </dd>
             </div>
           </dl>
@@ -126,7 +131,7 @@ export default async function ProfilePage({ params }: Props) {
               <ToolCard
                 key={post.id}
                 post={post}
-                hasVoted={votedIds.has(post.id)}
+                myRating={myRatings.get(post.id) ?? null}
                 canVote={canVote}
               />
             ))}

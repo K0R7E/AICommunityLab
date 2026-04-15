@@ -4,6 +4,7 @@
 
 drop trigger if exists on_auth_user_created on auth.users;
 
+drop table if exists public.ratings cascade;
 drop table if exists public.votes cascade;
 drop table if exists public.comments cascade;
 drop table if exists public.posts cascade;
@@ -14,3 +15,4 @@ drop function if exists public.increment_post_votes_count() cascade;
 drop function if exists public.decrement_post_votes_count() cascade;
 drop function if exists public.increment_post_comments_count() cascade;
 drop function if exists public.decrement_post_comments_count() cascade;
+drop function if exists public.apply_rating_to_post() cascade;

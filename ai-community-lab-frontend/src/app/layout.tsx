@@ -8,9 +8,9 @@ import {
 } from "@/components/auth/auth-provider";
 import { createClient } from "@/lib/supabase/server";
 import { SiteHeader } from "@/components/shell/site-header";
+import { SiteFooter } from "@/components/shell/site-footer";
 import { Sidebar } from "@/components/shell/sidebar";
 import { RightPanel } from "@/components/shell/right-panel";
-import { SubmitFab } from "@/components/shell/submit-fab";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -68,30 +68,39 @@ export default async function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-[#0f0f0f] font-sans text-zinc-100">
+      <body className="flex min-h-full flex-col bg-[#0f0f0f] font-sans text-zinc-100">
         <AuthProvider
           key={`${user?.id ?? "anon"}:${initialProfile?.username ?? ""}:${initialProfile?.avatar_url ?? ""}`}
           initialUser={user ?? null}
           initialProfile={initialProfile}
         >
           <SiteHeader />
-          <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6">
+
+          <aside
+            className="shell-sidebar-left hidden lg:block"
+            aria-label="Primary navigation"
+          >
+            <Sidebar />
+          </aside>
+          <aside
+            className="shell-sidebar-right hidden lg:block"
+            aria-label="Trending and actions"
+          >
+            <Suspense fallback={<RightPanelFallback />}>
+              <RightPanel userEmail={userEmail} />
+            </Suspense>
+          </aside>
+
+          <div className="mx-auto w-full max-w-[1400px] flex-1 px-4 pb-24 pt-6 sm:px-6 lg:max-w-none lg:px-0">
             <div className="mb-8 lg:hidden">
-              <Sidebar />
-            </div>
-            <div className="grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)_280px]">
-              <aside className="hidden lg:block">
+              <div className="sticky top-14 z-20 -mx-4 max-h-[calc(100dvh-6.5rem)] overflow-y-auto overflow-x-hidden border-b border-zinc-800/60 bg-[#0f0f0f]/95 px-4 py-3 backdrop-blur-sm sm:-mx-6 sm:px-6">
                 <Sidebar />
-              </aside>
-              <main className="min-w-0">{children}</main>
-              <aside className="hidden lg:block">
-                <Suspense fallback={<RightPanelFallback />}>
-                  <RightPanel userEmail={userEmail} />
-                </Suspense>
-              </aside>
+              </div>
             </div>
+            <main className="shell-main-with-sidebars min-w-0">{children}</main>
           </div>
-          <SubmitFab />
+
+          <SiteFooter />
         </AuthProvider>
         <Toaster richColors theme="dark" position="top-center" />
       </body>

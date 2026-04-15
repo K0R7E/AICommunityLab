@@ -32,7 +32,8 @@ export async function getProfileByUserId(
 
 export async function getUserProfileStats(userId: string): Promise<{
   totalPosts: number;
-  totalUpvotesReceived: number;
+  /** Sum of `rating_sum` across the user’s posts (all 1–5 scores from voters). */
+  totalRatingPoints: number;
 }> {
   const supabase = await createClient();
   const { count, error: countError } = await supabase
@@ -41,20 +42,20 @@ export async function getUserProfileStats(userId: string): Promise<{
     .eq("user_id", userId);
 
   if (countError) {
-    return { totalPosts: 0, totalUpvotesReceived: 0 };
+    return { totalPosts: 0, totalRatingPoints: 0 };
   }
 
   const { data: rows } = await supabase
     .from("posts")
-    .select("votes_count")
+    .select("rating_sum")
     .eq("user_id", userId);
 
-  const totalUpvotesReceived =
-    rows?.reduce((sum, r) => sum + (r.votes_count as number), 0) ?? 0;
+  const totalRatingPoints =
+    rows?.reduce((sum, r) => sum + (r.rating_sum as number), 0) ?? 0;
 
   return {
     totalPosts: count ?? 0,
-    totalUpvotesReceived,
+    totalRatingPoints,
   };
 }
 

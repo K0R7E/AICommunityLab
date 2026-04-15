@@ -35,23 +35,25 @@ export async function getCommentsForPost(
   return (data ?? []) as CommentRow[];
 }
 
-export async function getVoteStateForPost(
+export async function getMyRatingForPost(
   postId: string,
-): Promise<{ hasVoted: boolean }> {
+): Promise<{ myRating: number | null }> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return { hasVoted: false };
+    return { myRating: null };
   }
 
   const { data } = await supabase
-    .from("votes")
-    .select("id")
+    .from("ratings")
+    .select("value")
     .eq("post_id", postId)
     .eq("user_id", user.id)
     .maybeSingle();
 
-  return { hasVoted: !!data };
+  return {
+    myRating: data ? (data as { value: number }).value : null,
+  };
 }

@@ -7,8 +7,8 @@ async function getTrending() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("posts")
-    .select("id, title, votes_count")
-    .order("votes_count", { ascending: false })
+    .select("id, title, rating_avg, rating_count")
+    .order("rating_avg", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
     .limit(5);
   return data ?? [];
@@ -43,7 +43,10 @@ export async function RightPanel({ userEmail }: Props) {
                   </span>
                   {p.title}
                   <span className="ml-2 text-xs text-zinc-500">
-                    {p.votes_count}▲
+                    {p.rating_avg != null
+                      ? `${Number(p.rating_avg).toFixed(1)} ★`
+                      : "—"}{" "}
+                    ({p.rating_count ?? 0})
                   </span>
                 </Link>
               </li>
@@ -52,21 +55,17 @@ export async function RightPanel({ userEmail }: Props) {
         </ol>
       </section>
 
-      <section className="rounded-xl border border-zinc-800 bg-[#1a1a1a] p-4">
-        <h3 className="text-sm font-semibold text-zinc-100">Join the feed</h3>
-        <p className="mt-1 text-sm text-zinc-500">
-          Sign in with Google to submit tools, vote, and comment.
-        </p>
-        <div className="mt-4">
-          {userEmail ? (
-            <p className="text-sm text-zinc-400">
-              You’re signed in — submit tools and vote on the feed.
-            </p>
-          ) : (
+      {!userEmail ? (
+        <section className="rounded-xl border border-zinc-800 bg-[#1a1a1a] p-4">
+          <h3 className="text-sm font-semibold text-zinc-100">Join the feed</h3>
+          <p className="mt-1 text-sm text-zinc-500">
+            Sign in with Google to submit tools, vote, and comment.
+          </p>
+          <div className="mt-4">
             <SignInCard nextPath="/" />
-          )}
-        </div>
-      </section>
+          </div>
+        </section>
+      ) : null}
 
       <section className="rounded-xl border border-dashed border-[#00ff9f]/30 bg-[#141414] p-4">
         <h3 className="text-sm font-semibold text-[#00ff9f]">Share a tool</h3>

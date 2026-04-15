@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { ToolCard } from "@/components/feed/tool-card";
+import { FeedSearch } from "@/components/shell/feed-search";
 import { FeedSortBar } from "@/components/shell/feed-sort";
 import { getFeedPosts } from "@/lib/data/posts";
 
@@ -26,14 +27,28 @@ function FeedSkeleton() {
 async function Feed({
   sort,
   category,
+  searchQuery,
 }: {
   sort: "new" | "top";
   category: string | null;
+  searchQuery: string | null;
 }) {
-  const { posts, votedIds, userId } = await getFeedPosts({ sort, category });
+  const { posts, myRatings, userId } = await getFeedPosts({
+    sort,
+    category,
+    searchQuery,
+  });
   const canVote = !!userId;
 
   if (posts.length === 0) {
+    if (searchQuery?.trim()) {
+      return (
+        <p className="rounded-xl border border-zinc-800 bg-[#1a1a1a] px-6 py-12 text-center text-zinc-400">
+          No results for &quot;{searchQuery.trim()}&quot;. Try different words or
+          clear the search.
+        </p>
+      );
+    }
     return (
       <p className="rounded-xl border border-zinc-800 bg-[#1a1a1a] px-6 py-12 text-center text-zinc-400">
         No tools yet 😢 Be the first to share something cool
@@ -47,7 +62,7 @@ async function Feed({
         <ToolCard
           key={post.id}
           post={post}
-          hasVoted={votedIds.has(post.id)}
+          myRating={myRatings.get(post.id) ?? null}
           canVote={canVote}
         />
       ))}
@@ -58,27 +73,42 @@ async function Feed({
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ sort?: string; category?: string }>;
+  searchParams: Promise<{ sort?: string; category?: string; q?: string }>;
 }) {
   const sp = await searchParams;
   const sort = sp.sort === "top" ? "top" : "new";
   const category = sp.category?.trim() || null;
+  const q = sp.q?.trim() || null;
 
   return (
     <div>
       <div className="mb-2">
         <h1 className="text-2xl font-bold tracking-tight text-zinc-100">
-          {sort === "top" ? "Top tools" : "Latest tools"}
+          {q
+            ? "Search"
+            : sort === "top"
+              ? "Top tools"
+              : "Latest tools"}
         </h1>
-        {category ? (
+        {q ? (
+          <p className="mt-1 text-sm text-zinc-400">
+            Results for &quot;{q}&quot;
+            {category ? (
+              <span className="text-zinc-500"> · {category}</span>
+            ) : null}
+          </p>
+        ) : category ? (
           <p className="mt-1 text-sm text-zinc-500">Category: {category}</p>
         ) : null}
       </div>
       <Suspense fallback={null}>
+        <FeedSearch />
+      </Suspense>
+      <Suspense fallback={null}>
         <FeedSortBar />
       </Suspense>
       <Suspense fallback={<FeedSkeleton />}>
-        <Feed sort={sort} category={category} />
+        <Feed sort={sort} category={category} searchQuery={q} />
       </Suspense>
     </div>
   );

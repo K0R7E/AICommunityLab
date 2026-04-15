@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0f0f0f" />
+    <title>AICommunityLab — Coming soon</title>
+    <meta
+      name="description"
+      content="AICommunityLab — Discover and share AI tools. Coming soon."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0f0f0f;
+        --card: #1a1a1a;
+        --accent: #00ff9f;
+        --muted: #a1a1aa;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        font-family:
+          "Geist",
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background: var(--bg);
+        color: #f4f4f5;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        text-align: center;
+      }
+      .glow {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(
+          ellipse 80% 50% at 50% -20%,
+          rgba(0, 255, 159, 0.12),
+          transparent 55%
+        );
+      }
+      .card {
+        position: relative;
+        max-width: 28rem;
+        padding: 2.5rem 2rem;
+        border-radius: 1rem;
+        border: 1px solid rgba(63, 63, 70, 0.8);
+        background: var(--card);
+        box-shadow:
+          0 0 0 1px rgba(0, 255, 159, 0.06),
+          0 24px 48px rgba(0, 0, 0, 0.45);
+      }
+      .logo {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 700;
+        font-size: 1.125rem;
+        letter-spacing: -0.02em;
+        margin-bottom: 1.5rem;
+      }
+      .logo svg {
+        width: 1.5rem;
+        height: 1.5rem;
+        color: var(--accent);
+      }
+      h1 {
+        margin: 0 0 0.75rem;
+        font-size: clamp(1.5rem, 4vw, 1.875rem);
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        line-height: 1.2;
+      }
+      .badge {
+        display: inline-block;
+        margin-bottom: 1rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--accent);
+        background: rgba(0, 255, 159, 0.1);
+        border: 1px solid rgba(0, 255, 159, 0.25);
+      }
+      p {
+        margin: 0;
+        font-size: 0.9375rem;
+        line-height: 1.6;
+        color: var(--muted);
+      }
+      footer {
+        margin-top: 2rem;
+        font-size: 0.75rem;
+        color: #71717a;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="glow" aria-hidden="true"></div>
+    <div class="card">
+      <div class="logo">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path
+            d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+          />
+        </svg>
+        <span>AICommunityLab</span>
+      </div>
+      <div class="badge">Coming soon</div>
+      <h1>We’re building something for the AI tools community.</h1>
+      <p>
+        A place to discover, share, and rate tools — stay tuned. This is a
+        placeholder deployment.
+      </p>
+      <footer>© <span id="y"></span> AICommunityLab</footer>
+    </div>
+    <script>
+      document.getElementById("y").textContent = new Date().getFullYear();
+    </script>
+  </body>
+</html>

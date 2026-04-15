@@ -1,50 +1,20 @@
-# AI Community Lab — Angular frontend
+# AICommunityLab (Next.js)
 
-Angular **21** app for browsing AI tools, **anonymous** star ratings, **anonymous** text reviews (optional display name), category filtering, and a top-rated section.
+Dark, three-column UI: feed in the center, navigation on the left, trending and CTAs on the right. **Supabase** provides Postgres, RLS, and Google OAuth.
 
-## Run
+## Scripts
 
-```bash
-npm install
-npm start
-```
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Development server ([http://localhost:3000](http://localhost:3000)) |
+| `npm run build` | Production build |
+| `npm start` | Run production server (after `build`) |
+| `npm run lint` | ESLint |
 
-- **Development** (`ng serve`): uses `src/environments/environment.development.ts` → API base `http://localhost:5080` (see `angular.json` → `configurations.development.fileReplacements`).
-- **Production** (`ng build`): uses `environment.ts` with **`apiBaseUrl: ''`**, which enables the **in-browser mock** (`MockToolsStore`) so static hosting works without a backend.
+## Configuration
 
-## Services (HTTP + mock)
+Copy `.env.example` to `.env.local` and set Supabase URL and anon key. Required for auth and data.
 
-| Service | Role |
-|---------|------|
-| `CategoryService` | `GET /api/categories` |
-| `ToolService` | Tools list (`?categoryId=`), detail, top-rated |
-| `RatingService` | Average + submit star rating |
-| `ReviewService` | Paginated reviews, submit review, upvote/downvote |
+## Docker
 
-When `apiBaseUrl` is empty, these services short-circuit to `MockToolsStore` (no HTTP).
-
-## Netlify
-
-Set the site **Base directory** to `ai-community-lab-frontend`. See `netlify.toml`.
-
-To point production at a real API, replace `environment.ts` at build time (e.g. CI env → `sed` or a small script) so `apiBaseUrl` is your API origin (no trailing slash).
-
-## UI refinements (landing + shared components)
-
-Recent polish focused on **visual consistency with Angular Material system tokens** (`--mat-sys-*`) instead of ad hoc Tailwind slate colors in the top-rated and category-filter blocks, **clearer hover/focus states** in the header and hero CTAs, **single-level card hover** on featured tools (removed duplicate motion on the grid wrapper), and **accessible** star ratings (`aria-hidden` on decorative icons) plus removal of spurious `tabindex` on non-interactive “How it works” steps.
-
-The **early-access form** uses template validation with `mat-error` for empty/invalid email; successful submit clears the field. The **header logo** asset was resized (large PNG replaced with a ~640px max-edge version) to cut transfer size while keeping the same CSS display size.
-
-**Phase 2** further increases **hero-to-content spacing** and **grid gaps** (`2rem`) on the homepage, adds **shadow-sm / shadow-lg-style** hovers on featured tool cards with **pastel category chips**, a persistent **header bottom border**, a **max-width (~56rem) centered column** on the tool detail page with clearer title/description separation and a stronger **Submit a review** CTA, **split rating cards** (community vs your rating) with **gold interactive stars**, a proper **reviews empty state**, and **Inter** as the primary UI font (Roboto remains for Material theming).
-
-## UX notes (anonymous phase)
-
-- **No login** — header has navigation only.
-- **Reviews** have **no star field** in the database; only **tool-level** anonymous ratings are stored in `Ratings`.
-- Tool URLs use **UUIDs** from the API (e.g. `/tools/a1000001-0000-4000-8000-000000000003` for seeded CodePilot).
-
-## Tests
-
-```bash
-npm test
-```
+Multi-stage `Dockerfile` produces a **standalone** Node server. Build with the same `NEXT_PUBLIC_*` args as documented in the repo root `README.md` and `DOCKER.md`.

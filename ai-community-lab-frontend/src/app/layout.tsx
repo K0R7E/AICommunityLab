@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Suspense } from "react";
 import { Toaster } from "sonner";
+import {
+  AuthProvider,
+  type ProfileSummary,
+} from "@/components/auth/auth-provider";
 import { createClient } from "@/lib/supabase/server";
 import { SiteHeader } from "@/components/shell/site-header";
 import { Sidebar } from "@/components/shell/sidebar";
@@ -44,30 +48,51 @@ export default async function RootLayout({
   } = await supabase.auth.getUser();
   const userEmail = user?.email ?? null;
 
+  let initialProfile: ProfileSummary | null = null;
+  if (user) {
+    const { data: profileRow } = await supabase
+      .from("profiles")
+      .select("username, avatar_url")
+      .eq("id", user.id)
+      .maybeSingle();
+    initialProfile = profileRow
+      ? {
+          username: profileRow.username,
+          avatar_url: profileRow.avatar_url,
+        }
+      : null;
+  }
+
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-[#0f0f0f] font-sans text-zinc-100">
-        <SiteHeader userEmail={userEmail} />
-        <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6">
-          <div className="mb-8 lg:hidden">
-            <Sidebar />
-          </div>
-          <div className="grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)_280px]">
-            <aside className="hidden lg:block">
+        <AuthProvider
+          key={`${user?.id ?? "anon"}:${initialProfile?.username ?? ""}:${initialProfile?.avatar_url ?? ""}`}
+          initialUser={user ?? null}
+          initialProfile={initialProfile}
+        >
+          <SiteHeader />
+          <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6">
+            <div className="mb-8 lg:hidden">
               <Sidebar />
-            </aside>
-            <main className="min-w-0">{children}</main>
-            <aside className="hidden lg:block">
-              <Suspense fallback={<RightPanelFallback />}>
-                <RightPanel userEmail={userEmail} />
-              </Suspense>
-            </aside>
+            </div>
+            <div className="grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)_280px]">
+              <aside className="hidden lg:block">
+                <Sidebar />
+              </aside>
+              <main className="min-w-0">{children}</main>
+              <aside className="hidden lg:block">
+                <Suspense fallback={<RightPanelFallback />}>
+                  <RightPanel userEmail={userEmail} />
+                </Suspense>
+              </aside>
+            </div>
           </div>
-        </div>
-        <SubmitFab />
+          <SubmitFab />
+        </AuthProvider>
         <Toaster richColors theme="dark" position="top-center" />
       </body>
     </html>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { SignInCard } from "@/components/auth/user-menu";
 import { TrendingUp } from "lucide-react";
-import { AuthButton } from "@/components/auth/auth-button";
 
 async function getTrending() {
   const supabase = await createClient();
@@ -58,7 +58,13 @@ export async function RightPanel({ userEmail }: Props) {
           Sign in with Google to submit tools, vote, and comment.
         </p>
         <div className="mt-4">
-          <AuthButton email={userEmail} />
+          {userEmail ? (
+            <p className="text-sm text-zinc-400">
+              You’re signed in — submit tools and vote on the feed.
+            </p>
+          ) : (
+            <SignInCard nextPath="/" />
+          )}
         </div>
       </section>
 

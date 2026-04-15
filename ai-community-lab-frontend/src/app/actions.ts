@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { CATEGORIES } from "@/lib/constants";
+import { isValidUsername, normalizeUsername } from "@/lib/validate-profile";
 
 const TITLE_MIN = 3;
 
@@ -87,4 +88,81 @@ export async function addComment(postId: string, content: string) {
 
   revalidatePath(`/post/${postId}`);
   return { success: true };
+}
+
+export type UpdateProfileState = {
+  error: string | null;
+  /** Set when save succeeded; new timestamp on each success for client effects */
+  doneAt?: number;
+};
+
+export async function updateProfile(
+  _prev: UpdateProfileState,
+  formData: FormData,
+): Promise<UpdateProfileState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "You must be signed in to update your profile." };
+  }
+
+  const username = normalizeUsername(String(formData.get("username") ?? ""));
+  const bio = String(formData.get("bio") ?? "").trim();
+  const websiteRaw = String(formData.get("website") ?? "").trim();
+
+  if (!isValidUsername(username)) {
+    return {
+      error:
+        "Username must be 3–32 characters: lowercase letters, numbers, and underscores.",
+    };
+  }
+
+  let website: string | null = null;
+  if (websiteRaw) {
+    try {
+      const u = new URL(
+        websiteRaw.includes("://") ? websiteRaw : `https://${websiteRaw}`,
+      );
+      if (u.protocol !== "http:" && u.protocol !== "https:") {
+        return { error: "Website must be an http(s) URL." };
+      }
+      website = u.href;
+    } catch {
+      return { error: "Invalid website URL." };
+    }
+  }
+
+  const { data: before } = await supabase
+    .from("profiles")
+    .select("username")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      username,
+      bio: bio || null,
+      website,
+    })
+    .eq("id", user.id);
+
+  if (error) {
+    if (error.code === "23505") {
+      return { error: "That username is already taken." };
+    }
+    return { error: error.message };
+  }
+
+  revalidatePath("/settings");
+  revalidatePath("/", "layout");
+  const prevName = before?.username as string | undefined;
+  if (prevName && prevName !== username) {
+    revalidatePath(`/profile/${prevName}`);
+  }
+  revalidatePath(`/profile/${username}`);
+
+  return { error: null, doneAt: Date.now() };
 }

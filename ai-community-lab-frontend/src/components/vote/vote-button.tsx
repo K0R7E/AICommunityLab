@@ -27,7 +27,7 @@ export function VoteButton({
 
   async function toggle() {
     if (!canVote) {
-      toast.error("Sign in to vote");
+      toast.error("Login to Vote");
       return;
     }
 
@@ -44,7 +44,7 @@ export function VoteButton({
       if (!user) {
         setVotes(prevVotes);
         setHasVoted(prevVoted);
-        toast.error("Sign in to vote");
+        toast.error("Login to Vote");
         return;
       }
 

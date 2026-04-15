@@ -2,7 +2,7 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  border-bottom: 1px solid transparent;
+  border-bottom: 1px solid color-mix(in srgb, var(--mat-sys-outline) 14%, transparent);
   background: color-mix(in srgb, var(--mat-sys-surface) 90%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -13,7 +13,7 @@
 
   &.is-scrolled {
     background: color-mix(in srgb, var(--mat-sys-surface) 94%, transparent);
-    border-bottom-color: color-mix(in srgb, var(--mat-sys-outline) 26%, transparent);
+    border-bottom-color: color-mix(in srgb, var(--mat-sys-outline) 28%, transparent);
     box-shadow: 0 10px 32px color-mix(in srgb, var(--mat-sys-shadow) 12%, transparent);
   }
 }

@@ -34,6 +34,12 @@ body {
   background-color: var(--mat-sys-surface);
   color: var(--mat-sys-on-surface);
   font: var(--mat-sys-body-medium);
+  font-family:
+    Inter,
+    Roboto,
+    system-ui,
+    -apple-system,
+    sans-serif;
 
   // Reset the user agent margin.
   margin: 0;

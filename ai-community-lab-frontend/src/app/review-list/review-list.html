@@ -7,15 +7,17 @@
   @if (loading()) {
     <p class="tw-text-sm tw-text-slate-500">Loading reviews…</p>
   } @else if (!items().length) {
-    <p class="tw-rounded-xl tw-border tw-border-dashed tw-border-slate-200 tw-bg-slate-50 tw-p-6 tw-text-sm tw-text-slate-600">
-      No reviews yet. Be the first to share your experience.
-    </p>
+    <div class="review-empty" role="status">
+      <div class="review-empty__icon" aria-hidden="true">
+        <mat-icon>rate_review</mat-icon>
+      </div>
+      <h3 class="review-empty__title">No reviews yet</h3>
+      <p class="review-empty__text">Be the first to share how this tool worked for you.</p>
+    </div>
   } @else {
     <ul class="tw-m-0 tw-flex tw-list-none tw-flex-col tw-gap-4 tw-p-0">
       @for (r of items(); track r.id) {
-        <li
-          class="tw-rounded-2xl tw-border tw-border-slate-200/90 tw-bg-white tw-p-5 tw-shadow-sm"
-        >
+        <li class="tw-rounded-2xl tw-border tw-border-slate-200/90 tw-bg-white tw-p-5 tw-shadow-sm">
           <div class="tw-flex tw-flex-wrap tw-items-start tw-justify-between tw-gap-3">
             <div>
               <p class="tw-m-0 tw-font-medium tw-text-slate-900">{{ r.authorName }}</p>

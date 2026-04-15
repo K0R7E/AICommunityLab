@@ -52,7 +52,7 @@
 
 .top-rated__grid {
   display: grid;
-  gap: 1rem;
+  gap: 2rem;
   grid-template-columns: 1fr;
 
   @media (min-width: 640px) {
@@ -74,8 +74,10 @@
     box-shadow 0.2s ease;
 
   &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 36px color-mix(in srgb, var(--mat-sys-shadow) 16%, transparent);
+    transform: translateY(-4px);
+    box-shadow:
+      0 10px 15px color-mix(in srgb, var(--mat-sys-shadow) 10%, transparent),
+      0 20px 40px color-mix(in srgb, var(--mat-sys-shadow) 14%, transparent);
   }
 }
 

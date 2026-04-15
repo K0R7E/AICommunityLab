@@ -35,6 +35,8 @@ Recent polish focused on **visual consistency with Angular Material system token
 
 The **early-access form** uses template validation with `mat-error` for empty/invalid email; successful submit clears the field. The **header logo** asset was resized (large PNG replaced with a ~640px max-edge version) to cut transfer size while keeping the same CSS display size.
 
+**Phase 2** further increases **hero-to-content spacing** and **grid gaps** (`2rem`) on the homepage, adds **shadow-sm / shadow-lg-style** hovers on featured tool cards with **pastel category chips**, a persistent **header bottom border**, a **max-width (~56rem) centered column** on the tool detail page with clearer title/description separation and a stronger **Submit a review** CTA, **split rating cards** (community vs your rating) with **gold interactive stars**, a proper **reviews empty state**, and **Inter** as the primary UI font (Roboto remains for Material theming).
+
 ## UX notes (anonymous phase)
 
 - **No login** — header has navigation only.

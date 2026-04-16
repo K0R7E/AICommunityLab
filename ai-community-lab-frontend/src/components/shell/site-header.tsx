@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { UserMenu } from "@/components/auth/user-menu";
+import { NotificationsInboxLink } from "@/components/shell/notifications-inbox-link";
 
 export function SiteHeader() {
   return (
@@ -13,7 +14,8 @@ export function SiteHeader() {
           <Sparkles className="size-5 text-[#00ff9f]" aria-hidden />
           <span>AICommunityLab</span>
         </Link>
-        <div className="flex max-w-[min(100%,20rem)] items-center justify-end">
+        <div className="flex max-w-[min(100%,20rem)] items-center justify-end gap-2">
+          <NotificationsInboxLink />
           <UserMenu />
         </div>
       </div>

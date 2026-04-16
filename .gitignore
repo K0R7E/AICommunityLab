@@ -54,3 +54,7 @@ coverage/
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+
+
+# --- Cursor ---
+.cursor/

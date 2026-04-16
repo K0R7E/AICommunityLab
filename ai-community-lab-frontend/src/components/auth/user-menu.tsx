@@ -1,7 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { ChevronDown, LogOut, Settings, UserRound } from "lucide-react";
+import { Bell, ChevronDown, LogOut, Settings, Shield, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -103,6 +103,15 @@ export function UserMenu() {
             My profile
           </Link>
           <Link
+            href="/notifications"
+            role="menuitem"
+            className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800/80"
+            onClick={() => setOpen(false)}
+          >
+            <Bell className="size-4 text-zinc-400" />
+            Notifications
+          </Link>
+          <Link
             href="/settings"
             role="menuitem"
             className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800/80"
@@ -111,6 +120,17 @@ export function UserMenu() {
             <Settings className="size-4 text-zinc-400" />
             Settings
           </Link>
+          {profile?.is_admin ? (
+            <Link
+              href="/admin"
+              role="menuitem"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800/80"
+              onClick={() => setOpen(false)}
+            >
+              <Shield className="size-4 text-zinc-400" />
+              Moderation
+            </Link>
+          ) : null}
           <button
             type="button"
             role="menuitem"

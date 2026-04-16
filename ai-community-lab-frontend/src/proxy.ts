@@ -12,7 +12,12 @@ export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   if (!supabaseUrl || !supabaseKey) {
-    if (path.startsWith("/submit") || path.startsWith("/settings")) {
+    if (
+      path.startsWith("/submit") ||
+      path.startsWith("/settings") ||
+      path.startsWith("/admin") ||
+      path.startsWith("/notifications")
+    ) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       url.search = "";
@@ -49,7 +54,10 @@ export async function proxy(request: NextRequest) {
 
   if (
     !user &&
-    (path.startsWith("/submit") || path.startsWith("/settings"))
+    (path.startsWith("/submit") ||
+      path.startsWith("/settings") ||
+      path.startsWith("/admin") ||
+      path.startsWith("/notifications"))
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
@@ -67,5 +75,14 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/submit", "/submit/:path*", "/settings", "/settings/:path*"],
+  matcher: [
+    "/submit",
+    "/submit/:path*",
+    "/settings",
+    "/settings/:path*",
+    "/admin",
+    "/admin/:path*",
+    "/notifications",
+    "/notifications/:path*",
+  ],
 };

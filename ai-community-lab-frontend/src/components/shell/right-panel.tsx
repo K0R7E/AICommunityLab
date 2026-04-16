@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { POST_MODERATION_PUBLISHED } from "@/lib/moderation";
 import { SignInCard } from "@/components/auth/user-menu";
 import { TrendingUp } from "lucide-react";
 
@@ -8,6 +9,7 @@ async function getTrending() {
   const { data } = await supabase
     .from("posts")
     .select("id, title, rating_avg, rating_count")
+    .eq("moderation_status", POST_MODERATION_PUBLISHED)
     .order("rating_avg", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
     .limit(5);

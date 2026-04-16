@@ -12,7 +12,10 @@ import {
   useState,
 } from "react";
 
-export type ProfileSummary = Pick<ProfileRow, "username" | "avatar_url">;
+export type ProfileSummary = Pick<
+  ProfileRow,
+  "username" | "avatar_url" | "is_admin"
+>;
 
 type AuthContextValue = {
   user: User | null;
@@ -49,12 +52,16 @@ export function AuthProvider({
     }
     const { data } = await supabase
       .from("profiles")
-      .select("username, avatar_url")
+      .select("username, avatar_url, is_admin")
       .eq("id", u.id)
       .maybeSingle();
     setProfile(
       data
-        ? { username: data.username, avatar_url: data.avatar_url }
+        ? {
+            username: data.username,
+            avatar_url: data.avatar_url,
+            is_admin: Boolean((data as { is_admin?: boolean }).is_admin),
+          }
         : null,
     );
   }, [supabase]);
@@ -68,12 +75,16 @@ export function AuthProvider({
       if (nextUser) {
         const { data } = await supabase
           .from("profiles")
-          .select("username, avatar_url")
+          .select("username, avatar_url, is_admin")
           .eq("id", nextUser.id)
           .maybeSingle();
         setProfile(
           data
-            ? { username: data.username, avatar_url: data.avatar_url }
+            ? {
+                username: data.username,
+                avatar_url: data.avatar_url,
+                is_admin: Boolean((data as { is_admin?: boolean }).is_admin),
+              }
             : null,
         );
       } else {

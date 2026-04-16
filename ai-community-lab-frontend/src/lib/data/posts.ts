@@ -1,6 +1,41 @@
 import { createClient } from "@/lib/supabase/server";
+import { CATEGORIES } from "@/lib/constants";
+import { POST_MODERATION_PUBLISHED } from "@/lib/moderation";
 import { escapeLikePattern } from "@/lib/search-utils";
 import type { PostRow } from "@/lib/types/post";
+
+async function filterToPublishedPostIds(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  ids: string[],
+): Promise<string[]> {
+  const uniq = [...new Set(ids)];
+  if (uniq.length === 0) return [];
+  const { data } = await supabase
+    .from("posts")
+    .select("id")
+    .in("id", uniq)
+    .eq("moderation_status", POST_MODERATION_PUBLISHED);
+  return (data ?? []).map((row) => (row as { id: string }).id);
+}
+
+async function postIdsMatchingCategoryLabels(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  term: string,
+): Promise<string[]> {
+  const termLower = term.toLowerCase();
+  const labels = CATEGORIES.filter((c) => c.toLowerCase().includes(termLower));
+  if (labels.length === 0) return [];
+  const ids = new Set<string>();
+  for (const label of labels) {
+    const { data } = await supabase
+      .from("posts")
+      .select("id")
+      .eq("moderation_status", POST_MODERATION_PUBLISHED)
+      .contains("categories", [label]);
+    for (const row of data ?? []) ids.add((row as { id: string }).id);
+  }
+  return [...ids];
+}
 
 async function collectPostIdsForSearch(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -11,11 +46,23 @@ async function collectPostIdsForSearch(
 
   const pattern = `%${escapeLikePattern(term)}%`;
 
-  const [byTitle, byDesc, byUrl, byCategory, byComments] = await Promise.all([
-    supabase.from("posts").select("id").ilike("title", pattern),
-    supabase.from("posts").select("id").ilike("description", pattern),
-    supabase.from("posts").select("id").ilike("url", pattern),
-    supabase.from("posts").select("id").ilike("category", pattern),
+  const [byTitle, byDesc, byUrl, byCategoryIds, byComments] = await Promise.all([
+    supabase
+      .from("posts")
+      .select("id")
+      .eq("moderation_status", POST_MODERATION_PUBLISHED)
+      .ilike("title", pattern),
+    supabase
+      .from("posts")
+      .select("id")
+      .eq("moderation_status", POST_MODERATION_PUBLISHED)
+      .ilike("description", pattern),
+    supabase
+      .from("posts")
+      .select("id")
+      .eq("moderation_status", POST_MODERATION_PUBLISHED)
+      .ilike("url", pattern),
+    postIdsMatchingCategoryLabels(supabase, term),
     supabase.from("comments").select("post_id").ilike("content", pattern),
   ]);
 
@@ -23,13 +70,13 @@ async function collectPostIdsForSearch(
   for (const row of byTitle.data ?? []) ids.add((row as { id: string }).id);
   for (const row of byDesc.data ?? []) ids.add((row as { id: string }).id);
   for (const row of byUrl.data ?? []) ids.add((row as { id: string }).id);
-  for (const row of byCategory.data ?? []) ids.add((row as { id: string }).id);
+  for (const id of byCategoryIds) ids.add(id);
   for (const row of byComments.data ?? []) {
     const id = (row as { post_id: string }).post_id;
     if (id) ids.add(id);
   }
 
-  return [...ids];
+  return filterToPublishedPostIds(supabase, [...ids]);
 }
 
 async function fetchMyRatings(
@@ -52,7 +99,8 @@ async function fetchMyRatings(
 
 export async function getFeedPosts(options: {
   sort: "new" | "top";
-  category: string | null;
+  /** Show posts that have at least one of these categories (OR). */
+  categoryLabels: string[];
   searchQuery: string | null;
 }): Promise<{
   posts: PostRow[];
@@ -78,9 +126,13 @@ export async function getFeedPosts(options: {
       };
     }
 
-    let q = supabase.from("posts").select("*").in("id", postIds);
-    if (options.category) {
-      q = q.eq("category", options.category);
+    let q = supabase
+      .from("posts")
+      .select("*")
+      .in("id", postIds)
+      .eq("moderation_status", POST_MODERATION_PUBLISHED);
+    if (options.categoryLabels.length > 0) {
+      q = q.overlaps("categories", options.categoryLabels);
     }
     if (options.sort === "top") {
       q = q
@@ -120,9 +172,12 @@ export async function getFeedPosts(options: {
     };
   }
 
-  let q = supabase.from("posts").select("*");
-  if (options.category) {
-    q = q.eq("category", options.category);
+  let q = supabase
+    .from("posts")
+    .select("*")
+    .eq("moderation_status", POST_MODERATION_PUBLISHED);
+  if (options.categoryLabels.length > 0) {
+    q = q.overlaps("categories", options.categoryLabels);
   }
   if (options.sort === "top") {
     q = q

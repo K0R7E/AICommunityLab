@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getSiteMetadataBase } from "@/lib/site-metadata-base";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Suspense } from "react";
 import { Toaster } from "sonner";
@@ -8,6 +9,7 @@ import {
 } from "@/components/auth/auth-provider";
 import { createClient } from "@/lib/supabase/server";
 import { SiteHeader } from "@/components/shell/site-header";
+import { OnboardingBanner } from "@/components/shell/onboarding-banner";
 import { SiteFooter } from "@/components/shell/site-footer";
 import { Sidebar } from "@/components/shell/sidebar";
 import { RightPanel } from "@/components/shell/right-panel";
@@ -24,6 +26,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getSiteMetadataBase()),
   title: "AICommunityLab",
   description: "Discover and share AI tools — community-driven feed",
 };
@@ -52,13 +55,14 @@ export default async function RootLayout({
   if (user) {
     const { data: profileRow } = await supabase
       .from("profiles")
-      .select("username, avatar_url")
+      .select("username, avatar_url, is_admin")
       .eq("id", user.id)
       .maybeSingle();
     initialProfile = profileRow
       ? {
           username: profileRow.username,
           avatar_url: profileRow.avatar_url,
+          is_admin: Boolean((profileRow as { is_admin?: boolean }).is_admin),
         }
       : null;
   }
@@ -97,7 +101,10 @@ export default async function RootLayout({
                 <Sidebar />
               </div>
             </div>
-            <main className="shell-main-with-sidebars min-w-0">{children}</main>
+            <main className="shell-main-with-sidebars min-w-0">
+              <OnboardingBanner />
+              {children}
+            </main>
           </div>
 
           <SiteFooter />

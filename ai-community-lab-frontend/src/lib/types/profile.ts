@@ -5,6 +5,8 @@ export type ProfileRow = {
   bio: string | null;
   website: string | null;
   created_at: string;
+  /** Set via SQL / Dashboard; used for moderation UI. */
+  is_admin?: boolean;
 };
 
 export type ProfilePublic = Pick<

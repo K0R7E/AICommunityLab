@@ -1,7 +1,9 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { ToolCard } from "@/components/feed/tool-card";
 import { FeedSearch } from "@/components/shell/feed-search";
 import { FeedSortBar } from "@/components/shell/feed-sort";
+import { categoryFilterFromSearchParams } from "@/lib/category-query";
 import { getFeedPosts } from "@/lib/data/posts";
 
 function FeedSkeleton() {
@@ -26,16 +28,16 @@ function FeedSkeleton() {
 
 async function Feed({
   sort,
-  category,
+  categoryLabels,
   searchQuery,
 }: {
   sort: "new" | "top";
-  category: string | null;
+  categoryLabels: string[];
   searchQuery: string | null;
 }) {
   const { posts, myRatings, userId } = await getFeedPosts({
     sort,
-    category,
+    categoryLabels,
     searchQuery,
   });
   const canVote = !!userId;
@@ -73,12 +75,22 @@ async function Feed({
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ sort?: string; category?: string; q?: string }>;
+  searchParams: Promise<{ sort?: string; category?: string | string[]; q?: string }>;
 }) {
   const sp = await searchParams;
   const sort = sp.sort === "top" ? "top" : "new";
-  const category = sp.category?.trim() || null;
+  const categoryLabels = categoryFilterFromSearchParams(sp);
   const q = sp.q?.trim() || null;
+  const categorySummary =
+    categoryLabels.length > 0 ? categoryLabels.join(", ") : null;
+
+  const clearCategoryHref = (() => {
+    const p = new URLSearchParams();
+    if (sort === "top") p.set("sort", "top");
+    if (q) p.set("q", q);
+    const qs = p.toString();
+    return qs ? `/?${qs}` : "/";
+  })();
 
   return (
     <div>
@@ -91,14 +103,32 @@ export default async function HomePage({
               : "Latest tools"}
         </h1>
         {q ? (
-          <p className="mt-1 text-sm text-zinc-400">
-            Results for &quot;{q}&quot;
-            {category ? (
-              <span className="text-zinc-500"> · {category}</span>
+          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-400">
+            <span>
+              Results for &quot;{q}&quot;
+              {categorySummary ? (
+                <span className="text-zinc-500"> · {categorySummary}</span>
+              ) : null}
+            </span>
+            {categorySummary ? (
+              <Link
+                href={clearCategoryHref}
+                className="rounded-md border border-zinc-600 px-2 py-0.5 text-xs font-medium text-[#00ff9f] transition hover:bg-zinc-800/80"
+              >
+                Clear categories
+              </Link>
             ) : null}
           </p>
-        ) : category ? (
-          <p className="mt-1 text-sm text-zinc-500">Category: {category}</p>
+        ) : categorySummary ? (
+          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-500">
+            <span>Categories: {categorySummary}</span>
+            <Link
+              href={clearCategoryHref}
+              className="rounded-md border border-zinc-600 px-2 py-0.5 text-xs font-medium text-[#00ff9f] transition hover:bg-zinc-800/80"
+            >
+              Clear categories
+            </Link>
+          </p>
         ) : null}
       </div>
       <Suspense fallback={null}>
@@ -108,7 +138,7 @@ export default async function HomePage({
         <FeedSortBar />
       </Suspense>
       <Suspense fallback={<FeedSkeleton />}>
-        <Feed sort={sort} category={category} searchQuery={q} />
+        <Feed sort={sort} categoryLabels={categoryLabels} searchQuery={q} />
       </Suspense>
     </div>
   );

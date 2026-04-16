@@ -53,6 +53,41 @@ export function RatingControl({
     const prevCount = count;
     const prevMy = myRating;
 
+    if (prevMy === next) {
+      setSum((s) => s - next);
+      setCount((c) => Math.max(0, c - 1));
+      setMyRating(null);
+
+      startTransition(async () => {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) {
+          setSum(prevSum);
+          setCount(prevCount);
+          setMyRating(prevMy);
+          toast.error("Login to Vote");
+          return;
+        }
+
+        const { error } = await supabase
+          .from("ratings")
+          .delete()
+          .eq("post_id", postId)
+          .eq("user_id", user.id);
+
+        if (error) {
+          setSum(prevSum);
+          setCount(prevCount);
+          setMyRating(prevMy);
+          toast.error(error.message);
+          return;
+        }
+        router.refresh();
+      });
+      return;
+    }
+
     applyOptimistic(next, prevMy);
 
     startTransition(async () => {
@@ -97,7 +132,7 @@ export function RatingControl({
       <div
         className="flex flex-wrap justify-center gap-0.5"
         role="group"
-        aria-label="Your rating 1 to 5"
+        aria-label="Your rating 1 to 5; press the same number again to remove your vote"
       >
         {SCALE.map((n) => {
           const active = myRating === n;
@@ -113,7 +148,9 @@ export function RatingControl({
                   : "text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200"
               }`}
               aria-pressed={active}
-              aria-label={`Rate ${n} out of 5`}
+              aria-label={
+                active ? `Remove your ${n} star rating` : `Rate ${n} out of 5`
+              }
             >
               {n}
             </button>

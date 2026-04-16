@@ -2,10 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ToolCard } from "@/components/feed/tool-card";
 import {
+  getCommentsByUserId,
   getPostsByUserId,
   getProfileByUsername,
   getUserProfileStats,
 } from "@/lib/data/profile";
+import { formatRelativeTime } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import {
   safeHttpWebsiteHref,
@@ -30,9 +32,10 @@ export default async function ProfilePage({ params }: Props) {
   const profile = await getProfileByUsername(username);
   if (!profile) notFound();
 
-  const [stats, posts] = await Promise.all([
+  const [stats, posts, profileComments] = await Promise.all([
     getUserProfileStats(profile.id),
     getPostsByUserId(profile.id),
+    getCommentsByUserId(profile.id),
   ]);
 
   const supabase = await createClient();
@@ -141,6 +144,39 @@ export default async function ProfilePage({ params }: Props) {
               />
             ))}
           </div>
+        )}
+      </section>
+
+      <section className="mt-10">
+        <h2 className="text-lg font-semibold text-zinc-100">Comments</h2>
+        {profileComments.length === 0 ? (
+          <p className="mt-4 rounded-xl border border-zinc-800 bg-[#141414] px-6 py-10 text-center text-sm text-zinc-500">
+            No comments yet.
+          </p>
+        ) : (
+          <ul className="mt-4 flex flex-col gap-3">
+            {profileComments.map((c) => (
+              <li
+                key={c.id}
+                className="rounded-lg border border-zinc-800 bg-[#141414] px-4 py-3"
+              >
+                <p className="line-clamp-3 whitespace-pre-wrap text-sm text-zinc-200">
+                  {c.content}
+                </p>
+                <p className="mt-2 text-xs text-zinc-500">
+                  on{" "}
+                  <Link
+                    href={`/post/${c.post_id}`}
+                    className="text-[#00ff9f] hover:underline"
+                  >
+                    {c.post_title}
+                  </Link>
+                  {" · "}
+                  {formatRelativeTime(c.created_at)}
+                </p>
+              </li>
+            ))}
+          </ul>
         )}
       </section>
 

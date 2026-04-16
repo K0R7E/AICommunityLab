@@ -2,26 +2,35 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { categoryFilterFromUrlSearchParams } from "@/lib/category-query";
 
 export function FeedSortBar() {
   const sp = useSearchParams();
   const sort = sp.get("sort") === "top" ? "top" : "new";
-  const category = sp.get("category");
+  const categories = categoryFilterFromUrlSearchParams(sp);
   const q = sp.get("q");
 
   const newHref = (() => {
     const p = new URLSearchParams();
     p.set("sort", "new");
-    if (category) p.set("category", category);
+    for (const c of categories) p.append("category", c);
     if (q) p.set("q", q);
     return `/?${p.toString()}`;
   })();
   const topHref = (() => {
     const p = new URLSearchParams();
     p.set("sort", "top");
-    if (category) p.set("category", category);
+    for (const c of categories) p.append("category", c);
     if (q) p.set("q", q);
     return `/?${p.toString()}`;
+  })();
+
+  const clearCategoryHref = (() => {
+    const p = new URLSearchParams();
+    if (sort === "top") p.set("sort", "top");
+    if (q) p.set("q", q);
+    const qs = p.toString();
+    return qs ? `/?${qs}` : "/";
   })();
 
   return (
@@ -49,6 +58,14 @@ export function FeedSortBar() {
           Top
         </Link>
       </div>
+      {categories.length > 0 ? (
+        <Link
+          href={clearCategoryHref}
+          className="text-sm text-[#00ff9f] underline-offset-2 hover:underline"
+        >
+          Clear categories
+        </Link>
+      ) : null}
     </div>
   );
 }

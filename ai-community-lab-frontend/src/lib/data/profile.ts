@@ -70,3 +70,49 @@ export async function getPostsByUserId(userId: string): Promise<PostRow[]> {
   if (error) return [];
   return (data ?? []) as PostRow[];
 }
+
+export type ProfileCommentRow = {
+  id: string;
+  post_id: string;
+  content: string;
+  created_at: string;
+  post_title: string;
+};
+
+export async function getCommentsByUserId(
+  userId: string,
+  limit = 40,
+): Promise<ProfileCommentRow[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("comments")
+    .select("id, post_id, content, created_at, posts(title)")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error || !data) return [];
+
+  return (data as {
+    id: string;
+    post_id: string;
+    content: string;
+    created_at: string;
+    posts: { title: string } | { title: string }[] | null;
+  }[]).map((r) => {
+    const post = r.posts;
+    const title =
+      post && !Array.isArray(post)
+        ? post.title
+        : Array.isArray(post) && post[0]
+          ? post[0].title
+          : "Post";
+    return {
+      id: r.id,
+      post_id: r.post_id,
+      content: r.content,
+      created_at: r.created_at,
+      post_title: title,
+    };
+  });
+}

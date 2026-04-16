@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { canonicalSiteOrigin } from "@/lib/canonical-origin";
+import { safeRelativeNextPath } from "@/lib/safe-next-path";
 
 /**
  * OAuth returns with ?code= — exchange for session. Session cookies must be set on
@@ -12,7 +13,7 @@ export async function GET(request: NextRequest) {
 
   const code = reqUrl.searchParams.get("code");
   const nextParam = reqUrl.searchParams.get("next") ?? "/";
-  const safeNext = nextParam.startsWith("/") ? nextParam : "/";
+  const safeNext = safeRelativeNextPath(nextParam);
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -43,12 +44,7 @@ export async function GET(request: NextRequest) {
   const { error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
-    return NextResponse.redirect(
-      new URL(
-        `/?error=auth&message=${encodeURIComponent(error.message)}`,
-        origin,
-      ),
-    );
+    return NextResponse.redirect(new URL("/?error=auth", origin));
   }
 
   return response;

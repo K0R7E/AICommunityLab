@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { SignInWithGoogle } from "./sign-in-google";
 import { useAuth } from "./auth-provider";
+import { safeHttpsImageUrl } from "@/lib/safe-remote-media-url";
 
 function initials(email: string | undefined, username: string | undefined) {
   if (username?.length) return username.slice(0, 2).toUpperCase();
@@ -48,7 +49,7 @@ export function UserMenu() {
   }
 
   const display = profile?.username ?? user.email ?? "Account";
-  const avatarUrl = profile?.avatar_url?.trim() || null;
+  const avatarUrl = safeHttpsImageUrl(profile?.avatar_url);
   const profileHref = profile
     ? `/profile/${encodeURIComponent(profile.username)}`
     : "/settings";

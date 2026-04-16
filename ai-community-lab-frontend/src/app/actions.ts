@@ -7,6 +7,15 @@ import { CATEGORIES } from "@/lib/constants";
 import { isValidUsername, normalizeUsername } from "@/lib/validate-profile";
 
 const TITLE_MIN = 3;
+const TITLE_MAX = 200;
+const URL_MAX = 2048;
+const DESCRIPTION_MAX = 10_000;
+const COMMENT_MAX = 8000;
+const BIO_MAX = 2000;
+
+function genericActionError(): string {
+  return "Something went wrong. Please try again.";
+}
 
 function isValidUrl(s: string): boolean {
   try {
@@ -39,8 +48,17 @@ export async function submitPost(
   if (title.length < TITLE_MIN) {
     return { error: `Title must be at least ${TITLE_MIN} characters.` };
   }
+  if (title.length > TITLE_MAX) {
+    return { error: `Title must be at most ${TITLE_MAX} characters.` };
+  }
+  if (url.length > URL_MAX) {
+    return { error: "URL is too long." };
+  }
   if (!isValidUrl(url)) {
     return { error: "Please enter a valid http(s) URL." };
+  }
+  if (description.length > DESCRIPTION_MAX) {
+    return { error: `Description must be at most ${DESCRIPTION_MAX} characters.` };
   }
   if (!CATEGORIES.includes(category as (typeof CATEGORIES)[number])) {
     return { error: "Invalid category." };
@@ -55,7 +73,7 @@ export async function submitPost(
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: genericActionError() };
   }
 
   revalidatePath("/");
@@ -75,6 +93,9 @@ export async function addComment(postId: string, content: string) {
   if (text.length < 1) {
     return { error: "Comment cannot be empty." };
   }
+  if (text.length > COMMENT_MAX) {
+    return { error: `Comment must be at most ${COMMENT_MAX} characters.` };
+  }
 
   const { error } = await supabase.from("comments").insert({
     post_id: postId,
@@ -83,7 +104,7 @@ export async function addComment(postId: string, content: string) {
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: genericActionError() };
   }
 
   revalidatePath(`/post/${postId}`);
@@ -111,6 +132,10 @@ export async function updateProfile(
   const username = normalizeUsername(String(formData.get("username") ?? ""));
   const bio = String(formData.get("bio") ?? "").trim();
   const websiteRaw = String(formData.get("website") ?? "").trim();
+
+  if (bio.length > BIO_MAX) {
+    return { error: `Bio must be at most ${BIO_MAX} characters.` };
+  }
 
   if (!isValidUsername(username)) {
     return {
@@ -153,7 +178,7 @@ export async function updateProfile(
     if (error.code === "23505") {
       return { error: "That username is already taken." };
     }
-    return { error: error.message };
+    return { error: genericActionError() };
   }
 
   revalidatePath("/settings");

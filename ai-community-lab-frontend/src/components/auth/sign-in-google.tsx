@@ -1,6 +1,7 @@
 "use client";
 
 import { getOAuthRedirectBaseUrl } from "@/lib/auth-redirect";
+import { safeRelativeNextPath } from "@/lib/safe-next-path";
 import { createClient } from "@/lib/supabase/client";
 import { LogIn } from "lucide-react";
 import { useState } from "react";
@@ -23,7 +24,7 @@ export function SignInWithGoogle({
 
   async function signInGoogle() {
     setLoading(true);
-    const safeNext = nextPath.startsWith("/") ? nextPath : "/";
+    const safeNext = safeRelativeNextPath(nextPath);
     const redirectTo = `${getOAuthRedirectBaseUrl()}/auth/callback?next=${encodeURIComponent(safeNext)}`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",

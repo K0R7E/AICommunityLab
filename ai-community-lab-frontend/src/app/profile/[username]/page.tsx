@@ -7,6 +7,10 @@ import {
   getUserProfileStats,
 } from "@/lib/data/profile";
 import { createClient } from "@/lib/supabase/server";
+import {
+  safeHttpWebsiteHref,
+  safeHttpsImageUrl,
+} from "@/lib/safe-remote-media-url";
 import { Award, FileText } from "lucide-react";
 
 type Props = { params: Promise<{ username: string }> };
@@ -55,7 +59,10 @@ export default async function ProfilePage({ params }: Props) {
   }
 
   const canVote = !!user;
-  const avatarUrl = profile.avatar_url?.trim();
+  const avatarUrl = safeHttpsImageUrl(profile.avatar_url);
+  const websiteLink = profile.website
+    ? safeHttpWebsiteHref(profile.website)
+    : null;
 
   return (
     <div>
@@ -79,19 +86,17 @@ export default async function ProfilePage({ params }: Props) {
         </div>
         <div className="min-w-0 flex-1">
           <h1 className="text-2xl font-bold text-zinc-100">{profile.username}</h1>
-          {profile.website ? (
+          {websiteLink ? (
             <a
-              href={
-                profile.website.startsWith("http")
-                  ? profile.website
-                  : `https://${profile.website}`
-              }
+              href={websiteLink.href}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-1 inline-block text-sm text-[#00ff9f] hover:underline"
             >
-              {profile.website.replace(/^https?:\/\//, "")}
+              {websiteLink.label}
             </a>
+          ) : profile.website?.trim() ? (
+            <p className="mt-1 text-sm text-zinc-500">Invalid website URL.</p>
           ) : null}
           {profile.bio?.trim() ? (
             <p className="mt-3 whitespace-pre-wrap text-sm text-zinc-300">

@@ -9,12 +9,14 @@ type Props = {
   initialUsername: string;
   initialBio: string;
   initialWebsite: string;
+  initialNotifyNewTools: boolean;
 };
 
 export function SettingsForm({
   initialUsername,
   initialBio,
   initialWebsite,
+  initialNotifyNewTools,
 }: Props) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(
@@ -83,6 +85,27 @@ export function SettingsForm({
           defaultValue={initialWebsite}
           className="mt-2 w-full rounded-lg border border-zinc-700 bg-[#141414] px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-[#00ff9f]/50 focus:ring-2 focus:ring-[#00ff9f]/20"
         />
+      </div>
+      <div className="rounded-lg border border-zinc-800 bg-[#141414] px-4 py-3">
+        <label className="flex cursor-pointer items-start gap-3">
+          <input
+            name="notify_new_tools"
+            type="checkbox"
+            value="on"
+            defaultChecked={initialNotifyNewTools}
+            className="mt-1 size-4 shrink-0 rounded border-zinc-600 bg-[#0f0f0f] text-[#00ff9f] focus:ring-[#00ff9f]/30"
+          />
+          <span>
+            <span className="block text-sm font-medium text-zinc-200">
+              New tools in the feed
+            </span>
+            <span className="mt-1 block text-xs text-zinc-500">
+              Off by default so large communities are not flooded. When on, you
+              get one notification each time a tool is published (not while it
+              is still in the review queue).
+            </span>
+          </span>
+        </label>
       </div>
       <button
         type="submit"

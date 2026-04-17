@@ -1,13 +1,22 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { Bell, ChevronDown, LogOut, Settings, Shield, UserRound } from "lucide-react";
+import {
+  Bell,
+  ChevronDown,
+  LogIn,
+  LogOut,
+  Settings,
+  Shield,
+  UserRound,
+} from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { SignInWithGoogle } from "./sign-in-google";
 import { useAuth } from "./auth-provider";
+import { safeRelativeNextPath } from "@/lib/safe-next-path";
+import { SignInWithGoogle } from "./sign-in-google";
 import { safeHttpsImageUrl } from "@/lib/safe-remote-media-url";
 
 function initials(email: string | undefined, username: string | undefined) {
@@ -18,6 +27,7 @@ function initials(email: string | undefined, username: string | undefined) {
 
 export function UserMenu() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, profile } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -34,18 +44,43 @@ export function UserMenu() {
 
   async function signOut() {
     setLoading(true);
-    const { error } = await supabase.auth.signOut();
-    setLoading(false);
     setOpen(false);
-    if (error) toast.error(error.message);
-    else {
+    try {
+      const res = await fetch("/auth/sign-out", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { Accept: "application/json" },
+      });
+      const body = (await res.json().catch(() => ({}))) as { ok?: boolean };
+      if (!res.ok || body.ok !== true) {
+        throw new Error("Server sign-out failed");
+      }
+      await supabase.auth.signOut();
       toast.success("Signed out");
       router.refresh();
+    } catch {
+      const { error } = await supabase.auth.signOut();
+      if (error) toast.error(error.message);
+      else {
+        toast.success("Signed out");
+        router.refresh();
+      }
+    } finally {
+      setLoading(false);
     }
   }
 
   if (!user) {
-    return <SignInWithGoogle nextPath="/" />;
+    const next = safeRelativeNextPath(pathname.startsWith("/login") ? "/" : pathname);
+    return (
+      <Link
+        href={`/login?next=${encodeURIComponent(next)}`}
+        className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-700 bg-[#1a1a1a] px-3 py-2 text-sm font-medium text-zinc-200 transition hover:border-[#00ff9f]/50"
+      >
+        <LogIn className="size-4 shrink-0" aria-hidden />
+        Sign in
+      </Link>
+    );
   }
 
   const display = profile?.username ?? user.email ?? "Account";
@@ -135,7 +170,11 @@ export function UserMenu() {
             type="button"
             role="menuitem"
             disabled={loading}
-            onClick={() => void signOut()}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              void signOut();
+            }}
             className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800/80 disabled:opacity-50"
           >
             <LogOut className="size-4 text-zinc-400" />

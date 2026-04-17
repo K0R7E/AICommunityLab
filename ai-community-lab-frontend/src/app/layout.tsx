@@ -9,7 +9,6 @@ import {
 } from "@/components/auth/auth-provider";
 import { createClient } from "@/lib/supabase/server";
 import { SiteHeader } from "@/components/shell/site-header";
-import { OnboardingBanner } from "@/components/shell/onboarding-banner";
 import { SiteFooter } from "@/components/shell/site-footer";
 import { Sidebar } from "@/components/shell/sidebar";
 import { RightPanel } from "@/components/shell/right-panel";
@@ -102,7 +101,6 @@ export default async function RootLayout({
               </div>
             </div>
             <main className="shell-main-with-sidebars min-w-0">
-              <OnboardingBanner />
               {children}
             </main>
           </div>

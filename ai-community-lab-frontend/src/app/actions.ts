@@ -179,6 +179,8 @@ export async function updateProfile(
     }
   }
 
+  const notifyNewTools = formData.get("notify_new_tools") === "on";
+
   const { data: before } = await supabase
     .from("profiles")
     .select("username")
@@ -191,6 +193,7 @@ export async function updateProfile(
       username,
       bio: bio || null,
       website,
+      notify_new_tools: notifyNewTools,
     })
     .eq("id", user.id);
 

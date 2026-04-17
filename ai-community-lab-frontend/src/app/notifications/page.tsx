@@ -8,6 +8,31 @@ export const metadata = {
   title: "Notifications · AICommunityLab",
 };
 
+function notificationTitle(n: {
+  type: string;
+  batch_count: number | null;
+}): string {
+  const count = n.batch_count ?? 1;
+  switch (n.type) {
+    case "comment_on_post":
+      return "New comment on your tool";
+    case "admin_new_comment":
+      return "New comment (moderation)";
+    case "admin_post_comments_digest":
+      return count === 1
+        ? "New comment on a post (moderation)"
+        : `${count} new comments on one post (moderation)`;
+    case "admin_new_post":
+      return "New submission to review";
+    case "your_post_published":
+      return "Your tool was published";
+    case "new_tool_in_feed":
+      return "New tool in the feed";
+    default:
+      return n.type;
+  }
+}
+
 export default async function NotificationsPage() {
   const supabase = await createClient();
   const {
@@ -19,7 +44,7 @@ export default async function NotificationsPage() {
 
   const { data, error } = await supabase
     .from("notifications")
-    .select("id, post_id, type, read_at, created_at")
+    .select("id, post_id, type, read_at, created_at, batch_count")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(80);
@@ -32,6 +57,7 @@ export default async function NotificationsPage() {
           type: string;
           read_at: string | null;
           created_at: string;
+          batch_count: number | null;
         }[])
       : [];
 
@@ -39,8 +65,9 @@ export default async function NotificationsPage() {
     <div>
       <h1 className="text-2xl font-bold text-zinc-100">Notifications</h1>
       <p className="mt-2 text-sm text-zinc-400">
-        New comments on your tools and (for moderators) every public comment for
-        review appear here.
+        Comments on your posts, status on your submissions, optional alerts when
+        new tools go live, and a moderation queue for admins (grouped by post so
+        busy threads do not spam your inbox).
       </p>
       <ul className="mt-8 flex flex-col gap-2">
         {rows.length === 0 ? (
@@ -55,11 +82,7 @@ export default async function NotificationsPage() {
             >
               <div className="min-w-0">
                 <p className="text-sm text-zinc-200">
-                  {n.type === "comment_on_post"
-                    ? "New comment on your tool"
-                    : n.type === "admin_new_comment"
-                      ? "New comment (moderation)"
-                      : n.type}
+                  {notificationTitle(n)}
                 </p>
                 <p className="mt-1 text-xs text-zinc-500">
                   {formatRelativeTime(n.created_at)}

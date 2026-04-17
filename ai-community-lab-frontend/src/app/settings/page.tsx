@@ -46,6 +46,7 @@ export default async function SettingsPage() {
           initialUsername={profile.username}
           initialBio={profile.bio ?? ""}
           initialWebsite={profile.website ?? ""}
+          initialNotifyNewTools={Boolean(profile.notify_new_tools)}
         />
       </div>
       {hasEmailPassword ? <ChangePasswordForm /> : null}

@@ -4,6 +4,8 @@ export type PostRow = {
   title: string;
   /** Optional public site URL (may be null). */
   url: string | null;
+  /** Normalized URL for deduplication (may be null). */
+  url_canonical?: string | null;
   description: string | null;
   /** Optional https image (logo/screenshot). */
   image_url?: string | null;

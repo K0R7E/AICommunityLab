@@ -3,6 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { canonicalToolUrl } from "@/lib/canonical-tool-url";
+import {
+  loadSimilarPostsForSubmit,
+  maxSimilarityScore,
+  SIMILARITY_BLOCK_THRESHOLD,
+  type SimilarCandidate,
+} from "@/lib/duplicate-post-check";
 import { normalizeUserText } from "@/lib/normalize-user-text";
 import { parseCategoriesFromFormData, parseOptionalPostUrl } from "@/lib/post-form";
 import { safeHttpsImageUrl } from "@/lib/safe-remote-media-url";
@@ -19,7 +26,22 @@ function genericActionError(): string {
   return "Something went wrong. Please try again.";
 }
 
-export type SubmitPostState = { error: string | null };
+export type SubmitFieldSnapshot = {
+  title: string;
+  description: string;
+  url: string;
+  category: string;
+  image_url: string;
+};
+
+export type SubmitPostState = {
+  error: string | null;
+  duplicateUrlPostId?: string;
+  duplicateWarning?: {
+    candidates: SimilarCandidate[];
+    fieldSnap: SubmitFieldSnapshot;
+  };
+};
 
 export async function submitPost(
   _prev: SubmitPostState,
@@ -35,16 +57,15 @@ export async function submitPost(
 
   const title = normalizeUserText(String(formData.get("title") ?? ""));
   const description = normalizeUserText(String(formData.get("description") ?? ""));
+  const urlRaw = String(formData.get("url") ?? "");
+  const confirmDuplicate = formData.get("confirm_duplicate") === "on";
 
   const categoriesParsed = parseCategoriesFromFormData(formData);
   if (!categoriesParsed.ok) {
     return { error: categoriesParsed.error };
   }
 
-  const urlParsed = parseOptionalPostUrl(
-    String(formData.get("url") ?? ""),
-    URL_MAX,
-  );
+  const urlParsed = parseOptionalPostUrl(urlRaw, URL_MAX);
   if (!urlParsed.ok) {
     return { error: urlParsed.error };
   }
@@ -69,12 +90,53 @@ export async function submitPost(
     image_url = safeImg;
   }
 
+  const urlCanonical = canonicalToolUrl(urlParsed.url);
+
+  const fieldSnap: SubmitFieldSnapshot = {
+    title,
+    description,
+    url: urlRaw.trim(),
+    category: categoriesParsed.categories[0] ?? "",
+    image_url: imageRaw,
+  };
+
+  if (!urlCanonical) {
+    const candidates = await loadSimilarPostsForSubmit(
+      supabase,
+      title,
+      description || null,
+    );
+    const maxScore = maxSimilarityScore(candidates);
+    if (maxScore >= SIMILARITY_BLOCK_THRESHOLD && !confirmDuplicate) {
+      return {
+        error: null,
+        duplicateWarning: { candidates, fieldSnap },
+      };
+    }
+  } else {
+    const { data: clash } = await supabase
+      .from("posts")
+      .select("id,title")
+      .eq("url_canonical", urlCanonical)
+      .in("moderation_status", ["pending", "published"])
+      .maybeSingle();
+
+    if (clash) {
+      const row = clash as { id: string; title: string };
+      return {
+        error: `This link is already used by “${row.title}”. Change the URL or open the existing listing.`,
+        duplicateUrlPostId: row.id,
+      };
+    }
+  }
+
   const { data: inserted, error } = await supabase
     .from("posts")
     .insert({
       user_id: user.id,
       title,
       url: urlParsed.url,
+      url_canonical: urlCanonical,
       description: description || null,
       categories: categoriesParsed.categories,
       image_url,
@@ -83,6 +145,21 @@ export async function submitPost(
     .single();
 
   if (error) {
+    if (error.code === "23505" && urlCanonical) {
+      const { data: clash } = await supabase
+        .from("posts")
+        .select("id,title")
+        .eq("url_canonical", urlCanonical)
+        .in("moderation_status", ["pending", "published"])
+        .maybeSingle();
+      if (clash) {
+        const row = clash as { id: string; title: string };
+        return {
+          error: `This link is already used by “${row.title}”. Change the URL or open the existing listing.`,
+          duplicateUrlPostId: row.id,
+        };
+      }
+    }
     return { error: genericActionError() };
   }
 

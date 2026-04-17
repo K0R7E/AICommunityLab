@@ -3,7 +3,26 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
-export async function markNotificationRead(id: string): Promise<{ error?: string }> {
+/**
+ * Call when rendering /notifications so the header badge only counts newer items.
+ * Do not call `revalidatePath` here: this runs during RSC render and Next.js forbids
+ * revalidation during render. The bell uses `/api/notifications/unread` (client refetch).
+ */
+export async function markNotificationInboxOpened(): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  await supabase
+    .from("profiles")
+    .update({ notification_inbox_seen_at: new Date().toISOString() })
+    .eq("id", user.id);
+}
+
+/** Removes the notification from the inbox (no separate read state). */
+export async function dismissNotification(id: string): Promise<{ error?: string }> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -12,11 +31,21 @@ export async function markNotificationRead(id: string): Promise<{ error?: string
 
   const { error } = await supabase
     .from("notifications")
-    .update({ read_at: new Date().toISOString() })
+    .delete()
     .eq("id", id)
     .eq("user_id", user.id);
 
-  if (error) return { error: "Could not update notification." };
+  if (error) {
+    const msg = error.message?.toLowerCase() ?? "";
+    if (error.code === "42501" || msg.includes("permission") || msg.includes("policy")) {
+      return {
+        error:
+          "Removing notifications is blocked until the database allows deletes. Apply migration 016_notifications_user_delete.sql (policy + grant) on Supabase, then try again.",
+      };
+    }
+    return { error: error.message || "Could not remove notification." };
+  }
   revalidatePath("/notifications");
+  revalidatePath("/", "layout");
   return {};
 }

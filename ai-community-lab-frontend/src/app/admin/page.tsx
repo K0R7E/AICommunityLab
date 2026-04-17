@@ -69,6 +69,38 @@ export default async function AdminPage({
                       {(p.categories ?? []).join(" · ")} ·{" "}
                       {formatRelativeTime(p.created_at)}
                     </p>
+                    {p.duplicateHints?.length ? (
+                      <div className="mt-2 rounded-md border border-amber-800/45 bg-amber-950/25 px-2.5 py-2 text-xs text-amber-100/95">
+                        <p className="font-semibold text-amber-50">Duplicate / similar listings</p>
+                        <ul className="mt-1.5 list-inside list-disc space-y-1 text-amber-100/90">
+                          {p.duplicateHints.map((h) => (
+                            <li key={`${h.type}-${h.otherId}`}>
+                              {h.type === "url" ? (
+                                <>
+                                  Same canonical URL as{" "}
+                                  <Link
+                                    href={`/post/${h.otherId}`}
+                                    className="font-medium text-[#00ff9f] hover:underline"
+                                  >
+                                    {h.otherTitle}
+                                  </Link>
+                                </>
+                              ) : (
+                                <>
+                                  Similar title/description (score {(h.score ?? 0).toFixed(2)}):{" "}
+                                  <Link
+                                    href={`/post/${h.otherId}`}
+                                    className="font-medium text-[#00ff9f] hover:underline"
+                                  >
+                                    {h.otherTitle}
+                                  </Link>
+                                </>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
                   </div>
                 </AdminPostEditor>
               </li>

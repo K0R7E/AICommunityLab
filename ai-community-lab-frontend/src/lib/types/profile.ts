@@ -9,6 +9,8 @@ export type ProfileRow = {
   is_admin?: boolean;
   /** Opt-in: notify when any community tool is published (default off). */
   notify_new_tools?: boolean;
+  /** Last time the user opened the notifications inbox (badge uses this). */
+  notification_inbox_seen_at?: string | null;
 };
 
 export type ProfilePublic = Pick<

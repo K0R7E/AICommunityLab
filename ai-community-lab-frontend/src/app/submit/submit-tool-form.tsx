@@ -1,16 +1,69 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { submitPost, type SubmitPostState } from "@/app/actions";
 import { CATEGORIES } from "@/lib/constants";
+import { SIMILARITY_BLOCK_THRESHOLD } from "@/lib/duplicate-post-check";
 
 const initial: SubmitPostState = { error: null };
 
 export function SubmitToolForm() {
   const [state, formAction, pending] = useActionState(submitPost, initial);
 
+  const snap = state.duplicateWarning?.fieldSnap;
+  const formKey = snap ? `dup:${JSON.stringify(snap)}` : "form-empty";
+
   return (
-    <form action={formAction} className="flex max-w-lg flex-col gap-4">
+    <form key={formKey} action={formAction} className="flex max-w-lg flex-col gap-4">
+      {state.duplicateWarning ? (
+        <div
+          className="rounded-lg border border-amber-800/50 bg-amber-950/30 px-4 py-3 text-sm text-amber-100"
+          role="status"
+        >
+          <p className="font-medium text-amber-50">Similar tools already on the site</p>
+          <p className="mt-1 text-xs text-amber-200/90">
+            We found listings with a similar title or description (score ≥{" "}
+            {SIMILARITY_BLOCK_THRESHOLD}). If yours is different, confirm below and
+            submit again.
+          </p>
+          <ul className="mt-3 flex flex-col gap-2">
+            {state.duplicateWarning.candidates.map((c) => (
+              <li
+                key={c.id}
+                className="rounded-md border border-amber-900/40 bg-[#0f0f0f]/80 px-3 py-2"
+              >
+                <p className="font-medium text-zinc-100">{c.title}</p>
+                {c.excerpt ? (
+                  <p className="mt-1 line-clamp-2 text-xs text-zinc-500">{c.excerpt}</p>
+                ) : null}
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500">
+                  <span className="capitalize">{c.moderation_status}</span>
+                  <span>Match {(Number(c.score) || 0).toFixed(2)}</span>
+                  <Link
+                    href={`/post/${c.id}`}
+                    className="font-medium text-[#00ff9f] hover:underline"
+                  >
+                    Open listing
+                  </Link>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <label className="mt-4 flex cursor-pointer items-start gap-2 text-xs text-zinc-300">
+            <input
+              type="checkbox"
+              name="confirm_duplicate"
+              value="on"
+              className="mt-0.5 size-4 shrink-0 rounded border-zinc-600 bg-[#0f0f0f] text-[#00ff9f]"
+            />
+            <span>
+              These are not duplicates of my tool; I still want to publish this submission.
+            </span>
+          </label>
+        </div>
+      ) : null}
+
       <div>
         <label htmlFor="title" className="mb-1 block text-sm font-medium text-zinc-300">
           Title
@@ -20,6 +73,7 @@ export function SubmitToolForm() {
           name="title"
           required
           minLength={3}
+          defaultValue={snap?.title ?? ""}
           className="w-full rounded-lg border border-zinc-700 bg-[#141414] px-3 py-2 text-zinc-100 outline-none ring-[#00ff9f]/40 focus:ring-2"
           placeholder="e.g. Acme AI Writer"
         />
@@ -32,6 +86,7 @@ export function SubmitToolForm() {
           id="url"
           name="url"
           type="url"
+          defaultValue={snap?.url ?? ""}
           className="w-full rounded-lg border border-zinc-700 bg-[#141414] px-3 py-2 text-zinc-100 outline-none ring-[#00ff9f]/40 focus:ring-2"
           placeholder="https://…"
         />
@@ -50,6 +105,7 @@ export function SubmitToolForm() {
           id="description"
           name="description"
           rows={3}
+          defaultValue={snap?.description ?? ""}
           className="w-full rounded-lg border border-zinc-700 bg-[#141414] px-3 py-2 text-zinc-100 outline-none ring-[#00ff9f]/40 focus:ring-2"
           placeholder="One line about what it does"
         />
@@ -65,6 +121,7 @@ export function SubmitToolForm() {
           id="image_url"
           name="image_url"
           type="url"
+          defaultValue={snap?.image_url ?? ""}
           className="w-full rounded-lg border border-zinc-700 bg-[#141414] px-3 py-2 text-zinc-100 outline-none ring-[#00ff9f]/40 focus:ring-2"
           placeholder="https://… (https only)"
         />
@@ -80,8 +137,12 @@ export function SubmitToolForm() {
           id="category"
           name="category"
           required
+          defaultValue={
+            snap?.category && CATEGORIES.includes(snap.category as (typeof CATEGORIES)[number])
+              ? snap.category
+              : CATEGORIES[0]
+          }
           className="w-full rounded-lg border border-zinc-700 bg-[#141414] px-3 py-2 text-zinc-100 outline-none ring-[#00ff9f]/40 focus:ring-2"
-          defaultValue={CATEGORIES[0]}
         >
           {CATEGORIES.map((c) => (
             <option key={c} value={c}>
@@ -91,16 +152,28 @@ export function SubmitToolForm() {
         </select>
       </div>
       {state.error ? (
-        <p className="text-sm text-red-400" role="alert">
-          {state.error}
-        </p>
+        <div className="space-y-2">
+          <p className="text-sm text-red-400" role="alert">
+            {state.error}
+          </p>
+          {state.duplicateUrlPostId ? (
+            <p className="text-sm">
+              <Link
+                href={`/post/${state.duplicateUrlPostId}`}
+                className="font-medium text-[#00ff9f] hover:underline"
+              >
+                Open existing listing
+              </Link>
+            </p>
+          ) : null}
+        </div>
       ) : null}
       <button
         type="submit"
         disabled={pending}
         className="rounded-lg bg-[#00ff9f] px-4 py-2.5 text-sm font-semibold text-[#0f0f0f] transition hover:bg-[#33ffa8] disabled:opacity-60"
       >
-        {pending ? "Publishing…" : "Publish"}
+        {pending ? "Publishing…" : state.duplicateWarning ? "Submit again" : "Publish"}
       </button>
     </form>
   );

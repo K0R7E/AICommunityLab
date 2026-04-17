@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserIsAdmin } from "@/lib/admin";
+import { canonicalToolUrl } from "@/lib/canonical-tool-url";
 import { normalizeUserText } from "@/lib/normalize-user-text";
 import { parseCategoriesFromFormData, parseOptionalPostUrl } from "@/lib/post-form";
 import { safeHttpsImageUrl } from "@/lib/safe-remote-media-url";
@@ -131,11 +132,13 @@ export async function adminUpdatePost(
   }
 
   const supabase = await createClient();
+  const urlCanonical = canonicalToolUrl(urlParsed.url);
   const { error } = await supabase
     .from("posts")
     .update({
       title,
       url: urlParsed.url,
+      url_canonical: urlCanonical,
       description: description || null,
       categories: categoriesParsed.categories,
       image_url,

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
+import { PlusCircle, Sparkles } from "lucide-react";
 import { UserMenu } from "@/components/auth/user-menu";
 import { NotificationsInboxLink } from "@/components/shell/notifications-inbox-link";
 
@@ -15,6 +15,13 @@ export function SiteHeader() {
           <span>AICommunityLab</span>
         </Link>
         <div className="flex max-w-[min(100%,20rem)] items-center justify-end gap-2">
+          <Link
+            href="/submit"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-[#1a1a1a] px-2.5 py-2 text-xs font-medium text-zinc-200 transition hover:border-[#00ff9f]/45 lg:hidden"
+          >
+            <PlusCircle className="size-4 shrink-0 text-[#00ff9f]" aria-hidden />
+            Submit
+          </Link>
           <NotificationsInboxLink />
           <UserMenu />
         </div>

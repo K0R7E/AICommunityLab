@@ -11,7 +11,7 @@ import {
   UserRound,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "./auth-provider";
@@ -26,7 +26,6 @@ function initials(email: string | undefined, username: string | undefined) {
 }
 
 export function UserMenu() {
-  const router = useRouter();
   const pathname = usePathname();
   const { user, profile } = useAuth();
   const [open, setOpen] = useState(false);
@@ -57,13 +56,13 @@ export function UserMenu() {
       }
       await supabase.auth.signOut();
       toast.success("Signed out");
-      router.refresh();
+      window.location.assign("/");
     } catch {
       const { error } = await supabase.auth.signOut();
       if (error) toast.error(error.message);
       else {
         toast.success("Signed out");
-        router.refresh();
+        window.location.assign("/");
       }
     } finally {
       setLoading(false);

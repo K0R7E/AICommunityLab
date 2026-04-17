@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { formatRelativeTime } from "@/lib/format";
 import { getCurrentUserIsAdmin } from "@/lib/admin";
-import { createClient } from "@/lib/supabase/server";
+import { getAdminModerationData } from "@/lib/data/admin-moderation";
+import { FeedSearch } from "@/components/shell/feed-search";
 import { AdminCommentEditor } from "./admin-comment-editor";
 import { AdminPostEditor } from "./admin-post-editor";
 
@@ -10,48 +12,19 @@ export const metadata = {
   title: "Moderation · AICommunityLab",
 };
 
-export default async function AdminPage() {
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
   if (!(await getCurrentUserIsAdmin())) {
     redirect("/");
   }
 
-  const supabase = await createClient();
+  const sp = await searchParams;
+  const q = sp.q?.trim() || null;
 
-  const [{ data: recentPosts }, { data: recentComments }] = await Promise.all([
-    supabase
-      .from("posts")
-      .select(
-        "id, title, url, description, categories, image_url, moderation_status, created_at, user_id",
-      )
-      .order("moderation_status", { ascending: true })
-      .order("created_at", { ascending: false })
-      .limit(40),
-    supabase
-      .from("comments")
-      .select("id, post_id, content, created_at, user_id")
-      .order("created_at", { ascending: false })
-      .limit(60),
-  ]);
-
-  const posts = (recentPosts ?? []) as {
-    id: string;
-    title: string;
-    url: string | null;
-    description: string | null;
-    categories: string[];
-    image_url: string | null;
-    moderation_status: string;
-    created_at: string;
-    user_id: string;
-  }[];
-
-  const comments = (recentComments ?? []) as {
-    id: string;
-    post_id: string;
-    content: string;
-    created_at: string;
-    user_id: string;
-  }[];
+  const { posts, comments } = await getAdminModerationData({ q });
 
   return (
     <div className="space-y-12">
@@ -63,11 +36,21 @@ export default async function AdminPage() {
         </p>
       </div>
 
+      <Suspense fallback={null}>
+        <FeedSearch
+          basePath="/admin"
+          placeholder="Search posts and comments…"
+          aria-label="Search moderation queue"
+        />
+      </Suspense>
+
       <section>
         <h2 className="text-lg font-semibold text-zinc-100">Recent posts</h2>
         <ul className="mt-4 flex flex-col gap-2">
           {posts.length === 0 ? (
-            <li className="text-sm text-zinc-500">No posts.</li>
+            <li className="text-sm text-zinc-500">
+              {q ? "No posts match your search." : "No posts."}
+            </li>
           ) : (
             posts.map((p) => (
               <li
@@ -83,7 +66,8 @@ export default async function AdminPage() {
                       {p.title}
                     </Link>
                     <p className="mt-1 text-xs text-zinc-500">
-                      {(p.categories ?? []).join(" · ")} · {formatRelativeTime(p.created_at)}
+                      {(p.categories ?? []).join(" · ")} ·{" "}
+                      {formatRelativeTime(p.created_at)}
                     </p>
                   </div>
                 </AdminPostEditor>
@@ -97,7 +81,9 @@ export default async function AdminPage() {
         <h2 className="text-lg font-semibold text-zinc-100">Recent comments</h2>
         <ul className="mt-4 flex flex-col gap-2">
           {comments.length === 0 ? (
-            <li className="text-sm text-zinc-500">No comments.</li>
+            <li className="text-sm text-zinc-500">
+              {q ? "No comments match your search." : "No comments."}
+            </li>
           ) : (
             comments.map((c) => (
               <li

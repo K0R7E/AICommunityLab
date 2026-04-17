@@ -132,7 +132,7 @@ export default async function HomePage({
         ) : null}
       </div>
       <Suspense fallback={null}>
-        <FeedSearch />
+        <FeedSearch basePath="/" sticky />
       </Suspense>
       <Suspense fallback={null}>
         <FeedSortBar />

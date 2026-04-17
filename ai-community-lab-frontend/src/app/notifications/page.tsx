@@ -28,6 +28,10 @@ function notificationTitle(n: {
       return "Your tool was published";
     case "new_tool_in_feed":
       return "New tool in the feed";
+    case "post_rejected":
+      return "Your submission was not approved";
+    case "comment_removed":
+      return "Your comment was removed by a moderator";
     default:
       return n.type;
   }
@@ -44,7 +48,7 @@ export default async function NotificationsPage() {
 
   const { data, error } = await supabase
     .from("notifications")
-    .select("id, post_id, type, read_at, created_at, batch_count")
+    .select("id, post_id, type, read_at, created_at, batch_count, message")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(80);
@@ -58,6 +62,7 @@ export default async function NotificationsPage() {
           read_at: string | null;
           created_at: string;
           batch_count: number | null;
+          message: string | null;
         }[])
       : [];
 
@@ -84,6 +89,11 @@ export default async function NotificationsPage() {
                 <p className="text-sm text-zinc-200">
                   {notificationTitle(n)}
                 </p>
+                {n.message ? (
+                  <p className="mt-2 whitespace-pre-wrap rounded-md border border-zinc-800/80 bg-[#0f0f0f] px-2 py-1.5 text-xs text-zinc-300">
+                    {n.message}
+                  </p>
+                ) : null}
                 <p className="mt-1 text-xs text-zinc-500">
                   {formatRelativeTime(n.created_at)}
                   {n.read_at ? " · Read" : ""}

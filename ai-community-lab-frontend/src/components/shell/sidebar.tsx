@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { Home, Flame, Clock } from "lucide-react";
+import { Home, Flame, Clock, PlusCircle } from "lucide-react";
 import { CategorySearch } from "@/components/shell/category-search";
 
 const nav = [
@@ -31,6 +31,13 @@ export function Sidebar() {
       >
         <CategorySearch />
       </Suspense>
+      <Link
+        href="/submit"
+        className="flex items-center gap-3 rounded-lg bg-[#00ff9f]/10 px-3 py-2.5 text-sm font-medium text-[#00ff9f] transition hover:bg-[#00ff9f]/15"
+      >
+        <PlusCircle className="size-4 shrink-0" aria-hidden />
+        Submit a tool
+      </Link>
     </aside>
   );
 }

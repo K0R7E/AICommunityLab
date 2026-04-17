@@ -63,7 +63,11 @@ async function collectPostIdsForSearch(
       .eq("moderation_status", POST_MODERATION_PUBLISHED)
       .ilike("url", pattern),
     postIdsMatchingCategoryLabels(supabase, term),
-    supabase.from("comments").select("post_id").ilike("content", pattern),
+    supabase
+      .from("comments")
+      .select("post_id, posts!inner(moderation_status)")
+      .eq("posts.moderation_status", POST_MODERATION_PUBLISHED)
+      .ilike("content", pattern),
   ]);
 
   const ids = new Set<string>();

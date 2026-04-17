@@ -38,7 +38,7 @@ export function AdminCommentEditor({ id, postId, content, children }: Props) {
     <div className="w-full space-y-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div className="min-w-0 flex-1">{children}</div>
-        <div className="flex shrink-0 items-center justify-end gap-2 sm:justify-start">
+        <div className="flex shrink-0 items-start justify-end gap-2 sm:justify-start">
           <button
             type="button"
             onClick={() => setOpen((o) => !o)}

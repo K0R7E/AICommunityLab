@@ -30,15 +30,18 @@ async function Feed({
   sort,
   categoryLabels,
   searchQuery,
+  cursor,
 }: {
   sort: "new" | "top";
   categoryLabels: string[];
   searchQuery: string | null;
+  cursor: string | null;
 }) {
-  const { posts, myRatings, userId } = await getFeedPosts({
+  const { posts, myRatings, userId, nextCursor } = await getFeedPosts({
     sort,
     categoryLabels,
     searchQuery,
+    cursor,
   });
   const canVote = !!userId;
 
@@ -68,6 +71,24 @@ async function Feed({
           canVote={canVote}
         />
       ))}
+      {nextCursor ? (
+        <div className="pt-2">
+          <Link
+            href={(() => {
+              const p = new URLSearchParams();
+              if (sort === "top") p.set("sort", "top");
+              for (const c of categoryLabels) p.append("category", c);
+              if (searchQuery?.trim()) p.set("q", searchQuery.trim());
+              p.set("cursor", nextCursor);
+              const qs = p.toString();
+              return qs ? `/?${qs}` : "/";
+            })()}
+            className="inline-flex items-center justify-center rounded-lg border border-zinc-700 bg-[#161616] px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-[#00ff9f]/45 hover:text-[#00ff9f]"
+          >
+            Load more
+          </Link>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -75,12 +96,18 @@ async function Feed({
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ sort?: string; category?: string | string[]; q?: string }>;
+  searchParams: Promise<{
+    sort?: string;
+    category?: string | string[];
+    q?: string;
+    cursor?: string;
+  }>;
 }) {
   const sp = await searchParams;
   const sort = sp.sort === "top" ? "top" : "new";
   const categoryLabels = categoryFilterFromSearchParams(sp);
   const q = sp.q?.trim() || null;
+  const cursor = sp.cursor?.trim() || null;
   const categorySummary =
     categoryLabels.length > 0 ? categoryLabels.join(", ") : null;
 
@@ -138,7 +165,7 @@ export default async function HomePage({
         <FeedSortBar />
       </Suspense>
       <Suspense fallback={<FeedSkeleton />}>
-        <Feed sort={sort} categoryLabels={categoryLabels} searchQuery={q} />
+        <Feed sort={sort} categoryLabels={categoryLabels} searchQuery={q} cursor={cursor} />
       </Suspense>
     </div>
   );

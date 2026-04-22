@@ -10,6 +10,8 @@ type Props = {
   initialBio: string;
   initialWebsite: string;
   initialNotifyNewTools: boolean;
+  initialNotifyCommentsOnTools: boolean;
+  initialNotifyModerationUpdates: boolean;
 };
 
 export function SettingsForm({
@@ -17,6 +19,8 @@ export function SettingsForm({
   initialBio,
   initialWebsite,
   initialNotifyNewTools,
+  initialNotifyCommentsOnTools,
+  initialNotifyModerationUpdates,
 }: Props) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(
@@ -87,25 +91,66 @@ export function SettingsForm({
         />
       </div>
       <div className="rounded-lg border border-zinc-800 bg-[#141414] px-4 py-3">
-        <label className="flex cursor-pointer items-start gap-3">
-          <input
-            name="notify_new_tools"
-            type="checkbox"
-            value="on"
-            defaultChecked={initialNotifyNewTools}
-            className="mt-1 size-4 shrink-0 rounded border-zinc-600 bg-[#0f0f0f] text-[#00ff9f] focus:ring-[#00ff9f]/30"
-          />
-          <span>
-            <span className="block text-sm font-medium text-zinc-200">
-              New tools in the feed
+        <p className="text-sm font-medium text-zinc-200">Notifications</p>
+        <p className="mt-1 text-xs text-zinc-500">
+          Choose which inbox notifications you want to receive.
+        </p>
+        <div className="mt-3 space-y-3">
+          <label className="flex cursor-pointer items-start gap-3">
+            <input
+              name="notify_comments_on_tools"
+              type="checkbox"
+              value="on"
+              defaultChecked={initialNotifyCommentsOnTools}
+              className="mt-1 size-4 shrink-0 rounded border-zinc-600 bg-[#0f0f0f] text-[#00ff9f] focus:ring-[#00ff9f]/30"
+            />
+            <span>
+              <span className="block text-sm font-medium text-zinc-200">
+                Comments on your tools
+              </span>
+              <span className="mt-1 block text-xs text-zinc-500">
+                Enabled by default. You get notified when someone comments on a
+                tool you posted.
+              </span>
             </span>
-            <span className="mt-1 block text-xs text-zinc-500">
-              Off by default so large communities are not flooded. When on, you
-              get one notification each time a tool is published (not while it
-              is still in the review queue).
+          </label>
+          <label className="flex cursor-pointer items-start gap-3">
+            <input
+              name="notify_moderation_updates"
+              type="checkbox"
+              value="on"
+              defaultChecked={initialNotifyModerationUpdates}
+              className="mt-1 size-4 shrink-0 rounded border-zinc-600 bg-[#0f0f0f] text-[#00ff9f] focus:ring-[#00ff9f]/30"
+            />
+            <span>
+              <span className="block text-sm font-medium text-zinc-200">
+                Moderation updates
+              </span>
+              <span className="mt-1 block text-xs text-zinc-500">
+                Enabled by default. Includes publish/reject outcomes and
+                moderator actions on your comments.
+              </span>
             </span>
-          </span>
-        </label>
+          </label>
+          <label className="flex cursor-pointer items-start gap-3">
+            <input
+              name="notify_new_tools"
+              type="checkbox"
+              value="on"
+              defaultChecked={initialNotifyNewTools}
+              className="mt-1 size-4 shrink-0 rounded border-zinc-600 bg-[#0f0f0f] text-[#00ff9f] focus:ring-[#00ff9f]/30"
+            />
+            <span>
+              <span className="block text-sm font-medium text-zinc-200">
+                New tools in the feed
+              </span>
+              <span className="mt-1 block text-xs text-zinc-500">
+                Off by default so large communities are not flooded. When on,
+                you get one notification each time a tool is published.
+              </span>
+            </span>
+          </label>
+        </div>
       </div>
       <button
         type="submit"

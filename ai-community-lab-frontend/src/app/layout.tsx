@@ -32,6 +32,11 @@ export const metadata: Metadata = {
   metadataBase: new URL(getSiteMetadataBase()),
   title: "AICommunityLab",
   description: "Discover and share AI tools — community-driven feed",
+  alternates: {
+    types: {
+      "application/rss+xml": "/feed.xml",
+    },
+  },
 };
 
 function RightPanelFallback() {

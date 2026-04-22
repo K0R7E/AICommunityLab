@@ -9,6 +9,10 @@ export type ProfileRow = {
   is_admin?: boolean;
   /** Opt-in: notify when any community tool is published (default off). */
   notify_new_tools?: boolean;
+  /** Opt-in: notify when someone comments on one of your tools (default on). */
+  notify_comments_on_tools?: boolean;
+  /** Opt-in: notify about moderation outcomes and moderator actions (default on). */
+  notify_moderation_updates?: boolean;
   /** Last time the user opened the notifications inbox (badge uses this). */
   notification_inbox_seen_at?: string | null;
 };

@@ -12,7 +12,6 @@ import {
 } from "@/lib/duplicate-post-check";
 import { normalizeUserText } from "@/lib/normalize-user-text";
 import { parseCategoriesFromFormData, parseOptionalPostUrl } from "@/lib/post-form";
-import { safeHttpsImageUrl } from "@/lib/safe-remote-media-url";
 import { isValidUsername, normalizeUsername } from "@/lib/validate-profile";
 
 const TITLE_MIN = 3;
@@ -31,7 +30,6 @@ export type SubmitFieldSnapshot = {
   description: string;
   url: string;
   category: string;
-  image_url: string;
 };
 
 export type SubmitPostState = {
@@ -80,16 +78,6 @@ export async function submitPost(
     return { error: `Description must be at most ${DESCRIPTION_MAX} characters.` };
   }
 
-  const imageRaw = normalizeUserText(String(formData.get("image_url") ?? ""));
-  let image_url: string | null = null;
-  if (imageRaw) {
-    const safeImg = safeHttpsImageUrl(imageRaw);
-    if (!safeImg) {
-      return { error: "Image URL must be a valid https URL (e.g. CDN or static host)." };
-    }
-    image_url = safeImg;
-  }
-
   const urlCanonical = canonicalToolUrl(urlParsed.url);
 
   const fieldSnap: SubmitFieldSnapshot = {
@@ -97,7 +85,6 @@ export async function submitPost(
     description,
     url: urlRaw.trim(),
     category: categoriesParsed.categories[0] ?? "",
-    image_url: imageRaw,
   };
 
   if (!urlCanonical) {
@@ -139,7 +126,6 @@ export async function submitPost(
       url_canonical: urlCanonical,
       description: description || null,
       categories: categoriesParsed.categories,
-      image_url,
     })
     .select("id")
     .single();
@@ -168,6 +154,122 @@ export async function submitPost(
   revalidatePath("/admin");
   revalidatePath(`/post/${newId}`);
   redirect(`/post/${newId}?submitted=1`);
+}
+
+export async function updateOwnPost(
+  postId: string,
+  formData: FormData,
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "You must be signed in to edit your tool." };
+  }
+
+  const title = normalizeUserText(String(formData.get("title") ?? ""));
+  const description = normalizeUserText(String(formData.get("description") ?? ""));
+
+  const categoriesParsed = parseCategoriesFromFormData(formData);
+  if (!categoriesParsed.ok) {
+    return { error: categoriesParsed.error };
+  }
+
+  const urlParsed = parseOptionalPostUrl(String(formData.get("url") ?? ""), URL_MAX);
+  if (!urlParsed.ok) {
+    return { error: urlParsed.error };
+  }
+
+  if (title.length < TITLE_MIN) {
+    return { error: `Title must be at least ${TITLE_MIN} characters.` };
+  }
+  if (title.length > TITLE_MAX) {
+    return { error: `Title must be at most ${TITLE_MAX} characters.` };
+  }
+  if (description.length > DESCRIPTION_MAX) {
+    return { error: `Description must be at most ${DESCRIPTION_MAX} characters.` };
+  }
+
+  const urlCanonical = canonicalToolUrl(urlParsed.url);
+  const { data: updated, error } = await supabase
+    .from("posts")
+    .update({
+      title,
+      url: urlParsed.url,
+      url_canonical: urlCanonical,
+      description: description || null,
+      categories: categoriesParsed.categories,
+    })
+    .eq("id", postId)
+    .eq("user_id", user.id)
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    if (error.code === "23505" && urlCanonical) {
+      const { data: clash } = await supabase
+        .from("posts")
+        .select("id,title")
+        .eq("url_canonical", urlCanonical)
+        .in("moderation_status", ["pending", "published"])
+        .neq("id", postId)
+        .maybeSingle();
+      if (clash) {
+        const row = clash as { id: string; title: string };
+        return {
+          error: `This link is already used by “${row.title}”. Change the URL or open the existing listing.`,
+        };
+      }
+    }
+    if (error.code === "42501" || error.message?.toLowerCase().includes("policy")) {
+      return { error: "You can only edit your own tool." };
+    }
+    return { error: genericActionError() };
+  }
+
+  if (!updated) {
+    return { error: "Tool not found or you are not allowed to edit it." };
+  }
+
+  revalidatePath("/");
+  revalidatePath(`/post/${postId}`);
+  revalidatePath("/admin");
+  return {};
+}
+
+export async function deleteOwnPost(postId: string): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "You must be signed in to delete your tool." };
+  }
+
+  const { data: deleted, error } = await supabase
+    .from("posts")
+    .delete()
+    .eq("id", postId)
+    .eq("user_id", user.id)
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    if (error.code === "42501" || error.message?.toLowerCase().includes("policy")) {
+      return { error: "You can only delete your own tool." };
+    }
+    return { error: genericActionError() };
+  }
+
+  if (!deleted) {
+    return { error: "Tool not found or you are not allowed to delete it." };
+  }
+
+  revalidatePath("/");
+  revalidatePath(`/post/${postId}`);
+  revalidatePath("/admin");
+  return {};
 }
 
 export async function addComment(postId: string, content: string) {
@@ -257,6 +359,9 @@ export async function updateProfile(
   }
 
   const notifyNewTools = formData.get("notify_new_tools") === "on";
+  const notifyCommentsOnTools = formData.get("notify_comments_on_tools") === "on";
+  const notifyModerationUpdates =
+    formData.get("notify_moderation_updates") === "on";
 
   const { data: before } = await supabase
     .from("profiles")
@@ -271,6 +376,8 @@ export async function updateProfile(
       bio: bio || null,
       website,
       notify_new_tools: notifyNewTools,
+      notify_comments_on_tools: notifyCommentsOnTools,
+      notify_moderation_updates: notifyModerationUpdates,
     })
     .eq("id", user.id);
 

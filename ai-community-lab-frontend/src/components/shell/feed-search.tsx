@@ -48,6 +48,7 @@ export function FeedSearch({
       const t = value.trim();
       if (t) p.set("q", t);
       else p.delete("q");
+      p.delete("cursor");
       router.replace(pathWithQuery(basePath, p));
     }, 380);
     return () => window.clearTimeout(debounceRef.current);
@@ -55,6 +56,7 @@ export function FeedSearch({
 
   const clearParams = new URLSearchParams(spKey);
   clearParams.delete("q");
+  clearParams.delete("cursor");
   const clearHref = pathWithQuery(basePath, clearParams);
 
   const stickyClass =

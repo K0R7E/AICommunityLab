@@ -11,6 +11,7 @@ function toggleCategoryHref(label: string, sp: URLSearchParams): string {
   const p = new URLSearchParams(sp.toString());
   const active = categoryFilterFromUrlSearchParams(p);
   p.delete("category");
+  p.delete("cursor");
   if (active.includes(label)) {
     for (const c of active) {
       if (c !== label) p.append("category", c);
@@ -26,6 +27,7 @@ function toggleCategoryHref(label: string, sp: URLSearchParams): string {
 function clearCategoriesHref(sp: URLSearchParams): string {
   const p = new URLSearchParams(sp.toString());
   p.delete("category");
+  p.delete("cursor");
   const qs = p.toString();
   return qs ? `/?${qs}` : "/";
 }

@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { escapeLikePattern } from "@/lib/search-utils";
 
 const POST_FIELDS =
-  "id, title, url, url_canonical, description, categories, image_url, moderation_status, created_at, user_id" as const;
+  "id, title, url, url_canonical, description, categories, moderation_status, created_at, user_id" as const;
 
 export type AdminDuplicateHint =
   | { type: "url"; otherId: string; otherTitle: string }
@@ -21,7 +21,6 @@ export type AdminModerationPost = {
   url_canonical?: string | null;
   description: string | null;
   categories: string[];
-  image_url: string | null;
   moderation_status: string;
   created_at: string;
   user_id: string;

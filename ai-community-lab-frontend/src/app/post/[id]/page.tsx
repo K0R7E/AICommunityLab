@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -15,15 +16,54 @@ import { safeHttpExternalLink } from "@/lib/safe-external-url";
 import { CommentForm } from "./comment-form";
 import { PublishedToast } from "./published-toast";
 import { isPostPublishedForFeed, moderationStatusLabel } from "@/lib/moderation";
-import { safeHttpsImageUrl } from "@/lib/safe-remote-media-url";
+import { OwnerPostActions } from "./owner-post-actions";
 
 type Props = { params: Promise<{ id: string }> };
 
-export async function generateMetadata({ params }: Props) {
+function postMetadataDescription(description: string | null, title: string): string {
+  const cleaned = description?.trim();
+  if (cleaned) {
+    return cleaned.length > 200 ? `${cleaned.slice(0, 197)}...` : cleaned;
+  }
+  return `Discuss and rate ${title} on AICommunityLab.`;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const post = await getPostById(id);
   if (!post) return { title: "Post · AICommunityLab" };
-  return { title: `${post.title} · AICommunityLab` };
+
+  const title = `${post.title} · AICommunityLab`;
+  const description = postMetadataDescription(post.description, post.title);
+  const canonicalPath = `/post/${post.id}`;
+  const isPublished = isPostPublishedForFeed(post.moderation_status);
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: canonicalPath,
+    },
+    openGraph: {
+      type: "article",
+      url: canonicalPath,
+      title,
+      description,
+      siteName: "AICommunityLab",
+      publishedTime: post.created_at,
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+    },
+    robots: isPublished
+      ? undefined
+      : {
+          index: false,
+          follow: false,
+        },
+  };
 }
 
 export default async function PostDetailPage({ params }: Props) {
@@ -42,8 +82,8 @@ export default async function PostDetailPage({ params }: Props) {
   ]);
 
   const canAct = !!currentUser;
+  const isOwner = !!currentUser && currentUser.id === post.user_id;
   const visitLink = safeHttpExternalLink(post.url);
-  const thumb = safeHttpsImageUrl(post.image_url);
   const feedPublished = isPostPublishedForFeed(post.moderation_status);
   const modBanner = moderationStatusLabel(post.moderation_status);
   const modRejected = post.moderation_status === "rejected";
@@ -87,6 +127,17 @@ export default async function PostDetailPage({ params }: Props) {
           <h1 className="text-2xl font-bold leading-tight text-zinc-100">
             {post.title}
           </h1>
+          {isOwner ? (
+            <OwnerPostActions
+              post={{
+                id: post.id,
+                title: post.title,
+                url: post.url,
+                description: post.description,
+                categories: post.categories ?? [],
+              }}
+            />
+          ) : null}
           <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-zinc-500">
             <PostCategoryBadges categories={post.categories ?? []} />
             <span className="inline-flex items-center gap-1">
@@ -96,19 +147,6 @@ export default async function PostDetailPage({ params }: Props) {
             </span>
             <span>{formatRelativeTime(post.created_at)}</span>
           </div>
-          {thumb ? (
-            <div className="mt-4 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/50">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={thumb}
-                alt=""
-                width={800}
-                height={400}
-                className="max-h-64 w-full object-cover object-center"
-                referrerPolicy="no-referrer"
-              />
-            </div>
-          ) : null}
           {post.description ? (
             <p className="mt-4 text-zinc-300">{post.description}</p>
           ) : null}

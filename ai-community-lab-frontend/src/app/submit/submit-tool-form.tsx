@@ -111,25 +111,6 @@ export function SubmitToolForm() {
         />
       </div>
       <div>
-        <label
-          htmlFor="image_url"
-          className="mb-1 block text-sm font-medium text-zinc-300"
-        >
-          Logo or screenshot URL (optional)
-        </label>
-        <input
-          id="image_url"
-          name="image_url"
-          type="url"
-          defaultValue={snap?.image_url ?? ""}
-          className="w-full rounded-lg border border-zinc-700 bg-[#141414] px-3 py-2 text-zinc-100 outline-none ring-[#00ff9f]/40 focus:ring-2"
-          placeholder="https://… (https only)"
-        />
-        <p className="mt-1 text-xs text-zinc-500">
-          Direct link to an image (PNG/JPG/WebP). Used on the feed card and post page.
-        </p>
-      </div>
-      <div>
         <label htmlFor="category" className="mb-1 block text-sm font-medium text-zinc-300">
           Category
         </label>

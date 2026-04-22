@@ -2,8 +2,9 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { formatRatingDisplay } from "@/lib/format";
+import { Star } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useId, useRef, useState } from "react";
 import { toast } from "sonner";
 
 const SCALE = [1, 2, 3, 4, 5] as const;
@@ -24,12 +25,14 @@ export function RatingControl({
   canRate,
 }: Props) {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
   const supabase = createClient();
 
+  const [inFlightCount, setInFlightCount] = useState(0);
   const [sum, setSum] = useState(initialRatingSum);
   const [count, setCount] = useState(initialRatingCount);
   const [myRating, setMyRating] = useState<number | null>(initialMyRating);
+  const latestOpId = useRef(0);
+  const helperTextId = useId();
 
   const { avg, countLabel } = formatRatingDisplay(sum, count);
 
@@ -58,69 +61,87 @@ export function RatingControl({
       setCount((c) => Math.max(0, c - 1));
       setMyRating(null);
 
-      startTransition(async () => {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (!user) {
+      const opId = ++latestOpId.current;
+      setInFlightCount((c) => c + 1);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        if (opId === latestOpId.current) {
           setSum(prevSum);
           setCount(prevCount);
           setMyRating(prevMy);
           toast.error("Login to Vote");
-          return;
         }
+        setInFlightCount((c) => Math.max(0, c - 1));
+        return;
+      }
 
-        const { error } = await supabase
-          .from("ratings")
-          .delete()
-          .eq("post_id", postId)
-          .eq("user_id", user.id);
+      const { error } = await supabase
+        .from("ratings")
+        .delete()
+        .eq("post_id", postId)
+        .eq("user_id", user.id);
 
-        if (error) {
+      if (error) {
+        if (opId === latestOpId.current) {
           setSum(prevSum);
           setCount(prevCount);
           setMyRating(prevMy);
           toast.error(error.message);
-          return;
         }
+        setInFlightCount((c) => Math.max(0, c - 1));
+        return;
+      }
+      if (opId === latestOpId.current) {
         router.refresh();
-      });
+      }
+      setInFlightCount((c) => Math.max(0, c - 1));
       return;
     }
 
     applyOptimistic(next, prevMy);
 
-    startTransition(async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
+    const opId = ++latestOpId.current;
+    setInFlightCount((c) => c + 1);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      if (opId === latestOpId.current) {
         setSum(prevSum);
         setCount(prevCount);
         setMyRating(prevMy);
         toast.error("Login to Vote");
-        return;
       }
+      setInFlightCount((c) => Math.max(0, c - 1));
+      return;
+    }
 
-      const { error } = await supabase.from("ratings").upsert(
-        {
-          post_id: postId,
-          user_id: user.id,
-          value: next,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id,post_id" },
-      );
+    const { error } = await supabase.from("ratings").upsert(
+      {
+        post_id: postId,
+        user_id: user.id,
+        value: next,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,post_id" },
+    );
 
-      if (error) {
+    if (error) {
+      if (opId === latestOpId.current) {
         setSum(prevSum);
         setCount(prevCount);
         setMyRating(prevMy);
         toast.error(error.message);
-        return;
       }
+      setInFlightCount((c) => Math.max(0, c - 1));
+      return;
+    }
+    if (opId === latestOpId.current) {
       router.refresh();
-    });
+    }
+    setInFlightCount((c) => Math.max(0, c - 1));
   }
 
   return (
@@ -129,34 +150,55 @@ export function RatingControl({
         <span className="text-lg font-bold tabular-nums text-[#00ff9f]">{avg}</span>
         <p className="text-[10px] text-zinc-500">{countLabel}</p>
       </div>
+      <p className="text-[10px] text-zinc-500">
+        {myRating === null ? "No vote yet" : `Your vote: ${myRating}/5`}
+      </p>
       <div
         className="flex flex-wrap justify-center gap-0.5"
         role="group"
-        aria-label="Your rating 1 to 5; press the same number again to remove your vote"
+        aria-label="Your rating from one to five stars"
+        aria-describedby={helperTextId}
       >
         {SCALE.map((n) => {
           const active = myRating === n;
+          const filled = myRating !== null && n <= myRating;
+          const tooltipText = active
+            ? `Remove your ${n}-star rating`
+            : `Rate this tool ${n} out of 5`;
           return (
-            <button
-              key={n}
-              type="button"
-              disabled={pending}
-              onClick={() => void pickValue(n)}
-              className={`min-w-[1.35rem] rounded px-0.5 py-1 text-[11px] font-semibold tabular-nums transition disabled:opacity-60 ${
-                active
-                  ? "bg-[#00ff9f]/20 text-[#00ff9f] ring-1 ring-[#00ff9f]/50"
-                  : "text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200"
-              }`}
-              aria-pressed={active}
-              aria-label={
-                active ? `Remove your ${n} star rating` : `Rate ${n} out of 5`
-              }
-            >
-              {n}
-            </button>
+            <span key={n} className="group/rate relative inline-flex">
+              <button
+                type="button"
+                onClick={() => void pickValue(n)}
+                className={`rounded p-1 transition ${
+                  active
+                    ? "bg-[#00ff9f]/15 ring-1 ring-[#00ff9f]/50"
+                    : "hover:bg-zinc-800/90"
+                }`}
+                aria-pressed={active}
+                aria-busy={inFlightCount > 0}
+                aria-label={tooltipText}
+              >
+                <Star
+                  className={`size-4 transition ${
+                    filled
+                      ? "fill-[#00ff9f] text-[#00ff9f]"
+                      : "text-zinc-500 group-hover/rate:text-zinc-200 group-focus-within/rate:text-zinc-200"
+                  }`}
+                  aria-hidden
+                />
+              </button>
+              <span className="pointer-events-none absolute -top-7 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded bg-zinc-900 px-1.5 py-0.5 text-[10px] text-zinc-100 opacity-0 shadow transition group-hover/rate:opacity-100 group-focus-within/rate:opacity-100">
+                {tooltipText}
+              </span>
+            </span>
           );
         })}
       </div>
+      <p id={helperTextId} className="sr-only">
+        Choose from one to five stars. Press the currently selected rating again to
+        remove your vote.
+      </p>
     </div>
   );
 }

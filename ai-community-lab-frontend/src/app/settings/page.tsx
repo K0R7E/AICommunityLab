@@ -38,7 +38,7 @@ export default async function SettingsPage() {
     <div>
       <h1 className="text-2xl font-bold text-zinc-100">Settings</h1>
       <p className="mt-2 text-sm text-zinc-400">
-        Update how you appear on the site. Signed in as{" "}
+        Update your profile and notification preferences. Signed in as{" "}
         <span className="text-zinc-300">{user.email}</span>.
       </p>
       <div className="mt-8">
@@ -47,6 +47,8 @@ export default async function SettingsPage() {
           initialBio={profile.bio ?? ""}
           initialWebsite={profile.website ?? ""}
           initialNotifyNewTools={Boolean(profile.notify_new_tools)}
+          initialNotifyCommentsOnTools={Boolean(profile.notify_comments_on_tools ?? true)}
+          initialNotifyModerationUpdates={Boolean(profile.notify_moderation_updates ?? true)}
         />
       </div>
       {hasEmailPassword ? <ChangePasswordForm /> : null}

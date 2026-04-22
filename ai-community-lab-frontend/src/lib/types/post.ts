@@ -7,8 +7,6 @@ export type PostRow = {
   /** Normalized URL for deduplication (may be null). */
   url_canonical?: string | null;
   description: string | null;
-  /** Optional https image (logo/screenshot). */
-  image_url?: string | null;
   categories: string[];
   /** Sum of all user ratings (1–5 each). */
   rating_sum: number;

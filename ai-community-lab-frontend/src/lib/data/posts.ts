@@ -1,86 +1,70 @@
 import { createClient } from "@/lib/supabase/server";
-import { CATEGORIES } from "@/lib/constants";
 import { POST_MODERATION_PUBLISHED } from "@/lib/moderation";
-import { escapeLikePattern } from "@/lib/search-utils";
 import type { PostRow } from "@/lib/types/post";
 
-async function filterToPublishedPostIds(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  ids: string[],
-): Promise<string[]> {
-  const uniq = [...new Set(ids)];
-  if (uniq.length === 0) return [];
-  const { data } = await supabase
-    .from("posts")
-    .select("id")
-    .in("id", uniq)
-    .eq("moderation_status", POST_MODERATION_PUBLISHED);
-  return (data ?? []).map((row) => (row as { id: string }).id);
+const DEFAULT_FEED_PAGE_SIZE = 20;
+const MAX_FEED_PAGE_SIZE = 50;
+
+type FeedCursor = {
+  createdAt: string;
+  id: string;
+};
+
+function decodeFeedCursor(rawCursor: string | null | undefined): FeedCursor | null {
+  if (!rawCursor) return null;
+  const params = new URLSearchParams(rawCursor);
+  const createdAt = params.get("createdAt")?.trim();
+  const id = params.get("id")?.trim();
+  if (!createdAt || !id) return null;
+  return { createdAt, id };
 }
 
-async function postIdsMatchingCategoryLabels(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  term: string,
-): Promise<string[]> {
-  const termLower = term.toLowerCase();
-  const labels = CATEGORIES.filter((c) => c.toLowerCase().includes(termLower));
-  if (labels.length === 0) return [];
-  const ids = new Set<string>();
-  for (const label of labels) {
-    const { data } = await supabase
-      .from("posts")
-      .select("id")
-      .eq("moderation_status", POST_MODERATION_PUBLISHED)
-      .contains("categories", [label]);
-    for (const row of data ?? []) ids.add((row as { id: string }).id);
-  }
-  return [...ids];
+function encodeFeedCursor(post: PostRow): string {
+  const params = new URLSearchParams();
+  params.set("createdAt", post.created_at);
+  params.set("id", post.id);
+  return params.toString();
 }
+
+function normalizePageSize(value: number | undefined): number {
+  if (!Number.isFinite(value)) return DEFAULT_FEED_PAGE_SIZE;
+  const n = Math.floor(value ?? DEFAULT_FEED_PAGE_SIZE);
+  if (n < 1) return DEFAULT_FEED_PAGE_SIZE;
+  return Math.min(n, MAX_FEED_PAGE_SIZE);
+}
+
+type SearchPublishedPostRpcRow = {
+  id: string;
+};
 
 async function collectPostIdsForSearch(
   supabase: Awaited<ReturnType<typeof createClient>>,
   rawQuery: string,
+  options: {
+    categoryLabels: string[];
+    cursorCreatedAt?: string | null;
+    maxResults: number;
+  },
 ): Promise<string[]> {
   const term = rawQuery.trim();
   if (!term) return [];
 
-  const pattern = `%${escapeLikePattern(term)}%`;
-
-  const [byTitle, byDesc, byUrl, byCategoryIds, byComments] = await Promise.all([
-    supabase
-      .from("posts")
-      .select("id")
-      .eq("moderation_status", POST_MODERATION_PUBLISHED)
-      .ilike("title", pattern),
-    supabase
-      .from("posts")
-      .select("id")
-      .eq("moderation_status", POST_MODERATION_PUBLISHED)
-      .ilike("description", pattern),
-    supabase
-      .from("posts")
-      .select("id")
-      .eq("moderation_status", POST_MODERATION_PUBLISHED)
-      .ilike("url", pattern),
-    postIdsMatchingCategoryLabels(supabase, term),
-    supabase
-      .from("comments")
-      .select("post_id, posts!inner(moderation_status)")
-      .eq("posts.moderation_status", POST_MODERATION_PUBLISHED)
-      .ilike("content", pattern),
-  ]);
-
-  const ids = new Set<string>();
-  for (const row of byTitle.data ?? []) ids.add((row as { id: string }).id);
-  for (const row of byDesc.data ?? []) ids.add((row as { id: string }).id);
-  for (const row of byUrl.data ?? []) ids.add((row as { id: string }).id);
-  for (const id of byCategoryIds) ids.add(id);
-  for (const row of byComments.data ?? []) {
-    const id = (row as { post_id: string }).post_id;
-    if (id) ids.add(id);
+  const { data, error } = await supabase.rpc("search_published_posts", {
+    p_query: term,
+    p_category_labels: options.categoryLabels.length > 0 ? options.categoryLabels : null,
+    p_cursor: options.cursorCreatedAt ?? null,
+    p_limit: options.maxResults,
+  });
+  if (error) {
+    console.error(error.message);
+    return [];
   }
-
-  return filterToPublishedPostIds(supabase, [...ids]);
+  const ids = Array.isArray(data)
+    ? (data as SearchPublishedPostRpcRow[])
+        .map((row) => row.id)
+        .filter((id): id is string => typeof id === "string" && id.length > 0)
+    : [];
+  return [...new Set(ids)];
 }
 
 async function fetchMyRatings(
@@ -106,11 +90,14 @@ export async function getFeedPosts(options: {
   /** Show posts that have at least one of these categories (OR). */
   categoryLabels: string[];
   searchQuery: string | null;
+  cursor?: string | null;
+  pageSize?: number;
 }): Promise<{
   posts: PostRow[];
   myRatings: Map<string, number>;
   userId: string | null;
   userEmail: string | null;
+  nextCursor: string | null;
 }> {
   const supabase = await createClient();
   const {
@@ -118,15 +105,22 @@ export async function getFeedPosts(options: {
   } = await supabase.auth.getUser();
 
   const search = options.searchQuery?.trim() || null;
+  const cursor = options.sort === "new" ? decodeFeedCursor(options.cursor) : null;
+  const pageSize = normalizePageSize(options.pageSize);
 
   if (search) {
-    const postIds = await collectPostIdsForSearch(supabase, search);
+    const postIds = await collectPostIdsForSearch(supabase, search, {
+      categoryLabels: options.categoryLabels,
+      cursorCreatedAt: options.sort === "new" ? cursor?.createdAt ?? null : null,
+      maxResults: options.sort === "new" ? pageSize + 1 : MAX_FEED_PAGE_SIZE,
+    });
     if (postIds.length === 0) {
       return {
         posts: [],
         myRatings: new Map(),
         userId: user?.id ?? null,
         userEmail: user?.email ?? null,
+        nextCursor: null,
       };
     }
 
@@ -141,9 +135,11 @@ export async function getFeedPosts(options: {
     if (options.sort === "top") {
       q = q
         .order("rating_avg", { ascending: false, nullsFirst: false })
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false });
     } else {
-      q = q.order("created_at", { ascending: false });
+      q = q.order("created_at", { ascending: false }).order("id", { ascending: false });
+      q = q.limit(pageSize + 1);
     }
 
     const { data: posts, error } = await q;
@@ -155,10 +151,14 @@ export async function getFeedPosts(options: {
         myRatings: new Map(),
         userId: user?.id ?? null,
         userEmail: user?.email ?? null,
+        nextCursor: null,
       };
     }
 
-    const list = (posts ?? []) as PostRow[];
+    const queriedList = (posts ?? []) as PostRow[];
+    const hasMore = options.sort === "new" && queriedList.length > pageSize;
+    const list = hasMore ? queriedList.slice(0, pageSize) : queriedList;
+    const nextCursor = hasMore ? encodeFeedCursor(list[list.length - 1]) : null;
     const myRatings =
       user && list.length > 0
         ? await fetchMyRatings(
@@ -173,6 +173,7 @@ export async function getFeedPosts(options: {
       myRatings,
       userId: user?.id ?? null,
       userEmail: user?.email ?? null,
+      nextCursor,
     };
   }
 
@@ -183,12 +184,17 @@ export async function getFeedPosts(options: {
   if (options.categoryLabels.length > 0) {
     q = q.overlaps("categories", options.categoryLabels);
   }
+  if (options.sort === "new" && cursor) {
+    q = q.or(`created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},id.lt.${cursor.id})`);
+  }
   if (options.sort === "top") {
     q = q
       .order("rating_avg", { ascending: false, nullsFirst: false })
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false });
   } else {
-    q = q.order("created_at", { ascending: false });
+    q = q.order("created_at", { ascending: false }).order("id", { ascending: false });
+    q = q.limit(pageSize + 1);
   }
 
   const { data: posts, error } = await q;
@@ -200,10 +206,14 @@ export async function getFeedPosts(options: {
       myRatings: new Map(),
       userId: user?.id ?? null,
       userEmail: user?.email ?? null,
+      nextCursor: null,
     };
   }
 
-  const list = (posts ?? []) as PostRow[];
+  const queriedList = (posts ?? []) as PostRow[];
+  const hasMore = options.sort === "new" && queriedList.length > pageSize;
+  const list = hasMore ? queriedList.slice(0, pageSize) : queriedList;
+  const nextCursor = hasMore ? encodeFeedCursor(list[list.length - 1]) : null;
   const myRatings =
     user && list.length > 0
       ? await fetchMyRatings(
@@ -218,5 +228,6 @@ export async function getFeedPosts(options: {
     myRatings,
     userId: user?.id ?? null,
     userEmail: user?.email ?? null,
+    nextCursor,
   };
 }

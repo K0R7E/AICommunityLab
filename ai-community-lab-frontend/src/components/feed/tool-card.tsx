@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ExternalLink, MessageCircle } from "lucide-react";
 import { RatingControl } from "@/components/vote/rating-control";
 import { formatRelativeTime } from "@/lib/format";
-import { safeHttpsImageUrl } from "@/lib/safe-remote-media-url";
 import {
   isPostPublishedForFeed,
   moderationStatusLabel,
@@ -34,7 +33,6 @@ export function ToolCard({ post, myRating, canVote }: Props) {
   })();
 
   const postHref = `/post/${post.id}`;
-  const thumb = safeHttpsImageUrl(post.image_url);
   const modLabel = moderationStatusLabel(post.moderation_status);
   const canRateHere = canVote && isPostPublishedForFeed(post.moderation_status);
 
@@ -48,17 +46,6 @@ export function ToolCard({ post, myRating, canVote }: Props) {
       />
 
       <div className="relative z-10 flex shrink-0 flex-col items-center gap-2">
-        {thumb ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={thumb}
-            alt=""
-            width={56}
-            height={56}
-            className="relative z-20 size-14 rounded-lg border border-zinc-700 object-cover pointer-events-none"
-            referrerPolicy="no-referrer"
-          />
-        ) : null}
         <RatingControl
           key={`${post.id}-${post.rating_sum}-${post.rating_count}-${myRating ?? "x"}`}
           postId={post.id}

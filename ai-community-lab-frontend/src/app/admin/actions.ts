@@ -6,7 +6,6 @@ import { getCurrentUserIsAdmin } from "@/lib/admin";
 import { canonicalToolUrl } from "@/lib/canonical-tool-url";
 import { normalizeUserText } from "@/lib/normalize-user-text";
 import { parseCategoriesFromFormData, parseOptionalPostUrl } from "@/lib/post-form";
-import { safeHttpsImageUrl } from "@/lib/safe-remote-media-url";
 
 function forbidden(): { error: string } {
   return { error: "Not allowed." };
@@ -71,14 +70,26 @@ export async function adminDeleteComment(
 
   const authorId = (row as { user_id?: string } | null)?.user_id;
   if (authorId && user && authorId !== user.id) {
-    const { error: rpcError } = await supabase.rpc("moderation_push_notification", {
-      p_user_id: authorId,
-      p_type: "comment_removed",
-      p_post_id: postId,
-      p_message: moderatorNote?.trim() || null,
-    });
+    const { data: rpcResult, error: rpcError } = await supabase.rpc(
+      "moderation_push_notification",
+      {
+        p_user_id: authorId,
+        p_type: "comment_removed",
+        p_post_id: postId,
+        p_message: moderatorNote?.trim() || null,
+      },
+    );
     if (rpcError) {
-      return { error: "Could not notify the comment author. Apply migration 014 or try again." };
+      return {
+        error:
+          "Could not notify the comment author. Apply migration 021_notification_preferences_and_rpc_hardening.sql or try again.",
+      };
+    }
+    if (rpcResult !== "inserted" && rpcResult !== "skipped") {
+      return {
+        error:
+          "Could not notify the comment author due to an unexpected moderation RPC result.",
+      };
     }
   }
 
@@ -97,7 +108,6 @@ export async function adminUpdatePost(
 
   const title = normalizeUserText(String(formData.get("title") ?? ""));
   const description = normalizeUserText(String(formData.get("description") ?? ""));
-  const imageRaw = normalizeUserText(String(formData.get("image_url") ?? ""));
 
   const categoriesParsed = parseCategoriesFromFormData(formData);
   if (!categoriesParsed.ok) {
@@ -122,15 +132,6 @@ export async function adminUpdatePost(
     return { error: `Description must be at most ${DESCRIPTION_MAX} characters.` };
   }
 
-  let image_url: string | null = null;
-  if (imageRaw) {
-    const safe = safeHttpsImageUrl(imageRaw);
-    if (!safe) {
-      return { error: "Image URL must be a valid https URL or empty." };
-    }
-    image_url = safe;
-  }
-
   const supabase = await createClient();
   const urlCanonical = canonicalToolUrl(urlParsed.url);
   const { error } = await supabase
@@ -141,7 +142,6 @@ export async function adminUpdatePost(
       url_canonical: urlCanonical,
       description: description || null,
       categories: categoriesParsed.categories,
-      image_url,
     })
     .eq("id", postId);
 

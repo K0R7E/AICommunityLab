@@ -1,2 +1,0 @@
-alter table public.posts
-  drop column if exists image_url;

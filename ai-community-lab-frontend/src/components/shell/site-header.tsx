@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PlusCircle, Sparkles } from "lucide-react";
 import { UserMenu } from "@/components/auth/user-menu";
 import { NotificationsInboxLink } from "@/components/shell/notifications-inbox-link";
+import { ThemeToggle } from "@/components/shell/theme-toggle";
 
 export function SiteHeader() {
   return (
@@ -23,6 +24,7 @@ export function SiteHeader() {
             Submit
           </Link>
           <NotificationsInboxLink />
+          <ThemeToggle />
           <UserMenu />
         </div>
       </div>

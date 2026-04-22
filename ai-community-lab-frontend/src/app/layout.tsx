@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { getSiteMetadataBase } from "@/lib/site-metadata-base";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Suspense } from "react";
-import { Toaster } from "sonner";
 import {
   AuthProvider,
   type ProfileSummary,
@@ -12,6 +11,11 @@ import { SiteHeader } from "@/components/shell/site-header";
 import { SiteFooter } from "@/components/shell/site-footer";
 import { Sidebar } from "@/components/shell/sidebar";
 import { RightPanel } from "@/components/shell/right-panel";
+import {
+  ThemeProvider,
+  THEME_INIT_SCRIPT,
+} from "@/components/shell/theme-provider";
+import { ThemedToaster } from "@/components/shell/themed-toaster";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -69,45 +73,54 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <script
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
+        />
+      </head>
       <body className="flex min-h-full flex-col bg-[#0f0f0f] font-sans text-zinc-100">
-        <AuthProvider
-          key={`${user?.id ?? "anon"}:${initialProfile?.username ?? ""}:${initialProfile?.avatar_url ?? ""}`}
-          initialUser={user ?? null}
-          initialProfile={initialProfile}
-        >
-          <SiteHeader />
-
-          <aside
-            className="shell-sidebar-left hidden lg:block"
-            aria-label="Primary navigation"
+        <ThemeProvider>
+          <AuthProvider
+            key={`${user?.id ?? "anon"}:${initialProfile?.username ?? ""}:${initialProfile?.avatar_url ?? ""}`}
+            initialUser={user ?? null}
+            initialProfile={initialProfile}
           >
-            <Sidebar />
-          </aside>
-          <aside
-            className="shell-sidebar-right hidden lg:block"
-            aria-label="Trending and actions"
-          >
-            <Suspense fallback={<RightPanelFallback />}>
-              <RightPanel userEmail={userEmail} />
-            </Suspense>
-          </aside>
+            <SiteHeader />
 
-          <div className="mx-auto w-full max-w-[1400px] flex-1 px-4 pb-24 pt-6 sm:px-6 lg:max-w-none lg:px-0">
-            <div className="mb-8 lg:hidden">
-              <div className="sticky top-14 z-20 -mx-4 max-h-[calc(100dvh-6.5rem)] overflow-y-auto overflow-x-hidden border-b border-zinc-800/60 bg-[#0f0f0f]/95 px-4 py-3 backdrop-blur-sm sm:-mx-6 sm:px-6">
-                <Sidebar />
+            <aside
+              className="shell-sidebar-left hidden lg:block"
+              aria-label="Primary navigation"
+            >
+              <Sidebar />
+            </aside>
+            <aside
+              className="shell-sidebar-right hidden lg:block"
+              aria-label="Trending and actions"
+            >
+              <Suspense fallback={<RightPanelFallback />}>
+                <RightPanel userEmail={userEmail} />
+              </Suspense>
+            </aside>
+
+            <div className="mx-auto w-full max-w-[1400px] flex-1 px-4 pb-24 pt-6 sm:px-6 lg:max-w-none lg:px-0">
+              <div className="mb-8 lg:hidden">
+                <div className="sticky top-14 z-20 -mx-4 max-h-[calc(100dvh-6.5rem)] overflow-y-auto overflow-x-hidden border-b border-zinc-800/60 bg-[#0f0f0f]/95 px-4 py-3 backdrop-blur-sm sm:-mx-6 sm:px-6">
+                  <Sidebar />
+                </div>
               </div>
+              <main className="shell-main-with-sidebars min-w-0">
+                {children}
+              </main>
             </div>
-            <main className="shell-main-with-sidebars min-w-0">
-              {children}
-            </main>
-          </div>
 
-          <SiteFooter />
-        </AuthProvider>
-        <Toaster richColors theme="dark" position="top-center" />
+            <SiteFooter />
+          </AuthProvider>
+          <ThemedToaster />
+        </ThemeProvider>
       </body>
     </html>
   );

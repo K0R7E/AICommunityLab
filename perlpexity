@@ -1,0 +1,5 @@
+egy promptot írj amit az ai agentnek megadva megcsinálja ezt. 
+- legyen egy api lekérés
+- legyen egy új fül ahol (rout) ahol megjelennek a legfrissebb hírek
+- 3 óránként elég a lehívás, ha nincs új hír ne legyen megjelenítve semmi
+- headernel legyen egy gomb a hírek olvasására és a rout az oldal page megnyitására

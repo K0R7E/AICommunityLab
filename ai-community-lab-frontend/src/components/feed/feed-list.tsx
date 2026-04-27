@@ -110,7 +110,7 @@ export function FeedList({
             type="button"
             onClick={() => void loadMore()}
             disabled={loadingMore}
-            className="inline-flex items-center justify-center rounded-lg border border-zinc-700 bg-[#161616] px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-[#00ff9f]/45 hover:text-[#00ff9f] disabled:cursor-not-allowed disabled:opacity-70"
+            className="inline-flex items-center justify-center rounded-lg border border-zinc-600 bg-zinc-800/80 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-[#00ff9f]/45 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {loadingMore ? "Loading more..." : "Load more"}
           </button>

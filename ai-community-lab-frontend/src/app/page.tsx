@@ -192,8 +192,8 @@ export default async function HomePage({
           {q
             ? "Search"
             : sort === "top"
-              ? "Top tools"
-              : "Latest tools"}
+              ? "Top AI tools"
+              : "Latest AI tools"}
         </h1>
         {q ? (
           <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-400">

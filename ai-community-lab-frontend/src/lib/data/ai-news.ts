@@ -8,8 +8,11 @@ const DEFAULT_MAX_ARTICLES = 100;
 const DEFAULT_LANG = "en";
 const REQUEST_TIMEOUT_MS = 10_000;
 
-const AI_NEWS_QUERY =
-  '("artificial intelligence" OR AI OR "generative AI" OR "machine learning" OR "large language model" OR LLM OR OpenAI OR Anthropic OR Claude OR Gemini OR "Google DeepMind" OR DeepMind OR Mistral OR xAI OR Grok OR Copilot)';
+const AI_NEWS_QUERIES = [
+  '("artificial intelligence" OR AI OR "generative AI" OR "machine learning" OR "large language model" OR LLM OR OpenAI OR Anthropic OR Claude OR Gemini OR "Google DeepMind" OR DeepMind OR Mistral OR xAI OR Grok OR Copilot)',
+  '"artificial intelligence" OR AI OR "generative AI" OR "machine learning" OR "large language model" OR LLM OR OpenAI OR Anthropic OR Claude OR Gemini OR "Google DeepMind" OR DeepMind OR Mistral OR xAI OR Grok OR Copilot',
+  "AI OR artificial intelligence OR machine learning OR generative AI OR LLM OR OpenAI OR Anthropic OR Gemini OR DeepMind OR Mistral OR xAI",
+] as const;
 
 export type AiNewsArticle = {
   id: string;
@@ -129,18 +132,15 @@ async function fetchWithTimeout(url: URL): Promise<Response> {
   }
 }
 
-async function fetchAllArticlesFromGNews(): Promise<Omit<AiNewsArticle, "isNew">[]> {
-  const config = readConfig();
-
-  if (!config.apiKey) {
-    throw new Error("Missing GNEWS_API_KEY");
-  }
-
+async function fetchPagesForQuery(
+  config: ReturnType<typeof readConfig>,
+  query: string,
+): Promise<Omit<AiNewsArticle, "isNew">[]> {
   const dedupedByUrl = new Map<string, Omit<AiNewsArticle, "isNew">>();
 
   for (let page = 1; page <= config.maxPages; page += 1) {
     const params = new URLSearchParams({
-      q: AI_NEWS_QUERY,
+      q: query,
       lang: config.lang,
       sortby: "publishedAt",
       max: String(config.pageSize),
@@ -152,7 +152,15 @@ async function fetchAllArticlesFromGNews(): Promise<Omit<AiNewsArticle, "isNew">
     const response = await fetchWithTimeout(url);
 
     if (!response.ok) {
-      throw new Error(`GNews request failed with status ${response.status}`);
+      let details = "";
+      try {
+        details = await response.text();
+      } catch {
+        details = "";
+      }
+      throw new Error(
+        `GNews request failed with status ${response.status}${details ? `: ${details}` : ""}`,
+      );
     }
 
     const payload = (await response.json()) as GNewsResponse;
@@ -181,6 +189,30 @@ async function fetchAllArticlesFromGNews(): Promise<Omit<AiNewsArticle, "isNew">
   return Array.from(dedupedByUrl.values()).sort(
     (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
   );
+}
+
+async function fetchAllArticlesFromGNews(): Promise<Omit<AiNewsArticle, "isNew">[]> {
+  const config = readConfig();
+
+  if (!config.apiKey) {
+    throw new Error("Missing GNEWS_API_KEY");
+  }
+
+  let lastError: Error | null = null;
+
+  for (const query of AI_NEWS_QUERIES) {
+    try {
+      return await fetchPagesForQuery(config, query);
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error("Unknown GNews fetch error");
+    }
+  }
+
+  if (lastError) {
+    throw lastError;
+  }
+
+  return [];
 }
 
 function emptyDataset(state: AiNewsSourceState, errorMessage: string | null): AiNewsDataset {

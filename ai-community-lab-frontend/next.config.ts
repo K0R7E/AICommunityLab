@@ -28,7 +28,7 @@ function buildCspValue() {
     "frame-ancestors 'none'",
     "object-src 'none'",
     "form-action 'self'",
-    "script-src 'self'",
+    "script-src 'self' 'unsafe-inline'",
     "style-src 'self'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",

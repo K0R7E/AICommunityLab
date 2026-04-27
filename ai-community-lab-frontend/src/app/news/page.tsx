@@ -34,6 +34,9 @@ export default async function NewsPage() {
       {dataset.sourceState === "error" ? (
         <div className="rounded-xl border border-zinc-700 bg-[#1a1a1a] px-4 py-8 text-center text-zinc-400">
           AI news is currently unavailable. Please try again later.
+          {dataset.errorMessage ? (
+            <p className="mt-2 text-xs text-zinc-500">Debug: {dataset.errorMessage}</p>
+          ) : null}
         </div>
       ) : null}
 

@@ -8,6 +8,7 @@ const DEFAULT_MAX_PAGES = 1;
 const DEFAULT_MAX_ARTICLES = 20;
 const DEFAULT_LANG = "en";
 const REQUEST_TIMEOUT_MS = 10_000;
+const FORCE_SINGLE_API_CALL = true;
 
 const AI_NEWS_QUERIES = [
   '("artificial intelligence" OR AI OR "generative AI" OR "machine learning" OR "large language model" OR LLM OR OpenAI OR Anthropic OR Claude OR Gemini OR "Google DeepMind" OR DeepMind OR Mistral OR xAI OR Grok OR Copilot)',
@@ -148,8 +149,9 @@ async function fetchPagesForQuery(
   query: string,
 ): Promise<Omit<AiNewsArticle, "isNew">[]> {
   const dedupedByUrl = new Map<string, Omit<AiNewsArticle, "isNew">>();
+  const maxPagesForRun = FORCE_SINGLE_API_CALL ? 1 : config.maxPages;
 
-  for (let page = 1; page <= config.maxPages; page += 1) {
+  for (let page = 1; page <= maxPagesForRun; page += 1) {
     const params = new URLSearchParams({
       q: query,
       lang: config.lang,
@@ -211,6 +213,10 @@ async function fetchAllArticlesFromGNews(): Promise<Omit<AiNewsArticle, "isNew">
   }
 
   let lastError: Error | null = null;
+
+  if (FORCE_SINGLE_API_CALL) {
+    return fetchPagesForQuery(config, AI_NEWS_QUERIES[0]);
+  }
 
   for (const query of AI_NEWS_QUERIES) {
     try {

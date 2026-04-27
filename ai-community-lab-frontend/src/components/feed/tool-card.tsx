@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ExternalLink, MessageCircle } from "lucide-react";
 import { RatingControl } from "@/components/vote/rating-control";
+import { TrendingBadge, getTrendingLevel } from "@/components/feed/trending-badge";
 import { formatRelativeTime } from "@/lib/format";
 import {
   isPostPublishedForFeed,
@@ -16,9 +17,11 @@ type Props = {
   post: PostRow;
   myRating: number | null;
   canVote: boolean;
+  rank?: number;
 };
 
-export function ToolCard({ post, myRating, canVote }: Props) {
+export function ToolCard({ post, myRating, canVote, rank }: Props) {
+  const trendingLevel = rank != null ? getTrendingLevel(rank, post.created_at) : null;
   const external = safeHttpExternalLink(post.url);
   const line = (() => {
     if (post.description?.trim()) return post.description.trim();
@@ -39,7 +42,7 @@ export function ToolCard({ post, myRating, canVote }: Props) {
   const canRateHere = canVote && isPostPublishedForFeed(post.moderation_status);
 
   return (
-    <article className="group relative flex gap-2.5 overflow-hidden rounded-xl border border-zinc-800/80 bg-[#1a1a1a] p-3 transition hover:border-[#00ff9f]/25 hover:shadow-[0_0_0_1px_rgba(0,255,159,0.06)] sm:gap-3 sm:p-4">
+    <article className="group relative flex gap-2.5 overflow-hidden rounded-xl border border-zinc-800/80 bg-[#1a1a1a] p-3 transition duration-200 hover:-translate-y-px hover:border-[#00ff9f]/35 hover:shadow-[0_0_0_1px_rgba(0,255,159,0.08),_0_12px_30px_-18px_rgba(0,255,159,0.55)] sm:gap-3 sm:p-4">
       {/* Full-card hit target (comments); rating & external link sit above with z-index */}
       <Link
         href={postHref}
@@ -60,8 +63,11 @@ export function ToolCard({ post, myRating, canVote }: Props) {
 
       <div className="pointer-events-none relative z-10 min-w-0 flex-1">
         <div className="flex flex-wrap items-start justify-between gap-2">
-          <span className="text-base font-semibold leading-snug text-zinc-100 transition-colors group-hover:text-[#00ff9f] sm:text-lg">
-            {post.title}
+          <span className="flex flex-wrap items-center gap-2">
+            <span className="text-base font-semibold leading-snug text-zinc-100 transition-colors group-hover:text-[#00ff9f] sm:text-lg">
+              {post.title}
+            </span>
+            {trendingLevel && <TrendingBadge level={trendingLevel} rank={rank!} />}
           </span>
           {external ? (
             <a

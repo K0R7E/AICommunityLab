@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import { submitPost, type SubmitPostState } from "@/app/actions";
-import { CATEGORIES } from "@/lib/constants";
+import { CATEGORIES_BY_KIND, LISTING_KINDS, type ListingKind } from "@/lib/constants";
 import { SIMILARITY_BLOCK_THRESHOLD } from "@/lib/duplicate-post-check";
 
 const initial: SubmitPostState = { error: null };
@@ -12,6 +12,23 @@ export function SubmitToolForm() {
   const [state, formAction, pending] = useActionState(submitPost, initial);
 
   const snap = state.duplicateWarning?.fieldSnap;
+  const defaultKind = snap?.listingKind ?? LISTING_KINDS[0];
+  const [listingKind, setListingKind] = useState<ListingKind>(defaultKind);
+  useEffect(() => {
+    setListingKind(defaultKind);
+  }, [defaultKind]);
+  const categoryOptions = useMemo(
+    () => [...CATEGORIES_BY_KIND[listingKind]],
+    [listingKind],
+  );
+  const defaultCategory =
+    snap?.category && CATEGORIES_BY_KIND[defaultKind].includes(snap.category)
+      ? snap.category
+      : CATEGORIES_BY_KIND[defaultKind][0];
+  const [category, setCategory] = useState(defaultCategory);
+  useEffect(() => {
+    setCategory(defaultCategory);
+  }, [defaultCategory]);
   const formKey = snap ? `dup:${JSON.stringify(snap)}` : "form-empty";
 
   return (
@@ -111,6 +128,32 @@ export function SubmitToolForm() {
         />
       </div>
       <div>
+        <label
+          htmlFor="listing_kind"
+          className="mb-1 block text-sm font-medium text-zinc-300"
+        >
+          Listing type
+        </label>
+        <select
+          id="listing_kind"
+          name="listing_kind"
+          required
+          value={listingKind}
+          onChange={(e) => {
+            const nextKind = e.target.value as ListingKind;
+            setListingKind(nextKind);
+            setCategory(CATEGORIES_BY_KIND[nextKind][0]);
+          }}
+          className="w-full rounded-lg border border-zinc-700 bg-[#141414] px-3 py-2 text-zinc-100 outline-none ring-[#00ff9f]/40 focus:ring-2"
+        >
+          {LISTING_KINDS.map((kind) => (
+            <option key={kind} value={kind}>
+              {kind}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
         <label htmlFor="category" className="mb-1 block text-sm font-medium text-zinc-300">
           Category
         </label>
@@ -118,14 +161,11 @@ export function SubmitToolForm() {
           id="category"
           name="category"
           required
-          defaultValue={
-            snap?.category && CATEGORIES.includes(snap.category as (typeof CATEGORIES)[number])
-              ? snap.category
-              : CATEGORIES[0]
-          }
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
           className="w-full rounded-lg border border-zinc-700 bg-[#141414] px-3 py-2 text-zinc-100 outline-none ring-[#00ff9f]/40 focus:ring-2"
         >
-          {CATEGORIES.map((c) => (
+          {categoryOptions.map((c) => (
             <option key={c} value={c}>
               {c}
             </option>

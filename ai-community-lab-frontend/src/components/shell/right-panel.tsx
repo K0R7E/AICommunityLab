@@ -8,9 +8,10 @@ async function getTrending() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("posts")
-    .select("id, title, rating_avg, rating_count")
+    .select("id, title, rating_avg, rating_count, leaderboard_score, bayes_score")
     .eq("moderation_status", POST_MODERATION_PUBLISHED)
-    .order("rating_avg", { ascending: false, nullsFirst: false })
+    .order("leaderboard_score", { ascending: false, nullsFirst: false })
+    .order("bayes_score", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
     .limit(5);
   return data ?? [];

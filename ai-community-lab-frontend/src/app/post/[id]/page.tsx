@@ -135,10 +135,16 @@ export default async function PostDetailPage({ params }: Props) {
                 url: post.url,
                 description: post.description,
                 categories: post.categories ?? [],
+                post_kind: post.post_kind as "AI Engine" | "AI Agent" | undefined,
               }}
             />
           ) : null}
           <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-zinc-500">
+            {post.post_kind ? (
+              <span className="rounded-md border border-[#00ff9f]/30 bg-[#00ff9f]/10 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-[#00ff9f]">
+                {post.post_kind}
+              </span>
+            ) : null}
             <PostCategoryBadges categories={post.categories ?? []} />
             <span className="inline-flex items-center gap-1">
               <MessageCircle className="size-4" aria-hidden />

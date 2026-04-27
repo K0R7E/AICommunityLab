@@ -123,7 +123,6 @@ export function RatingControl({
         post_id: postId,
         user_id: user.id,
         value: next,
-        updated_at: new Date().toISOString(),
       },
       { onConflict: "user_id,post_id" },
     );

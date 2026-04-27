@@ -5,7 +5,11 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserIsAdmin } from "@/lib/admin";
 import { canonicalToolUrl } from "@/lib/canonical-tool-url";
 import { normalizeUserText } from "@/lib/normalize-user-text";
-import { parseCategoriesFromFormData, parseOptionalPostUrl } from "@/lib/post-form";
+import {
+  parseCategoriesFromFormData,
+  parseListingKindFromFormData,
+  parseOptionalPostUrl,
+} from "@/lib/post-form";
 
 function forbidden(): { error: string } {
   return { error: "Not allowed." };
@@ -109,7 +113,12 @@ export async function adminUpdatePost(
   const title = normalizeUserText(String(formData.get("title") ?? ""));
   const description = normalizeUserText(String(formData.get("description") ?? ""));
 
-  const categoriesParsed = parseCategoriesFromFormData(formData);
+  const kindParsed = parseListingKindFromFormData(formData);
+  if (!kindParsed.ok) {
+    return { error: kindParsed.error };
+  }
+
+  const categoriesParsed = parseCategoriesFromFormData(formData, kindParsed.kind);
   if (!categoriesParsed.ok) {
     return { error: categoriesParsed.error };
   }
@@ -141,6 +150,7 @@ export async function adminUpdatePost(
       url: urlParsed.url,
       url_canonical: urlCanonical,
       description: description || null,
+      post_kind: kindParsed.kind,
       categories: categoriesParsed.categories,
     })
     .eq("id", postId);

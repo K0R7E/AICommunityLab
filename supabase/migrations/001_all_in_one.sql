@@ -1605,3 +1605,444 @@ grant execute on function public.search_published_posts (text, text[], timestamp
 
 -- ===== END 022_feed_search_performance_indexes_and_rpc_optimization.sql =====
 
+
+-- ===== BEGIN 023_arena_like_ranking.sql =====
+
+-- Arena-like ranking without UI changes:
+-- - keeps existing 1-5 star voting UX
+-- - adds robust leaderboard scoring fields to posts
+-- - logs rating events for time-window momentum
+-- - enforces server-side updated_at + lightweight write throttling
+
+alter table public.posts
+  add column if not exists bayes_score double precision not null default 0,
+  add column if not exists hot_score double precision not null default 0,
+  add column if not exists leaderboard_score double precision not null default 0,
+  add column if not exists ratings_last_7d integer not null default 0,
+  add column if not exists ratings_last_30d integer not null default 0;
+
+create table if not exists public.rating_events (
+  id uuid primary key default gen_random_uuid(),
+  post_id uuid not null references public.posts (id) on delete cascade,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  action text not null check (action in ('insert', 'update', 'delete', 'seed')),
+  value_before smallint check (value_before is null or (value_before >= 1 and value_before <= 5)),
+  value_after smallint check (value_after is null or (value_after >= 1 and value_after <= 5)),
+  created_at timestamptz not null default now()
+);
+
+create index if not exists rating_events_post_created_idx
+  on public.rating_events (post_id, created_at desc);
+
+create index if not exists rating_events_user_created_idx
+  on public.rating_events (user_id, created_at desc);
+
+alter table public.rating_events enable row level security;
+
+drop policy if exists "Users read own rating events" on public.rating_events;
+create policy "Users read own rating events"
+  on public.rating_events
+  for select
+  using (auth.uid() = user_id);
+
+revoke insert, update, delete on table public.rating_events from anon, authenticated;
+grant select on table public.rating_events to authenticated;
+
+create or replace function public.set_rating_updated_at ()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  new.updated_at := now();
+  return new;
+end;
+$$;
+
+drop trigger if exists tr_ratings_set_updated_at on public.ratings;
+create trigger tr_ratings_set_updated_at
+  before insert or update on public.ratings
+  for each row
+  execute function public.set_rating_updated_at ();
+
+create or replace function public.enforce_rating_write_limits ()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  writes_last_minute integer;
+begin
+  if tg_op = 'UPDATE'
+     and old.updated_at > now() - interval '3 seconds'
+     and old.value is distinct from new.value then
+    raise exception 'Too many rating updates, please wait a few seconds.'
+      using errcode = '22023';
+  end if;
+
+  select count(*)::integer
+  into writes_last_minute
+  from public.ratings r
+  where r.user_id = new.user_id
+    and r.updated_at >= now() - interval '1 minute';
+
+  if writes_last_minute >= 40 then
+    raise exception 'Rating limit reached, please slow down.'
+      using errcode = '22023';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists tr_ratings_enforce_write_limits on public.ratings;
+create trigger tr_ratings_enforce_write_limits
+  before insert or update on public.ratings
+  for each row
+  execute function public.enforce_rating_write_limits ();
+
+create or replace function public.log_rating_event ()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if tg_op = 'INSERT' then
+    insert into public.rating_events (post_id, user_id, action, value_before, value_after)
+    values (new.post_id, new.user_id, 'insert', null, new.value);
+    return new;
+  elsif tg_op = 'UPDATE' then
+    if old.value is distinct from new.value then
+      insert into public.rating_events (post_id, user_id, action, value_before, value_after)
+      values (new.post_id, new.user_id, 'update', old.value, new.value);
+    end if;
+    return new;
+  elsif tg_op = 'DELETE' then
+    insert into public.rating_events (post_id, user_id, action, value_before, value_after)
+    values (old.post_id, old.user_id, 'delete', old.value, null);
+    return old;
+  end if;
+
+  return null;
+end;
+$$;
+
+drop trigger if exists tr_ratings_log_event on public.ratings;
+create trigger tr_ratings_log_event
+  after insert or update or delete on public.ratings
+  for each row
+  execute function public.log_rating_event ();
+
+create or replace function public.recompute_post_leaderboard_metrics (p_post_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_count integer;
+  v_sum integer;
+  recent_7d integer;
+  recent_30d integer;
+  prior_mean double precision := 3.5;
+  prior_weight double precision := 8.0;
+  bayes double precision;
+  hot double precision;
+  final_score double precision;
+begin
+  select p.rating_sum, p.rating_count
+  into v_sum, v_count
+  from public.posts p
+  where p.id = p_post_id;
+
+  if not found then
+    return;
+  end if;
+
+  select count(*)::integer
+  into recent_7d
+  from public.rating_events re
+  where re.post_id = p_post_id
+    and re.created_at >= now() - interval '7 days';
+
+  select count(*)::integer
+  into recent_30d
+  from public.rating_events re
+  where re.post_id = p_post_id
+    and re.created_at >= now() - interval '30 days';
+
+  if v_count > 0 then
+    bayes := (v_sum::double precision + (prior_mean * prior_weight))
+      / (v_count::double precision + prior_weight);
+  else
+    bayes := prior_mean;
+  end if;
+
+  hot := bayes
+    + (ln(1 + greatest(recent_7d, 0)) * 0.18)
+    + (ln(1 + greatest(recent_30d, 0)) * 0.08);
+
+  final_score := hot + (least(greatest(v_count, 0), 1000)::double precision * 0.0015);
+
+  update public.posts
+  set
+    bayes_score = bayes,
+    hot_score = hot,
+    leaderboard_score = final_score,
+    ratings_last_7d = recent_7d,
+    ratings_last_30d = recent_30d
+  where id = p_post_id;
+end;
+$$;
+
+create or replace function public.refresh_post_leaderboard_from_rating ()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  affected_post_id uuid;
+begin
+  if tg_op = 'DELETE' then
+    affected_post_id := old.post_id;
+  else
+    affected_post_id := new.post_id;
+  end if;
+
+  perform public.recompute_post_leaderboard_metrics(affected_post_id);
+  return coalesce(new, old);
+end;
+$$;
+
+drop trigger if exists tr_ratings_refresh_post_leaderboard on public.ratings;
+create trigger tr_ratings_refresh_post_leaderboard
+  after insert or update or delete on public.ratings
+  for each row
+  execute function public.refresh_post_leaderboard_from_rating ();
+
+insert into public.rating_events (post_id, user_id, action, value_before, value_after, created_at)
+select r.post_id, r.user_id, 'seed', null, r.value, coalesce(r.updated_at, r.created_at, now())
+from public.ratings r
+where not exists (
+  select 1
+  from public.rating_events re
+  where re.action = 'seed'
+    and re.post_id = r.post_id
+    and re.user_id = r.user_id
+);
+
+do $$
+declare
+  p record;
+begin
+  for p in select id from public.posts loop
+    perform public.recompute_post_leaderboard_metrics(p.id);
+  end loop;
+end;
+$$;
+
+create index if not exists posts_moderation_leaderboard_idx
+  on public.posts (moderation_status, leaderboard_score desc, created_at desc, id desc);
+
+create index if not exists posts_leaderboard_idx
+  on public.posts (leaderboard_score desc, created_at desc, id desc);
+
+-- ===== END 023_arena_like_ranking.sql =====
+
+
+-- ===== BEGIN 024_agent_engine_split_and_catalog_seed.sql =====
+
+-- Distinguish AI Engines vs AI Agents and enforce category compatibility.
+
+alter table public.posts
+  add column if not exists post_kind text;
+
+update public.posts
+set post_kind = case
+  when coalesce(categories[1], '') in (
+    'Automation',
+    'Marketing',
+    'Coding Agent',
+    'Research Agent',
+    'Writing Agent',
+    'Data Analysis Agent',
+    'Customer Support Agent',
+    'Sales Agent',
+    'Marketing Agent',
+    'Automation Agent',
+    'DevOps Agent',
+    'Multi-Agent Platform'
+  ) then 'AI Agent'
+  else 'AI Engine'
+end
+where post_kind is null;
+
+alter table public.posts
+  alter column post_kind set default 'AI Engine',
+  alter column post_kind set not null;
+
+alter table public.posts
+  drop constraint if exists posts_post_kind_check;
+
+alter table public.posts
+  add constraint posts_post_kind_check check (post_kind in ('AI Engine', 'AI Agent'));
+
+create or replace function public.validate_post_kind_categories ()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+declare
+  allowed text[];
+begin
+  if new.post_kind = 'AI Agent' then
+    allowed := array[
+      'Coding Agent',
+      'Research Agent',
+      'Writing Agent',
+      'Data Analysis Agent',
+      'Customer Support Agent',
+      'Sales Agent',
+      'Marketing Agent',
+      'Automation Agent',
+      'DevOps Agent',
+      'Multi-Agent Platform'
+    ];
+  else
+    allowed := array[
+      'General LLM',
+      'Reasoning Model',
+      'Coding Model',
+      'Image Generation Model',
+      'Video Generation Model',
+      'Speech / Audio Model',
+      'Embedding Model',
+      'Reranker Model',
+      'Multimodal Model',
+      'Open-Source Model'
+    ];
+  end if;
+
+  if coalesce(array_length(new.categories, 1), 0) < 1 then
+    raise exception 'At least one category is required.' using errcode = '22023';
+  end if;
+
+  if exists (
+    select 1
+    from unnest(new.categories) c
+    where not (c = any (allowed))
+  ) then
+    raise exception 'Category does not match post kind.' using errcode = '22023';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists tr_posts_validate_post_kind_categories on public.posts;
+create trigger tr_posts_validate_post_kind_categories
+  before insert or update on public.posts
+  for each row
+  execute function public.validate_post_kind_categories ();
+
+-- Map legacy broad categories to the new split taxonomy.
+update public.posts
+set categories = array[
+  case
+    when coalesce(categories[1], '') = 'AI Tools' then 'General LLM'
+    when coalesce(categories[1], '') = 'Automation' and post_kind = 'AI Agent' then 'Automation Agent'
+    when coalesce(categories[1], '') = 'Automation' then 'General LLM'
+    when coalesce(categories[1], '') = 'Marketing' and post_kind = 'AI Agent' then 'Marketing Agent'
+    when coalesce(categories[1], '') = 'Marketing' then 'General LLM'
+    when coalesce(categories[1], '') = 'Coding' and post_kind = 'AI Agent' then 'Coding Agent'
+    when coalesce(categories[1], '') = 'Coding' then 'Coding Model'
+    else coalesce(categories[1], 'General LLM')
+  end
+];
+
+-- Seed a starter catalog of known engines and agents using the earliest admin account.
+with owner as (
+  select pr.id
+  from public.profiles pr
+  where pr.is_admin = true
+  order by pr.created_at asc
+  limit 1
+),
+seed_rows(title, url, description, post_kind, category) as (
+  values
+    ('OpenAI GPT-4o', 'https://openai.com/index/hello-gpt-4o/', 'OpenAI multimodal flagship model family.', 'AI Engine', 'Multimodal Model'),
+    ('OpenAI o3', 'https://openai.com/index/introducing-o3-and-o4-mini/', 'OpenAI reasoning-focused model line.', 'AI Engine', 'Reasoning Model'),
+    ('Anthropic Claude 3.7 Sonnet', 'https://www.anthropic.com/claude', 'General-purpose Claude model line for chat, coding, and analysis.', 'AI Engine', 'General LLM'),
+    ('Google Gemini 2.5 Pro', 'https://ai.google.dev/', 'Google Gemini model family for reasoning and multimodal workloads.', 'AI Engine', 'Multimodal Model'),
+    ('xAI Grok 3', 'https://x.ai/', 'xAI frontier model family.', 'AI Engine', 'General LLM'),
+    ('Meta Llama 4', 'https://ai.meta.com/llama/', 'Meta open model family for text and multimodal tasks.', 'AI Engine', 'Open-Source Model'),
+    ('Mistral Large', 'https://mistral.ai/', 'Mistral flagship large language model line.', 'AI Engine', 'General LLM'),
+    ('DeepSeek V3', 'https://www.deepseek.com/', 'DeepSeek general model family.', 'AI Engine', 'General LLM'),
+    ('Cohere Command R+', 'https://cohere.com/', 'Cohere enterprise command model line.', 'AI Engine', 'General LLM'),
+    ('Qwen 2.5', 'https://qwenlm.github.io/', 'Alibaba Qwen model family.', 'AI Engine', 'Open-Source Model'),
+    ('AI21 Jamba', 'https://www.ai21.com/', 'AI21 hybrid architecture model line.', 'AI Engine', 'General LLM'),
+    ('Stability SDXL', 'https://stability.ai/', 'Image generation model family from Stability AI.', 'AI Engine', 'Image Generation Model'),
+    ('Midjourney Model', 'https://www.midjourney.com/', 'Production image generation model family.', 'AI Engine', 'Image Generation Model'),
+    ('ElevenLabs Speech', 'https://elevenlabs.io/', 'Speech generation and voice models.', 'AI Engine', 'Speech / Audio Model'),
+    ('OpenAI text-embedding-3-large', 'https://platform.openai.com/docs/guides/embeddings', 'Embedding model for semantic search and retrieval.', 'AI Engine', 'Embedding Model'),
+    ('Voyage Embeddings', 'https://www.voyageai.com/', 'Embedding and reranker model family.', 'AI Engine', 'Embedding Model'),
+    ('Cohere Rerank', 'https://cohere.com/rerank', 'Neural reranking model family.', 'AI Engine', 'Reranker Model'),
+    ('Runway Gen-3', 'https://runwayml.com/', 'Video generation model family.', 'AI Engine', 'Video Generation Model'),
+    ('Pika Video Model', 'https://pika.art/', 'Video generation model family.', 'AI Engine', 'Video Generation Model'),
+    ('Whisper', 'https://openai.com/research/whisper', 'Open-source speech-to-text model family.', 'AI Engine', 'Speech / Audio Model'),
+    ('OpenAI Operator', 'https://openai.com/index/introducing-operator/', 'Autonomous task agent for browser and workflow tasks.', 'AI Agent', 'Automation Agent'),
+    ('Anthropic Claude Code', 'https://www.anthropic.com/claude-code', 'Coding-focused AI agent in terminal/editor workflows.', 'AI Agent', 'Coding Agent'),
+    ('Devin', 'https://www.cognition.ai/', 'Software engineering agent from Cognition.', 'AI Agent', 'Coding Agent'),
+    ('Cursor Agent', 'https://www.cursor.com/', 'IDE-native coding and refactoring agent.', 'AI Agent', 'Coding Agent'),
+    ('GitHub Copilot Agent Mode', 'https://github.com/features/copilot', 'Copilot autonomous coding and issue-resolution flows.', 'AI Agent', 'Coding Agent'),
+    ('OpenHands', 'https://github.com/All-Hands-AI/OpenHands', 'Open-source software engineering agent.', 'AI Agent', 'Coding Agent'),
+    ('AutoGen', 'https://github.com/microsoft/autogen', 'Framework for orchestrating multiple collaborative agents.', 'AI Agent', 'Multi-Agent Platform'),
+    ('CrewAI', 'https://www.crewai.com/', 'Agent orchestration framework for role-based task execution.', 'AI Agent', 'Multi-Agent Platform'),
+    ('LangGraph Agents', 'https://www.langchain.com/langgraph', 'Stateful graph-based multi-agent orchestration.', 'AI Agent', 'Multi-Agent Platform'),
+    ('Perplexity Deep Research', 'https://www.perplexity.ai/', 'Web-grounded research agent workflow.', 'AI Agent', 'Research Agent'),
+    ('Genspark AI Agent', 'https://www.genspark.ai/', 'General-purpose research and synthesis agent.', 'AI Agent', 'Research Agent'),
+    ('Harvey AI', 'https://www.harvey.ai/', 'Domain-specific legal workflow agent.', 'AI Agent', 'Writing Agent'),
+    ('Jasper Marketing Agent', 'https://www.jasper.ai/', 'Marketing strategy and content automation agent.', 'AI Agent', 'Marketing Agent'),
+    ('Intercom Fin', 'https://www.intercom.com/fin', 'Customer support automation agent.', 'AI Agent', 'Customer Support Agent'),
+    ('Ada Support Agent', 'https://www.ada.cx/', 'Automated customer support agent platform.', 'AI Agent', 'Customer Support Agent'),
+    ('Salesforce Agentforce', 'https://www.salesforce.com/agentforce/', 'Enterprise sales and support agent platform.', 'AI Agent', 'Sales Agent'),
+    ('Clay Agent Workflows', 'https://www.clay.com/', 'Outbound prospecting and sales automation agents.', 'AI Agent', 'Sales Agent'),
+    ('Zapier AI Agents', 'https://zapier.com/ai', 'Automation agents that execute app workflows.', 'AI Agent', 'Automation Agent'),
+    ('n8n AI Agent', 'https://n8n.io/', 'Workflow automation agent in no-code pipelines.', 'AI Agent', 'Automation Agent'),
+    ('Replit Agent', 'https://replit.com/', 'Build-and-deploy coding agent in cloud IDE workflows.', 'AI Agent', 'DevOps Agent'),
+    ('AWS Q Developer Agent', 'https://aws.amazon.com/q/developer/', 'Developer and cloud operations assistant agent.', 'AI Agent', 'DevOps Agent')
+),
+normalized as (
+  select
+    o.id as user_id,
+    s.title,
+    s.url,
+    s.url as url_canonical,
+    s.description,
+    s.post_kind,
+    s.category
+  from owner o
+  cross join seed_rows s
+)
+insert into public.posts (user_id, title, url, url_canonical, description, categories, post_kind)
+select
+  n.user_id,
+  n.title,
+  n.url,
+  n.url_canonical,
+  n.description,
+  array[n.category]::text[],
+  n.post_kind
+from normalized n
+where not exists (
+  select 1
+  from public.posts p
+  where lower(p.title) = lower(n.title)
+     or (p.url_canonical is not null and p.url_canonical = n.url_canonical)
+);
+
+-- ===== END 024_agent_engine_split_and_catalog_seed.sql =====

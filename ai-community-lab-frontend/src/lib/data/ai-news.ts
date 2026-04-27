@@ -232,9 +232,10 @@ async function refreshDataset(): Promise<AiNewsDataset> {
 }
 
 export async function getAiNewsDataset(): Promise<AiNewsDataset> {
-  const hasFreshCache = cacheState.dataset && Date.now() < cacheState.expiresAt;
+  const cachedDataset = cacheState.dataset;
+  const hasFreshCache = cachedDataset !== null && Date.now() < cacheState.expiresAt;
   if (hasFreshCache) {
-    return cacheState.dataset;
+    return cachedDataset;
   }
 
   if (!cacheState.inFlight) {

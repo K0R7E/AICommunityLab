@@ -166,3 +166,85 @@ html[data-theme="light"] select,
 html[data-theme="light"] button {
   color-scheme: light;
 }
+
+/* ---------------------------------------------------------------------------
+ * Futuristic feed background
+ * Subtle enough for readability in both dark and light themes.
+ * ------------------------------------------------------------------------- */
+
+@keyframes futuristicGlowDrift {
+  0%,
+  100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(0, 1.5rem, 0) scale(1.04); }
+}
+
+@keyframes futuristicScan {
+  0% { transform: translateX(-25%); }
+  100% { transform: translateX(25%); }
+}
+
+.futuristic-bg {
+  --futuristic-line: rgb(0 255 159 / 0.12);
+  --futuristic-grid: rgb(255 255 255 / 0.05);
+  --futuristic-glow-a: rgb(0 255 159 / 0.2);
+  --futuristic-glow-b: rgb(0 164 255 / 0.18);
+  --futuristic-vignette: rgb(15 15 15 / 0.8);
+  mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
+}
+
+.futuristic-bg__glow {
+  position: absolute;
+  width: 34rem;
+  height: 34rem;
+  filter: blur(70px);
+  border-radius: 999px;
+  animation: futuristicGlowDrift 10s ease-in-out infinite;
+}
+
+.futuristic-bg__glow--left {
+  left: -10rem;
+  top: -11rem;
+  background:
+    radial-gradient(circle at center, var(--futuristic-glow-a) 0%, transparent 68%);
+}
+
+.futuristic-bg__glow--right {
+  right: -12rem;
+  top: -13rem;
+  animation-delay: -5s;
+  background:
+    radial-gradient(circle at center, var(--futuristic-glow-b) 0%, transparent 72%);
+}
+
+.futuristic-bg__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--futuristic-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--futuristic-grid) 1px, transparent 1px),
+    linear-gradient(180deg, transparent, var(--futuristic-vignette));
+  background-size: 34px 34px, 34px 34px, 100% 100%;
+  background-position: center top, center top, center top;
+}
+
+.futuristic-bg__scanline {
+  position: absolute;
+  inset: 0;
+  opacity: 0.75;
+  background:
+    linear-gradient(
+      120deg,
+      transparent 20%,
+      var(--futuristic-line) 48%,
+      transparent 75%
+    );
+  animation: futuristicScan 12s linear infinite;
+}
+
+html[data-theme="light"] .futuristic-bg {
+  --futuristic-line: rgb(16 185 129 / 0.22);
+  --futuristic-grid: rgb(39 39 42 / 0.08);
+  --futuristic-glow-a: rgb(16 185 129 / 0.16);
+  --futuristic-glow-b: rgb(20 184 166 / 0.14);
+  --futuristic-vignette: rgb(247 247 248 / 0.8);
+}

@@ -11,9 +11,9 @@ const REQUEST_TIMEOUT_MS = 10_000;
 const FORCE_SINGLE_API_CALL = true;
 
 const AI_NEWS_QUERIES = [
-  '("artificial intelligence" OR AI OR "generative AI" OR "machine learning" OR "large language model" OR LLM OR OpenAI OR Anthropic OR Claude OR Gemini OR "Google DeepMind" OR DeepMind OR Mistral OR xAI OR Grok OR Copilot)',
-  '"artificial intelligence" OR AI OR "generative AI" OR "machine learning" OR "large language model" OR LLM OR OpenAI OR Anthropic OR Claude OR Gemini OR "Google DeepMind" OR DeepMind OR Mistral OR xAI OR Grok OR Copilot',
-  "AI OR artificial intelligence OR machine learning OR generative AI OR LLM OR OpenAI OR Anthropic OR Gemini OR DeepMind OR Mistral OR xAI",
+  '("artificial intelligence" OR "generative AI" OR "machine learning" OR LLM OR OpenAI OR Anthropic OR Claude OR Gemini OR DeepMind OR Mistral OR xAI OR Copilot)',
+  '"artificial intelligence" OR "generative AI" OR "machine learning" OR LLM OR OpenAI OR Anthropic OR Claude OR Gemini OR DeepMind',
+  '"artificial intelligence" OR AI OR LLM OR OpenAI OR Anthropic OR Gemini OR DeepMind',
 ] as const;
 
 export type AiNewsArticle = {

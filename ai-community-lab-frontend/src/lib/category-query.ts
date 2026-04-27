@@ -1,4 +1,4 @@
-import { CATEGORIES } from "@/lib/constants";
+import { CATEGORIES, isListingKind, type ListingKind } from "@/lib/constants";
 
 function normalizeCategoryLabels(labels: string[]): string[] {
   const seen = new Set<string>();
@@ -26,4 +26,18 @@ export function categoryFilterFromSearchParams(sp: {
 /** Same rules for client-side `URLSearchParams` (multiple `category=` keys). */
 export function categoryFilterFromUrlSearchParams(sp: URLSearchParams): string[] {
   return normalizeCategoryLabels(sp.getAll("category"));
+}
+
+export function listingKindFromSearchParams(sp: {
+  kind?: string | undefined;
+}): ListingKind | null {
+  const raw = sp.kind?.trim();
+  if (!raw) return null;
+  return isListingKind(raw) ? raw : null;
+}
+
+export function listingKindFromUrlSearchParams(sp: URLSearchParams): ListingKind | null {
+  const raw = sp.get("kind")?.trim();
+  if (!raw) return null;
+  return isListingKind(raw) ? raw : null;
 }

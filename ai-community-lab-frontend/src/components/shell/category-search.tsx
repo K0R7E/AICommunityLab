@@ -4,8 +4,11 @@ import Link from "next/link";
 import { FolderOpen, ListX, Search } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import { CATEGORIES } from "@/lib/constants";
-import { categoryFilterFromUrlSearchParams } from "@/lib/category-query";
+import { CATEGORIES_BY_KIND, LISTING_KINDS, type ListingKind } from "@/lib/constants";
+import {
+  categoryFilterFromUrlSearchParams,
+  listingKindFromUrlSearchParams,
+} from "@/lib/category-query";
 
 function toggleCategoryHref(label: string, sp: URLSearchParams): string {
   const p = new URLSearchParams(sp.toString());
@@ -35,23 +38,55 @@ function clearCategoriesHref(sp: URLSearchParams): string {
 export function CategorySearch() {
   const sp = useSearchParams();
   const spKey = sp.toString();
+  const listingKind = useMemo(
+    () => listingKindFromUrlSearchParams(new URLSearchParams(spKey)),
+    [spKey],
+  );
   const active = useMemo(
     () => categoryFilterFromUrlSearchParams(new URLSearchParams(spKey)),
     [spKey],
   );
   const [filter, setFilter] = useState("");
+  const effectiveKind: ListingKind = listingKind ?? "AI Engine";
 
   const filtered = useMemo(() => {
+    const source = [...CATEGORIES_BY_KIND[effectiveKind]];
     const t = filter.trim().toLowerCase();
-    if (!t) return [...CATEGORIES];
-    return CATEGORIES.filter((c) => c.toLowerCase().includes(t));
-  }, [filter]);
+    if (!t) return source;
+    return source.filter((c) => c.toLowerCase().includes(t));
+  }, [effectiveKind, filter]);
+
+  const kindHref = (kind: ListingKind): string => {
+    const p = new URLSearchParams(sp.toString());
+    p.set("kind", kind);
+    p.delete("category");
+    p.delete("cursor");
+    const qs = p.toString();
+    return qs ? `/?${qs}` : "/";
+  };
 
   return (
     <div>
       <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
         Categories
       </p>
+      <div className="mb-2 px-3">
+        <div className="inline-flex w-full rounded-lg border border-zinc-800 bg-[#141414] p-0.5">
+          {LISTING_KINDS.map((kind) => (
+            <Link
+              key={kind}
+              href={kindHref(kind)}
+              className={`flex-1 rounded-md px-3 py-1.5 text-center text-xs font-medium transition ${
+                effectiveKind === kind
+                  ? "bg-zinc-800 text-[#00ff9f]"
+                  : "text-zinc-400 hover:text-zinc-200"
+              }`}
+            >
+              {kind}
+            </Link>
+          ))}
+        </div>
+      </div>
       <p className="mb-2 px-3 text-xs text-zinc-600">
         Select several to show tools in any of them.
       </p>

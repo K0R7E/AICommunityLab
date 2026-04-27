@@ -2,18 +2,20 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { categoryFilterFromUrlSearchParams } from "@/lib/category-query";
+import { categoryFilterFromUrlSearchParams, listingKindFromUrlSearchParams } from "@/lib/category-query";
 
 export function FeedSortBar() {
   const sp = useSearchParams();
   const sort = sp.get("sort") === "top" ? "top" : "new";
   const categories = categoryFilterFromUrlSearchParams(sp);
+  const listingKind = listingKindFromUrlSearchParams(sp);
   const q = sp.get("q");
 
   const newHref = (() => {
     const p = new URLSearchParams();
     p.set("sort", "new");
     for (const c of categories) p.append("category", c);
+    if (listingKind) p.set("kind", listingKind);
     if (q) p.set("q", q);
     return `/?${p.toString()}`;
   })();
@@ -21,6 +23,7 @@ export function FeedSortBar() {
     const p = new URLSearchParams();
     p.set("sort", "top");
     for (const c of categories) p.append("category", c);
+    if (listingKind) p.set("kind", listingKind);
     if (q) p.set("q", q);
     return `/?${p.toString()}`;
   })();
@@ -28,6 +31,7 @@ export function FeedSortBar() {
   const clearCategoryHref = (() => {
     const p = new URLSearchParams();
     if (sort === "top") p.set("sort", "top");
+    if (listingKind) p.set("kind", listingKind);
     if (q) p.set("q", q);
     const qs = p.toString();
     return qs ? `/?${qs}` : "/";

@@ -1,10 +1,11 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { ToolCard } from "@/components/feed/tool-card";
+import { FeedList } from "@/components/feed/feed-list";
 import { FeedSearch } from "@/components/shell/feed-search";
 import { FeedSortBar } from "@/components/shell/feed-sort";
-import { categoryFilterFromSearchParams } from "@/lib/category-query";
+import { categoryFilterFromSearchParams, listingKindFromSearchParams } from "@/lib/category-query";
 import { getFeedPosts } from "@/lib/data/posts";
+import type { ListingKind } from "@/lib/constants";
 
 function FeedSkeleton() {
   return (
@@ -29,17 +30,20 @@ function FeedSkeleton() {
 async function Feed({
   sort,
   categoryLabels,
+  listingKind,
   searchQuery,
   cursor,
 }: {
   sort: "new" | "top";
   categoryLabels: string[];
+  listingKind: ListingKind | null;
   searchQuery: string | null;
   cursor: string | null;
 }) {
   const { posts, myRatings, userId, nextCursor } = await getFeedPosts({
     sort,
     categoryLabels,
+    listingKind,
     searchQuery,
     cursor,
   });
@@ -61,35 +65,20 @@ async function Feed({
     );
   }
 
+  const ratings: Record<string, number> = {};
+  for (const [postId, value] of myRatings.entries()) ratings[postId] = value;
+
   return (
-    <div className="flex flex-col gap-4">
-      {posts.map((post) => (
-        <ToolCard
-          key={post.id}
-          post={post}
-          myRating={myRatings.get(post.id) ?? null}
-          canVote={canVote}
-        />
-      ))}
-      {nextCursor ? (
-        <div className="pt-2">
-          <Link
-            href={(() => {
-              const p = new URLSearchParams();
-              if (sort === "top") p.set("sort", "top");
-              for (const c of categoryLabels) p.append("category", c);
-              if (searchQuery?.trim()) p.set("q", searchQuery.trim());
-              p.set("cursor", nextCursor);
-              const qs = p.toString();
-              return qs ? `/?${qs}` : "/";
-            })()}
-            className="inline-flex items-center justify-center rounded-lg border border-zinc-700 bg-[#161616] px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-[#00ff9f]/45 hover:text-[#00ff9f]"
-          >
-            Load more
-          </Link>
-        </div>
-      ) : null}
-    </div>
+    <FeedList
+      initialPosts={posts}
+      initialMyRatings={ratings}
+      initialNextCursor={nextCursor}
+      sort={sort}
+      categoryLabels={categoryLabels}
+      listingKind={listingKind}
+      searchQuery={searchQuery}
+      canVote={canVote}
+    />
   );
 }
 
@@ -99,6 +88,7 @@ export default async function HomePage({
   searchParams: Promise<{
     sort?: string;
     category?: string | string[];
+    kind?: string;
     q?: string;
     cursor?: string;
   }>;
@@ -106,6 +96,7 @@ export default async function HomePage({
   const sp = await searchParams;
   const sort = sp.sort === "top" ? "top" : "new";
   const categoryLabels = categoryFilterFromSearchParams(sp);
+  const listingKind = listingKindFromSearchParams(sp);
   const q = sp.q?.trim() || null;
   const cursor = sp.cursor?.trim() || null;
   const categorySummary =
@@ -114,6 +105,7 @@ export default async function HomePage({
   const clearCategoryHref = (() => {
     const p = new URLSearchParams();
     if (sort === "top") p.set("sort", "top");
+    if (listingKind) p.set("kind", listingKind);
     if (q) p.set("q", q);
     const qs = p.toString();
     return qs ? `/?${qs}` : "/";
@@ -133,9 +125,8 @@ export default async function HomePage({
           <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-400">
             <span>
               Results for &quot;{q}&quot;
-              {categorySummary ? (
-                <span className="text-zinc-500"> · {categorySummary}</span>
-              ) : null}
+              {listingKind ? <span className="text-zinc-500"> · {listingKind}</span> : null}
+              {categorySummary ? <span className="text-zinc-500"> · {categorySummary}</span> : null}
             </span>
             {categorySummary ? (
               <Link
@@ -148,7 +139,10 @@ export default async function HomePage({
           </p>
         ) : categorySummary ? (
           <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-500">
-            <span>Categories: {categorySummary}</span>
+            <span>
+              {listingKind ? `Type: ${listingKind} · ` : ""}
+              Categories: {categorySummary}
+            </span>
             <Link
               href={clearCategoryHref}
               className="rounded-md border border-zinc-600 px-2 py-0.5 text-xs font-medium text-[#00ff9f] transition hover:bg-zinc-800/80"
@@ -165,7 +159,13 @@ export default async function HomePage({
         <FeedSortBar />
       </Suspense>
       <Suspense fallback={<FeedSkeleton />}>
-        <Feed sort={sort} categoryLabels={categoryLabels} searchQuery={q} cursor={cursor} />
+        <Feed
+          sort={sort}
+          categoryLabels={categoryLabels}
+          listingKind={listingKind}
+          searchQuery={q}
+          cursor={cursor}
+        />
       </Suspense>
     </div>
   );

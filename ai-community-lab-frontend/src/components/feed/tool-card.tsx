@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { ExternalLink, MessageCircle } from "lucide-react";
 import { RatingControl } from "@/components/vote/rating-control";

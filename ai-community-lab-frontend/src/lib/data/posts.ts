@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { POST_MODERATION_PUBLISHED } from "@/lib/moderation";
 import type { PostRow } from "@/lib/types/post";
+import type { ListingKind } from "@/lib/constants";
 
 const DEFAULT_FEED_PAGE_SIZE = 20;
 const MAX_FEED_PAGE_SIZE = 50;
@@ -89,6 +90,7 @@ export async function getFeedPosts(options: {
   sort: "new" | "top";
   /** Show posts that have at least one of these categories (OR). */
   categoryLabels: string[];
+  listingKind?: ListingKind | null;
   searchQuery: string | null;
   cursor?: string | null;
   pageSize?: number;
@@ -131,6 +133,9 @@ export async function getFeedPosts(options: {
       .eq("moderation_status", POST_MODERATION_PUBLISHED);
     if (options.categoryLabels.length > 0) {
       q = q.overlaps("categories", options.categoryLabels);
+    }
+    if (options.listingKind) {
+      q = q.eq("post_kind", options.listingKind);
     }
     if (options.sort === "top") {
       q = q
@@ -184,6 +189,9 @@ export async function getFeedPosts(options: {
     .eq("moderation_status", POST_MODERATION_PUBLISHED);
   if (options.categoryLabels.length > 0) {
     q = q.overlaps("categories", options.categoryLabels);
+  }
+  if (options.listingKind) {
+    q = q.eq("post_kind", options.listingKind);
   }
   if (options.sort === "new" && cursor) {
     q = q.or(`created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},id.lt.${cursor.id})`);

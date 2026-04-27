@@ -5,6 +5,7 @@ import { FeedSearch } from "@/components/shell/feed-search";
 import { FeedSortBar } from "@/components/shell/feed-sort";
 import { categoryFilterFromSearchParams, listingKindFromSearchParams } from "@/lib/category-query";
 import { getFeedPosts } from "@/lib/data/posts";
+import { getAiNewsPreview } from "@/lib/data/ai-news";
 import type { ListingKind } from "@/lib/constants";
 
 function FeedSkeleton() {
@@ -90,6 +91,68 @@ async function Feed({
   );
 }
 
+function NewsPreviewSkeleton() {
+  return (
+    <section className="mb-8 rounded-xl border border-zinc-800/80 bg-[#1a1a1a] p-4">
+      <div className="mb-4 h-5 w-32 animate-pulse rounded bg-zinc-800" />
+      <div className="flex flex-col gap-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div
+            key={i}
+            className="rounded-lg border border-zinc-800 bg-[#141414] p-3"
+          >
+            <div className="h-4 w-3/4 animate-pulse rounded bg-zinc-800" />
+            <div className="mt-2 h-3 w-full animate-pulse rounded bg-zinc-800/70" />
+            <div className="mt-1 h-3 w-2/3 animate-pulse rounded bg-zinc-800/60" />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+async function AiNewsPreviewSection() {
+  const dataset = await getAiNewsPreview(3);
+  if (dataset.articles.length === 0) return null;
+
+  return (
+    <section className="mb-8 rounded-xl border border-zinc-800/80 bg-[#1a1a1a] p-4">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold text-zinc-100">AI News</h2>
+        <Link
+          href="/news"
+          className="rounded-md border border-zinc-700 px-2 py-1 text-xs font-medium text-[#00ff9f] transition hover:bg-zinc-800/80"
+        >
+          Read News
+        </Link>
+      </div>
+      <div className="flex flex-col gap-3">
+        {dataset.articles.map((article) => (
+          <article
+            key={article.id}
+            className="rounded-lg border border-zinc-800 bg-[#141414] p-3"
+          >
+            <a
+              href={article.url}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="text-sm font-semibold text-zinc-100 transition hover:text-[#00ff9f]"
+            >
+              {article.title}
+            </a>
+            {article.description ? (
+              <p className="mt-1 text-sm text-zinc-400">{article.description}</p>
+            ) : null}
+            <p className="mt-2 text-xs text-zinc-500">
+              {article.source} · {new Date(article.publishedAt).toLocaleString()}
+            </p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default async function HomePage({
   searchParams,
 }: {
@@ -121,6 +184,9 @@ export default async function HomePage({
 
   return (
     <div>
+      <Suspense fallback={<NewsPreviewSkeleton />}>
+        <AiNewsPreviewSection />
+      </Suspense>
       <div className="mb-2">
         <h1 className="text-2xl font-bold tracking-tight text-zinc-100">
           {q

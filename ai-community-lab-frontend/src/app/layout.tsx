@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { getSiteMetadataBase } from "@/lib/site-metadata-base";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import { Suspense } from "react";
 import {
   AuthProvider,
@@ -39,6 +40,16 @@ export const metadata: Metadata = {
       "application/rss+xml": "/feed.xml",
     },
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#0f0f0f" },
+    { media: "(prefers-color-scheme: light)", color: "#f7f7f8" },
+  ],
 };
 
 function RightPanelFallback() {
@@ -84,7 +95,7 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
-        <script src="/theme-init.js" />
+        <Script src="/theme-init.js" strategy="beforeInteractive" />
       </head>
       <body className="flex min-h-full flex-col bg-[#0f0f0f] font-sans text-zinc-100">
         <ThemeProvider>
@@ -110,9 +121,9 @@ export default async function RootLayout({
               </Suspense>
             </aside>
 
-            <div className="mx-auto w-full max-w-[1400px] flex-1 px-4 pb-24 pt-6 sm:px-6 lg:max-w-none lg:px-0">
+            <div className="mx-auto w-full max-w-[1400px] flex-1 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:pt-6 lg:max-w-none lg:px-0">
               <div className="mb-8 lg:hidden">
-                <div className="sticky top-14 z-20 -mx-4 max-h-[calc(100dvh-6.5rem)] overflow-y-auto overflow-x-hidden border-b border-zinc-800/60 bg-[#0f0f0f]/95 px-4 py-3 backdrop-blur-sm sm:-mx-6 sm:px-6">
+                <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 -mx-4 max-h-[calc(100dvh-8.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] overflow-y-auto overflow-x-hidden border-b border-zinc-800/60 bg-[#0f0f0f]/95 px-4 py-3 backdrop-blur-sm sm:-mx-6 sm:px-6">
                   <Sidebar />
                 </div>
               </div>

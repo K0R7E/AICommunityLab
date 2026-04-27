@@ -93,7 +93,7 @@ export function UserMenu() {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 rounded-lg border border-zinc-700 bg-[#1a1a1a] py-1.5 pl-1.5 pr-2 text-sm text-zinc-200 transition hover:border-[#00ff9f]/50"
+        className="flex min-h-10 items-center gap-2 rounded-lg border border-zinc-700 bg-[#1a1a1a] py-1.5 pl-1.5 pr-2 text-sm text-zinc-200 transition hover:border-[#00ff9f]/50"
         aria-expanded={open}
         aria-haspopup="menu"
       >
@@ -125,7 +125,7 @@ export function UserMenu() {
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 top-[calc(100%+6px)] z-50 min-w-[12rem] rounded-lg border border-zinc-700 bg-[#141414] py-1 shadow-xl"
+          className="absolute right-0 top-[calc(100%+6px)] z-50 min-w-[13rem] rounded-lg border border-zinc-700 bg-[#141414] py-1 shadow-xl"
         >
           <Link
             href={profileHref}

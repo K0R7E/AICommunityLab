@@ -16,6 +16,9 @@
 
 html {
   color-scheme: dark;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scrollbar-gutter: stable both-edges;
 }
 
 html[data-theme="light"] {
@@ -28,6 +31,30 @@ html[data-theme="light"] {
 body {
   background: var(--background);
   color: var(--foreground);
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+main {
+  min-width: 0;
+}
+
+a,
+button,
+input,
+select,
+textarea,
+[role="button"] {
+  touch-action: manipulation;
+}
+
+@media (max-width: 640px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }
 
 /* Fixed sidebars (lg+): stay in view while the main column scrolls */

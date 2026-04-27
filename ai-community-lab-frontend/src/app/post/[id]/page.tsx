@@ -114,7 +114,7 @@ export default async function PostDetailPage({ params }: Props) {
           </p>
         </div>
       ) : null}
-      <div className="flex gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row">
         <RatingControl
           key={`${post.id}-${post.rating_sum}-${post.rating_count}-${ratingState.myRating ?? "x"}`}
           postId={post.id}
@@ -124,7 +124,7 @@ export default async function PostDetailPage({ params }: Props) {
           canRate={canAct && feedPublished}
         />
         <div className="min-w-0 flex-1">
-          <h1 className="text-2xl font-bold leading-tight text-zinc-100">
+          <h1 className="text-xl font-bold leading-tight text-zinc-100 sm:text-2xl">
             {post.title}
           </h1>
           {isOwner ? (
@@ -176,7 +176,7 @@ export default async function PostDetailPage({ params }: Props) {
         </div>
       </div>
 
-      <section className="mt-12 border-t border-zinc-800 pt-8">
+      <section className="mt-10 border-t border-zinc-800 pt-7 sm:mt-12 sm:pt-8">
         <h2 className="text-lg font-semibold text-zinc-100">Comments</h2>
         <ul className="mt-4 flex flex-col gap-4">
           {comments.length === 0 ? (

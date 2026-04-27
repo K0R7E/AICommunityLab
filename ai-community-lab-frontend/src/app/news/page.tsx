@@ -13,7 +13,7 @@ export default async function NewsPage() {
   return (
     <div className="space-y-4">
       <div className="mb-2">
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-100">AI News</h1>
+        <h1 className="text-xl font-bold tracking-tight text-zinc-100 sm:text-2xl">AI News</h1>
         <p className="mt-1 text-sm text-zinc-400">
           Aggregated from GNews search with a broad AI query, refreshed every 2 hours.
         </p>
@@ -50,7 +50,7 @@ export default async function NewsPage() {
               key={article.id}
               className="rounded-xl border border-zinc-800/80 bg-[#1a1a1a] p-4"
             >
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <a
                     href={article.url}

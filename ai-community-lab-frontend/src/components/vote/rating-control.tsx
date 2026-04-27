@@ -144,12 +144,12 @@ export function RatingControl({
   }
 
   return (
-    <div className="flex min-w-[6.5rem] flex-col items-center gap-1.5 rounded-lg border border-zinc-800 bg-[#141414] px-1.5 py-2">
+    <div className="flex min-w-[5.75rem] flex-col items-center gap-1.5 rounded-lg border border-zinc-800 bg-[#141414] px-1.5 py-2 sm:min-w-[6.5rem]">
       <div className="text-center leading-tight">
         <span className="text-lg font-bold tabular-nums text-[#00ff9f]">{avg}</span>
-        <p className="text-[10px] text-zinc-500">{countLabel}</p>
+        <p className="text-[11px] text-zinc-500">{countLabel}</p>
       </div>
-      <p className="text-[10px] text-zinc-500">
+      <p className="text-[11px] text-zinc-500">
         {myRating === null ? "No vote yet" : `Your vote: ${myRating}/5`}
       </p>
       <div
@@ -169,7 +169,7 @@ export function RatingControl({
               <button
                 type="button"
                 onClick={() => void pickValue(n)}
-                className={`rounded p-1 transition ${
+                className={`flex min-h-8 min-w-8 items-center justify-center rounded p-1 transition ${
                   active
                     ? "bg-[#00ff9f]/15 ring-1 ring-[#00ff9f]/50"
                     : "hover:bg-zinc-800/90"

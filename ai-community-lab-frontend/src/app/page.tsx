@@ -118,10 +118,10 @@ async function AiNewsPreviewSection() {
   return (
     <section className="mb-8 rounded-xl border border-zinc-800/80 bg-[#1a1a1a] p-4">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold text-zinc-100">AI News</h2>
+        <h2 className="text-base font-semibold text-zinc-100 sm:text-lg">AI News</h2>
         <Link
           href="/news"
-          className="rounded-md border border-zinc-700 px-2 py-1 text-xs font-medium text-[#00ff9f] transition hover:bg-zinc-800/80"
+          className="inline-flex min-h-9 items-center rounded-md border border-zinc-700 px-2.5 py-1 text-xs font-medium text-[#00ff9f] transition hover:bg-zinc-800/80"
         >
           Read News
         </Link>
@@ -188,7 +188,7 @@ export default async function HomePage({
         <AiNewsPreviewSection />
       </Suspense>
       <div className="mb-2">
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-100">
+        <h1 className="text-xl font-bold tracking-tight text-zinc-100 sm:text-2xl">
           {q
             ? "Search"
             : sort === "top"
@@ -205,7 +205,7 @@ export default async function HomePage({
             {categorySummary ? (
               <Link
                 href={clearCategoryHref}
-                className="rounded-md border border-zinc-600 px-2 py-0.5 text-xs font-medium text-[#00ff9f] transition hover:bg-zinc-800/80"
+                className="inline-flex min-h-8 items-center rounded-md border border-zinc-600 px-2 py-0.5 text-xs font-medium text-[#00ff9f] transition hover:bg-zinc-800/80"
               >
                 Clear categories
               </Link>
@@ -219,7 +219,7 @@ export default async function HomePage({
             </span>
             <Link
               href={clearCategoryHref}
-              className="rounded-md border border-zinc-600 px-2 py-0.5 text-xs font-medium text-[#00ff9f] transition hover:bg-zinc-800/80"
+              className="inline-flex min-h-8 items-center rounded-md border border-zinc-600 px-2 py-0.5 text-xs font-medium text-[#00ff9f] transition hover:bg-zinc-800/80"
             >
               Clear categories
             </Link>

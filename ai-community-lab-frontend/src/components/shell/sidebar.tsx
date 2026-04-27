@@ -16,7 +16,7 @@ export function Sidebar() {
           <Link
             key={href + label}
             href={href}
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-zinc-300 transition hover:bg-zinc-800/80 hover:text-[#00ff9f]"
+            className="flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-sm text-zinc-300 transition hover:bg-zinc-800/80 hover:text-[#00ff9f]"
           >
             <Icon className="size-4 shrink-0 text-zinc-500" aria-hidden />
             {label}
@@ -32,7 +32,7 @@ export function Sidebar() {
       </Suspense>
       <Link
         href="/submit"
-        className="flex items-center gap-3 rounded-lg bg-[#00ff9f]/10 px-3 py-2.5 text-sm font-medium text-[#00ff9f] transition hover:bg-[#00ff9f]/15"
+        className="flex min-h-10 items-center gap-3 rounded-lg bg-[#00ff9f]/10 px-3 py-2.5 text-sm font-medium text-[#00ff9f] transition hover:bg-[#00ff9f]/15"
       >
         <PlusCircle className="size-4 shrink-0" aria-hidden />
         Submit a tool

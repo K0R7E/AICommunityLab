@@ -39,7 +39,7 @@ export function ToolCard({ post, myRating, canVote }: Props) {
   const canRateHere = canVote && isPostPublishedForFeed(post.moderation_status);
 
   return (
-    <article className="group relative flex gap-3 overflow-hidden rounded-xl border border-zinc-800/80 bg-[#1a1a1a] p-4 transition hover:border-[#00ff9f]/25 hover:shadow-[0_0_0_1px_rgba(0,255,159,0.06)]">
+    <article className="group relative flex gap-2.5 overflow-hidden rounded-xl border border-zinc-800/80 bg-[#1a1a1a] p-3 transition hover:border-[#00ff9f]/25 hover:shadow-[0_0_0_1px_rgba(0,255,159,0.06)] sm:gap-3 sm:p-4">
       {/* Full-card hit target (comments); rating & external link sit above with z-index */}
       <Link
         href={postHref}
@@ -47,7 +47,7 @@ export function ToolCard({ post, myRating, canVote }: Props) {
         aria-label={`${post.title} — open post and comments`}
       />
 
-      <div className="relative z-10 flex shrink-0 flex-col items-center gap-2">
+      <div className="relative z-10 flex shrink-0 flex-col items-center gap-2 self-start">
         <RatingControl
           key={`${post.id}-${post.rating_sum}-${post.rating_count}-${myRating ?? "x"}`}
           postId={post.id}
@@ -58,9 +58,9 @@ export function ToolCard({ post, myRating, canVote }: Props) {
         />
       </div>
 
-      <div className="relative z-10 min-w-0 flex-1 pointer-events-none">
+      <div className="pointer-events-none relative z-10 min-w-0 flex-1">
         <div className="flex flex-wrap items-start justify-between gap-2">
-          <span className="text-lg font-semibold leading-snug text-zinc-100 transition-colors group-hover:text-[#00ff9f]">
+          <span className="text-base font-semibold leading-snug text-zinc-100 transition-colors group-hover:text-[#00ff9f] sm:text-lg">
             {post.title}
           </span>
           {external ? (
@@ -68,7 +68,7 @@ export function ToolCard({ post, myRating, canVote }: Props) {
               href={external.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="pointer-events-auto relative z-20 inline-flex shrink-0 items-center gap-1 text-sm font-medium text-[#00ff9f] transition hover:underline"
+              className="pointer-events-auto relative z-20 inline-flex min-h-10 shrink-0 items-center gap-1 text-sm font-medium text-[#00ff9f] transition hover:underline"
             >
               Visit →
               <ExternalLink className="size-3.5" aria-hidden />
@@ -84,7 +84,7 @@ export function ToolCard({ post, myRating, canVote }: Props) {
           )}
         </div>
         <p className="mt-1 line-clamp-2 text-sm text-zinc-400">{line}</p>
-        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-zinc-500">
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-zinc-500">
           {modLabel ? (
             <span className="rounded-md border border-amber-800/60 bg-amber-950/35 px-2 py-0.5 text-[11px] font-medium text-amber-200">
               {modLabel}

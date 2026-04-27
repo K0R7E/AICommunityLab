@@ -25,8 +25,27 @@ export async function GET(request: Request) {
     ratings[postId] = value;
   }
 
+  const STRIP_FIELDS = new Set([
+    "user_id",
+    "bayes_score",
+    "hot_score",
+    "leaderboard_score",
+    "ratings_last_7d",
+    "ratings_last_30d",
+    "moderation_rejection_reason",
+  ]);
+
+  // Strip internal fields that have no use in the public client.
+  const publicPosts = payload.posts.map((post) =>
+    Object.fromEntries(
+      Object.entries(post as Record<string, unknown>).filter(
+        ([k]) => !STRIP_FIELDS.has(k),
+      ),
+    ),
+  );
+
   return NextResponse.json({
-    posts: payload.posts,
+    posts: publicPosts,
     myRatings: ratings,
     nextCursor: payload.nextCursor,
   });

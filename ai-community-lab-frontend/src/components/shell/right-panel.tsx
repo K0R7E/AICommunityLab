@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { POST_MODERATION_PUBLISHED } from "@/lib/moderation";
 import { SignInCard } from "@/components/auth/user-menu";
-import { TrendingUp } from "lucide-react";
+import { Newspaper, TrendingUp } from "lucide-react";
+import { getAiNewsPreview } from "@/lib/data/ai-news";
 
 async function getTrending() {
   const supabase = await createClient();
@@ -17,6 +19,51 @@ async function getTrending() {
   return data ?? [];
 }
 
+async function AiNewsSection() {
+  const dataset = await getAiNewsPreview(3);
+  if (dataset.articles.length === 0) return null;
+
+  return (
+    <section>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-zinc-400">
+          <Newspaper className="size-4 text-[#00ff9f]" aria-hidden />
+          AI News
+        </h2>
+        <Link
+          href="/news"
+          className="inline-flex min-h-10 items-center rounded-md border border-zinc-700 px-2.5 py-1 text-xs font-medium text-[#00ff9f] transition hover:bg-zinc-800/80"
+        >
+          Read News
+        </Link>
+      </div>
+      <div className="flex flex-col gap-2">
+        {dataset.articles.map((article) => (
+          <article
+            key={article.id}
+            className="rounded-lg border border-zinc-800 bg-[#141414] p-3"
+          >
+            <a
+              href={article.url}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="text-sm font-semibold text-zinc-100 transition hover:text-[#00ff9f]"
+            >
+              {article.title}
+            </a>
+            {article.description ? (
+              <p className="mt-1 line-clamp-2 text-xs text-zinc-400">{article.description}</p>
+            ) : null}
+            <p className="mt-2 text-xs text-zinc-500">
+              {article.source} · {new Date(article.publishedAt).toLocaleString()}
+            </p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 type Props = {
   userEmail?: string | null;
 };
@@ -26,8 +73,12 @@ export async function RightPanel({ userEmail }: Props) {
 
   return (
     <aside className="flex flex-col gap-8">
+      <Suspense fallback={null}>
+        <AiNewsSection />
+      </Suspense>
+
       <section>
-        <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-zinc-400">
+        <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-zinc-100">
           <TrendingUp className="size-4 text-[#00ff9f]" aria-hidden />
           Trending tools
         </h2>
@@ -70,7 +121,7 @@ export async function RightPanel({ userEmail }: Props) {
         </section>
       ) : null}
 
-      <section className="rounded-xl border border-dashed border-[#00ff9f]/30 bg-[#141414] p-4">
+      <section className="rounded-xl border border-[#00ff9f]/30 bg-[#141414] p-4">
         <h3 className="text-sm font-semibold text-[#00ff9f]">Share a tool</h3>
         <p className="mt-1 text-sm text-zinc-400">
           Found something the community should know about?

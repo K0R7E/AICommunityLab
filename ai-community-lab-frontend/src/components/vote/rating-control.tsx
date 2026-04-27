@@ -2,7 +2,7 @@
 
 import { CSRF_COOKIE_NAME } from "@/lib/csrf-constants";
 import { formatRatingDisplay } from "@/lib/format";
-import { Star } from "lucide-react";
+import { Lock, Star } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useId, useRef, useState } from "react";
@@ -209,9 +209,10 @@ export function RatingControl({
       ) : (
         <Link
           href={loginHref}
-          className="text-center text-[11px] text-[#00ff9f] hover:underline"
+          aria-label="Sign in to vote"
+          className="flex items-center justify-center rounded p-1 text-zinc-500 transition hover:text-[#00ff9f]"
         >
-          Sign in to vote.
+          <Lock className="size-4" aria-hidden />
         </Link>
       )}
       <p id={helperTextId} className="sr-only">

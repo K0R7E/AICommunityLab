@@ -43,7 +43,7 @@ export function ToolCard({ post, myRating, canVote }: Props) {
       {/* Full-card hit target (comments); rating & external link sit above with z-index */}
       <Link
         href={postHref}
-        className="absolute inset-0 z-0 rounded-xl outline-none ring-[#00ff9f]/0 transition focus-visible:ring-2 focus-visible:ring-[#00ff9f]/45 focus-visible:ring-inset"
+        className="absolute inset-0 z-0 rounded-xl outline-none ring-[#00ff9f]/0 transition focus-visible:ring-2 focus-visible:ring-[#00ff9f]/70 focus-visible:ring-inset"
         aria-label={`${post.title} — open post and comments`}
       />
 
@@ -84,7 +84,7 @@ export function ToolCard({ post, myRating, canVote }: Props) {
           )}
         </div>
         <p className="mt-1 line-clamp-2 text-sm text-zinc-400">{line}</p>
-        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-zinc-500">
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-zinc-400">
           {modLabel ? (
             <span className="rounded-md border border-amber-800/60 bg-amber-950/35 px-2 py-0.5 text-[11px] font-medium text-amber-200">
               {modLabel}

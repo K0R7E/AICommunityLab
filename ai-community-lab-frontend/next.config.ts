@@ -39,6 +39,10 @@ function buildCspValue() {
 }
 
 const securityHeaders = [
+  // Best-effort fingerprint reduction for scanners that flag software disclosure.
+  // Infrastructure (CDN/proxy/runtime) may still inject their own Server header.
+  { key: "Server", value: "" },
+  { key: "X-Powered-By", value: "" },
   { key: "Content-Security-Policy", value: buildCspValue() },
   {
     key: "Strict-Transport-Security",
@@ -50,7 +54,7 @@ const securityHeaders = [
   { key: "X-Permitted-Cross-Domain-Policies", value: "none" },
   {
     key: "Referrer-Policy",
-    value: "strict-origin-when-cross-origin",
+    value: "no-referrer",
   },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
   { key: "Cross-Origin-Resource-Policy", value: "same-origin" },

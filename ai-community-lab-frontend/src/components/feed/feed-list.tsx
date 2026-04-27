@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ToolCard } from "@/components/feed/tool-card";
 import type { PostRow } from "@/lib/types/post";
 import type { ListingKind } from "@/lib/constants";
@@ -53,6 +53,14 @@ export function FeedList({
   const [nextCursor, setNextCursor] = useState<string | null>(initialNextCursor);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setPosts(initialPosts);
+    setMyRatings(initialMyRatings);
+    setNextCursor(initialNextCursor);
+    setLoadError(null);
+    setLoadingMore(false);
+  }, [initialPosts, initialMyRatings, initialNextCursor]);
 
   const postIds = useMemo(() => new Set(posts.map((p) => p.id)), [posts]);
 

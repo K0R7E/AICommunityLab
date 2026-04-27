@@ -67,9 +67,17 @@ async function Feed({
 
   const ratings: Record<string, number> = {};
   for (const [postId, value] of myRatings.entries()) ratings[postId] = value;
+  const feedKey = [
+    sort,
+    listingKind ?? "all",
+    searchQuery?.trim() ?? "",
+    categoryLabels.join("|"),
+    cursor ?? "",
+  ].join("::");
 
   return (
     <FeedList
+      key={feedKey}
       initialPosts={posts}
       initialMyRatings={ratings}
       initialNextCursor={nextCursor}

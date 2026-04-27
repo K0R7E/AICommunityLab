@@ -3,7 +3,6 @@ import Link from "next/link";
 import { FeedList } from "@/components/feed/feed-list";
 import { FeedSearch } from "@/components/shell/feed-search";
 import { FeedSortBar } from "@/components/shell/feed-sort";
-import { FuturisticBackground } from "@/components/shell/futuristic-background";
 import { categoryFilterFromSearchParams, listingKindFromSearchParams } from "@/lib/category-query";
 import { getFeedPosts } from "@/lib/data/posts";
 import type { ListingKind } from "@/lib/constants";
@@ -121,8 +120,7 @@ export default async function HomePage({
   })();
 
   return (
-    <div className="relative isolate">
-      <FuturisticBackground />
+    <div>
       <div className="mb-2">
         <h1 className="text-2xl font-bold tracking-tight text-zinc-100">
           {q

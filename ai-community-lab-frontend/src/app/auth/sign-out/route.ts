@@ -1,11 +1,27 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { canonicalSiteOrigin } from "@/lib/canonical-origin";
+
+function isCrossSiteRequest(request: NextRequest): boolean {
+  const secFetchSite = request.headers.get("sec-fetch-site");
+  if (secFetchSite && secFetchSite !== "same-origin" && secFetchSite !== "same-site") {
+    return true;
+  }
+
+  const origin = request.headers.get("origin");
+  if (!origin) return false;
+  return origin !== canonicalSiteOrigin(request.nextUrl);
+}
 
 /**
  * Clears Supabase auth cookies on the response. Client-only signOut() often
  * leaves SSR cookies, so the app still looks signed in until a hard refresh.
  */
 export async function POST(request: NextRequest) {
+  if (isCrossSiteRequest(request)) {
+    return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !supabaseKey) {

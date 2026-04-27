@@ -28,6 +28,7 @@ yarn-error.log*
 
 # --- OS ---
 .DS_Store
+.cursor/
 Thumbs.db
 
 # --- IDE / editors ---

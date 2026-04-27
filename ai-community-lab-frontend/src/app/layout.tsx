@@ -29,6 +29,18 @@ export const metadata: Metadata = {
   metadataBase: new URL(getSiteMetadataBase()),
   title: "AICommunityLab",
   description: "Discover and share AI tools — community-driven feed",
+  icons: {
+    icon: "/green-stars.svg",
+    shortcut: "/green-stars.svg",
+    apple: "/green-stars.svg",
+    other: [
+      {
+        rel: "mask-icon",
+        url: "/green-stars.svg",
+        color: "#00ff9f",
+      },
+    ],
+  },
   alternates: {
     types: {
       "application/rss+xml": "/feed.xml",

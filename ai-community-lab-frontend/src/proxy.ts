@@ -58,11 +58,16 @@ function isProtected(path: string): boolean {
 export async function proxy(request: NextRequest) {
   const rawPathname = request.nextUrl.pathname;
 
-  // Redirect percent-encoded path segments to their decoded form.
-  // Prevents routing to 500 on paths like /%61dmin and blocks bypass attempts.
+  // Normalize percent-encoded path segments (e.g. /%61dmin → /admin).
+  // Guards: decoded result must still be a safe single-slash-rooted path.
+  // %2F decodes to "/" which would produce "//host" — open redirect — so we
+  // reject anything that decodes to a path starting with "//".
   try {
     const decoded = decodeURIComponent(rawPathname);
     if (decoded !== rawPathname) {
+      if (!decoded.startsWith("/") || decoded.startsWith("//")) {
+        return new NextResponse("Bad Request", { status: 400 });
+      }
       const url = request.nextUrl.clone();
       url.pathname = decoded;
       return NextResponse.redirect(url, 308);

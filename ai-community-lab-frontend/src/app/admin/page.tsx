@@ -66,6 +66,7 @@ export default async function AdminPage({
                       {p.title}
                     </Link>
                     <p className="mt-1 text-xs text-zinc-500">
+                      {p.post_kind ?? "AI Engine"} ·{" "}
                       {(p.categories ?? []).join(" · ")} ·{" "}
                       {formatRelativeTime(p.created_at)}
                     </p>

@@ -88,6 +88,11 @@ export function ToolCard({ post, myRating, canVote }: Props) {
               {modLabel}
             </span>
           ) : null}
+          {post.post_kind ? (
+            <span className="rounded-md border border-[#00ff9f]/30 bg-[#00ff9f]/10 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-[#00ff9f]">
+              {post.post_kind}
+            </span>
+          ) : null}
           <PostCategoryBadges categories={post.categories ?? []} />
           <span className="inline-flex items-center gap-1">
             <MessageCircle className="size-3.5" aria-hidden />

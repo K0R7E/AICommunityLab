@@ -134,7 +134,8 @@ export async function getFeedPosts(options: {
     }
     if (options.sort === "top") {
       q = q
-        .order("rating_avg", { ascending: false, nullsFirst: false })
+        .order("leaderboard_score", { ascending: false, nullsFirst: false })
+        .order("bayes_score", { ascending: false, nullsFirst: false })
         .order("created_at", { ascending: false })
         .order("id", { ascending: false });
     } else {
@@ -189,7 +190,8 @@ export async function getFeedPosts(options: {
   }
   if (options.sort === "top") {
     q = q
-      .order("rating_avg", { ascending: false, nullsFirst: false })
+      .order("leaderboard_score", { ascending: false, nullsFirst: false })
+      .order("bayes_score", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false })
       .order("id", { ascending: false });
   } else {

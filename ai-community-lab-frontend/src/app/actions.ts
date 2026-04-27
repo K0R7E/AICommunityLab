@@ -11,8 +11,13 @@ import {
   type SimilarCandidate,
 } from "@/lib/duplicate-post-check";
 import { normalizeUserText } from "@/lib/normalize-user-text";
-import { parseCategoriesFromFormData, parseOptionalPostUrl } from "@/lib/post-form";
+import {
+  parseCategoriesFromFormData,
+  parseListingKindFromFormData,
+  parseOptionalPostUrl,
+} from "@/lib/post-form";
 import { isValidUsername, normalizeUsername } from "@/lib/validate-profile";
+import type { ListingKind } from "@/lib/constants";
 
 const TITLE_MIN = 3;
 const TITLE_MAX = 200;
@@ -29,6 +34,7 @@ export type SubmitFieldSnapshot = {
   title: string;
   description: string;
   url: string;
+  listingKind: ListingKind;
   category: string;
 };
 
@@ -58,7 +64,12 @@ export async function submitPost(
   const urlRaw = String(formData.get("url") ?? "");
   const confirmDuplicate = formData.get("confirm_duplicate") === "on";
 
-  const categoriesParsed = parseCategoriesFromFormData(formData);
+  const kindParsed = parseListingKindFromFormData(formData);
+  if (!kindParsed.ok) {
+    return { error: kindParsed.error };
+  }
+
+  const categoriesParsed = parseCategoriesFromFormData(formData, kindParsed.kind);
   if (!categoriesParsed.ok) {
     return { error: categoriesParsed.error };
   }
@@ -84,6 +95,7 @@ export async function submitPost(
     title,
     description,
     url: urlRaw.trim(),
+    listingKind: kindParsed.kind,
     category: categoriesParsed.categories[0] ?? "",
   };
 
@@ -125,6 +137,7 @@ export async function submitPost(
       url: urlParsed.url,
       url_canonical: urlCanonical,
       description: description || null,
+      post_kind: kindParsed.kind,
       categories: categoriesParsed.categories,
     })
     .select("id")
@@ -171,7 +184,12 @@ export async function updateOwnPost(
   const title = normalizeUserText(String(formData.get("title") ?? ""));
   const description = normalizeUserText(String(formData.get("description") ?? ""));
 
-  const categoriesParsed = parseCategoriesFromFormData(formData);
+  const kindParsed = parseListingKindFromFormData(formData);
+  if (!kindParsed.ok) {
+    return { error: kindParsed.error };
+  }
+
+  const categoriesParsed = parseCategoriesFromFormData(formData, kindParsed.kind);
   if (!categoriesParsed.ok) {
     return { error: categoriesParsed.error };
   }
@@ -199,6 +217,7 @@ export async function updateOwnPost(
       url: urlParsed.url,
       url_canonical: urlCanonical,
       description: description || null,
+      post_kind: kindParsed.kind,
       categories: categoriesParsed.categories,
     })
     .eq("id", postId)

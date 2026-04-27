@@ -3,7 +3,8 @@
 import { CSRF_COOKIE_NAME } from "@/lib/csrf-constants";
 import { formatRatingDisplay } from "@/lib/format";
 import { Star } from "lucide-react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { useId, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -25,6 +26,8 @@ export function RatingControl({
   canRate,
 }: Props) {
   const router = useRouter();
+  const pathname = usePathname();
+  const loginHref = `/login?next=${encodeURIComponent(pathname)}`;
 
   const [inFlightCount, setInFlightCount] = useState(0);
   const [sum, setSum] = useState(initialRatingSum);
@@ -204,7 +207,12 @@ export function RatingControl({
           })}
         </div>
       ) : (
-        <p className="text-center text-[11px] text-zinc-500">Sign in to vote.</p>
+        <Link
+          href={loginHref}
+          className="text-center text-[11px] text-[#00ff9f] hover:underline"
+        >
+          Sign in to vote.
+        </Link>
       )}
       <p id={helperTextId} className="sr-only">
         {canRate

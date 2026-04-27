@@ -28,6 +28,9 @@ export default async function NewsPage() {
       {dataset.sourceState === "stale" ? (
         <div className="rounded-xl border border-zinc-700 bg-[#1a1a1a] px-4 py-3 text-sm text-zinc-400">
           Live refresh failed, showing the most recently cached news.
+          {dataset.errorMessage ? (
+            <p className="mt-2 text-xs text-zinc-500">Debug: {dataset.errorMessage}</p>
+          ) : null}
         </div>
       ) : null}
 
@@ -40,7 +43,7 @@ export default async function NewsPage() {
         </div>
       ) : null}
 
-      {dataset.sourceState !== "error" && articles.length === 0 ? (
+      {dataset.sourceState === "empty" && articles.length === 0 ? (
         <div className="rounded-xl border border-zinc-800 bg-[#1a1a1a] px-6 py-10 text-center text-zinc-400">
           No AI news articles are available right now.
         </div>

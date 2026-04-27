@@ -4,8 +4,8 @@ const GNEWS_BASE_URL = "https://gnews.io/api/v4/search";
 const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
 const ERROR_COOLDOWN_MS = 10 * 60 * 1000;
 const DEFAULT_PAGE_SIZE = 10;
-const DEFAULT_MAX_PAGES = 5;
-const DEFAULT_MAX_ARTICLES = 100;
+const DEFAULT_MAX_PAGES = 1;
+const DEFAULT_MAX_ARTICLES = 20;
 const DEFAULT_LANG = "en";
 const REQUEST_TIMEOUT_MS = 10_000;
 
@@ -268,7 +268,8 @@ async function refreshDataset(): Promise<AiNewsDataset> {
     return dataset;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown AI news fetch error";
-    if (cacheState.dataset) {
+    const hasSuccessfulSnapshot = cacheState.lastSuccessfulUrlSet.size > 0;
+    if (cacheState.dataset && hasSuccessfulSnapshot) {
       const staleDataset: AiNewsDataset = {
         ...cacheState.dataset,
         sourceState: "stale",

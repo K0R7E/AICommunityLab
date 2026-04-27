@@ -96,12 +96,13 @@ export function FeedList({
 
   return (
     <div className="flex flex-col gap-4">
-      {posts.map((post) => (
+      {posts.map((post, i) => (
         <ToolCard
           key={post.id}
           post={post}
           myRating={myRatings[post.id] ?? null}
           canVote={canVote}
+          rank={sort === "top" ? i + 1 : undefined}
         />
       ))}
       {nextCursor ? (

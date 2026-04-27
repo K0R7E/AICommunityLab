@@ -3,6 +3,7 @@ import Link from "next/link";
 import { FeedList } from "@/components/feed/feed-list";
 import { FeedSearch } from "@/components/shell/feed-search";
 import { FeedSortBar } from "@/components/shell/feed-sort";
+import { EmptyFeed, EmptyCategory, EmptySearch } from "@/components/feed/empty-state";
 import { categoryFilterFromSearchParams, listingKindFromSearchParams } from "@/lib/category-query";
 import { getFeedPosts } from "@/lib/data/posts";
 import type { ListingKind } from "@/lib/constants";
@@ -50,19 +51,9 @@ async function Feed({
   const canVote = !!userId;
 
   if (posts.length === 0) {
-    if (searchQuery?.trim()) {
-      return (
-        <p className="rounded-xl border border-zinc-800 bg-[#1a1a1a] px-6 py-12 text-center text-zinc-400">
-          No results for &quot;{searchQuery.trim()}&quot;. Try different words or
-          clear the search.
-        </p>
-      );
-    }
-    return (
-      <p className="rounded-xl border border-zinc-800 bg-[#1a1a1a] px-6 py-12 text-center text-zinc-400">
-        No tools yet 😢 Be the first to share something cool
-      </p>
-    );
+    if (searchQuery?.trim()) return <EmptySearch query={searchQuery.trim()} />;
+    if (categoryLabels.length > 0 || listingKind) return <EmptyCategory />;
+    return <EmptyFeed />;
   }
 
   const ratings: Record<string, number> = {};

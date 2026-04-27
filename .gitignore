@@ -28,6 +28,7 @@ yarn-error.log*
 
 # --- OS ---
 .DS_Store
+.cursor/
 Thumbs.db
 
 # --- IDE / editors ---
@@ -59,14 +60,14 @@ coverage/
 # --- Cursor ---
 .cursor/
 
-# --- Supabase ---
-# supabase/
-# supabase/migrations/
-# supabase/seed.sql
-# supabase/seed.sql.gz
-# supabase/seed.sql.gz.part
-# supabase/seed.sql.gz.part.1
-# supabase/seed.sql.gz.part.2
-# supabase/seed.sql.gz.part.3
-# supabase/seed.sql.gz.part.4
-# supabase/seed.sql.gz.part.5
+--- Supabase ---
+supabase/
+supabase/migrations/
+supabase/seed.sql
+supabase/seed.sql.gz
+supabase/seed.sql.gz.part
+supabase/seed.sql.gz.part.1
+supabase/seed.sql.gz.part.2
+supabase/seed.sql.gz.part.3
+supabase/seed.sql.gz.part.4
+supabase/seed.sql.gz.part.5

@@ -10,6 +10,8 @@ import { toast } from "sonner";
 const MIN_PASSWORD = 8;
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_MS = 30_000;
+const GENERIC_AUTH_FAILURE_MESSAGE =
+  "Authentication failed. Check your credentials and try again.";
 
 type Mode = "signin" | "signup";
 
@@ -37,6 +39,18 @@ export function EmailAuthForm({ nextPath = "/" }: Props) {
     }, 1_000);
     return () => window.clearInterval(timer);
   }, [lockSecondsRemaining]);
+
+  function handleAuthFailure() {
+    const nextFailedAttempts = failedAttempts + 1;
+    setFailedAttempts(nextFailedAttempts);
+    if (nextFailedAttempts >= MAX_FAILED_ATTEMPTS) {
+      setLockSecondsRemaining(Math.ceil(LOCKOUT_MS / 1000));
+      setFailedAttempts(0);
+      toast.error("Too many failed attempts. Please wait 30 seconds.");
+      return;
+    }
+    toast.error(GENERIC_AUTH_FAILURE_MESSAGE);
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -68,15 +82,7 @@ export function EmailAuthForm({ nextPath = "/" }: Props) {
       });
       setLoading(false);
       if (error) {
-        const nextFailedAttempts = failedAttempts + 1;
-        setFailedAttempts(nextFailedAttempts);
-        if (nextFailedAttempts >= MAX_FAILED_ATTEMPTS) {
-          setLockSecondsRemaining(Math.ceil(LOCKOUT_MS / 1000));
-          setFailedAttempts(0);
-          toast.error("Too many failed attempts. Please wait 30 seconds.");
-          return;
-        }
-        toast.error(error.message);
+        handleAuthFailure();
         return;
       }
       setFailedAttempts(0);
@@ -96,15 +102,7 @@ export function EmailAuthForm({ nextPath = "/" }: Props) {
     });
     setLoading(false);
     if (error) {
-      const nextFailedAttempts = failedAttempts + 1;
-      setFailedAttempts(nextFailedAttempts);
-      if (nextFailedAttempts >= MAX_FAILED_ATTEMPTS) {
-        setLockSecondsRemaining(Math.ceil(LOCKOUT_MS / 1000));
-        setFailedAttempts(0);
-        toast.error("Too many failed attempts. Please wait 30 seconds.");
-        return;
-      }
-      toast.error(error.message);
+      handleAuthFailure();
       return;
     }
     setFailedAttempts(0);
@@ -148,7 +146,11 @@ export function EmailAuthForm({ nextPath = "/" }: Props) {
         </button>
       </div>
 
-      <form onSubmit={(e) => void onSubmit(e)} className="mt-5 flex flex-col gap-4">
+      <form
+        method="post"
+        onSubmit={(e) => void onSubmit(e)}
+        className="mt-5 flex flex-col gap-4"
+      >
         <div>
           <label htmlFor="email-auth-email" className="mb-1 block text-sm font-medium text-zinc-300">
             Email

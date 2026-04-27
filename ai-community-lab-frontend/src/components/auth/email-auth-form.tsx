@@ -4,10 +4,14 @@ import { createClient } from "@/lib/supabase/client";
 import { getEmailAuthRedirectOrigin } from "@/lib/email-auth-redirect";
 import { safeRelativeNextPath } from "@/lib/safe-next-path";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const MIN_PASSWORD = 8;
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCKOUT_MS = 30_000;
+const GENERIC_AUTH_FAILURE_MESSAGE =
+  "Authentication failed. Check your credentials and try again.";
 
 type Mode = "signin" | "signup";
 
@@ -22,11 +26,39 @@ export function EmailAuthForm({ nextPath = "/" }: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockSecondsRemaining, setLockSecondsRemaining] = useState(0);
 
   const safeNext = safeRelativeNextPath(nextPath);
+  const isLocked = lockSecondsRemaining > 0;
+
+  useEffect(() => {
+    if (lockSecondsRemaining <= 0) return;
+    const timer = window.setInterval(() => {
+      setLockSecondsRemaining((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1_000);
+    return () => window.clearInterval(timer);
+  }, [lockSecondsRemaining]);
+
+  function handleAuthFailure() {
+    const nextFailedAttempts = failedAttempts + 1;
+    setFailedAttempts(nextFailedAttempts);
+    if (nextFailedAttempts >= MAX_FAILED_ATTEMPTS) {
+      setLockSecondsRemaining(Math.ceil(LOCKOUT_MS / 1000));
+      setFailedAttempts(0);
+      toast.error("Too many failed attempts. Please wait 30 seconds.");
+      return;
+    }
+    toast.error(GENERIC_AUTH_FAILURE_MESSAGE);
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (isLocked) {
+      toast.error(`Too many failed attempts. Try again in ${lockSecondsRemaining}s.`);
+      return;
+    }
+
     const em = email.trim();
     if (!em || !em.includes("@")) {
       toast.error("Enter a valid email address.");
@@ -50,9 +82,10 @@ export function EmailAuthForm({ nextPath = "/" }: Props) {
       });
       setLoading(false);
       if (error) {
-        toast.error(error.message);
+        handleAuthFailure();
         return;
       }
+      setFailedAttempts(0);
       if (data.session) {
         toast.success("Account created — you’re signed in.");
         router.refresh();
@@ -69,9 +102,10 @@ export function EmailAuthForm({ nextPath = "/" }: Props) {
     });
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      handleAuthFailure();
       return;
     }
+    setFailedAttempts(0);
     toast.success("Signed in");
     router.refresh();
     router.push(safeNext);
@@ -82,7 +116,11 @@ export function EmailAuthForm({ nextPath = "/" }: Props) {
       <div className="flex gap-2 rounded-lg bg-zinc-900/80 p-1">
         <button
           type="button"
-          onClick={() => setMode("signin")}
+          onClick={() => {
+            setMode("signin");
+            setFailedAttempts(0);
+            setLockSecondsRemaining(0);
+          }}
           className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition ${
             mode === "signin"
               ? "bg-[#00ff9f] text-[#0f0f0f]"
@@ -93,7 +131,11 @@ export function EmailAuthForm({ nextPath = "/" }: Props) {
         </button>
         <button
           type="button"
-          onClick={() => setMode("signup")}
+          onClick={() => {
+            setMode("signup");
+            setFailedAttempts(0);
+            setLockSecondsRemaining(0);
+          }}
           className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition ${
             mode === "signup"
               ? "bg-[#00ff9f] text-[#0f0f0f]"
@@ -104,7 +146,11 @@ export function EmailAuthForm({ nextPath = "/" }: Props) {
         </button>
       </div>
 
-      <form onSubmit={(e) => void onSubmit(e)} className="mt-5 flex flex-col gap-4">
+      <form
+        method="post"
+        onSubmit={(e) => void onSubmit(e)}
+        className="mt-5 flex flex-col gap-4"
+      >
         <div>
           <label htmlFor="email-auth-email" className="mb-1 block text-sm font-medium text-zinc-300">
             Email
@@ -145,10 +191,16 @@ export function EmailAuthForm({ nextPath = "/" }: Props) {
         ) : null}
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || isLocked}
           className="rounded-lg border border-zinc-600 bg-zinc-800/80 px-4 py-2.5 text-sm font-semibold text-zinc-100 transition hover:border-[#00ff9f]/40 hover:bg-zinc-800 disabled:opacity-50"
         >
-          {loading ? "Please wait…" : mode === "signup" ? "Create account" : "Sign in with email"}
+          {loading
+            ? "Please wait…"
+            : isLocked
+              ? `Try again in ${lockSecondsRemaining}s`
+              : mode === "signup"
+                ? "Create account"
+                : "Sign in with email"}
         </button>
       </form>
     </div>

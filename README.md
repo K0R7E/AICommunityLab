@@ -18,7 +18,9 @@ A **Next.js** app (App Router) with **Supabase** (PostgreSQL + Auth). Users disc
 ## Supabase setup
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. **SQL:** run the migration in [`supabase/migrations/001_initial.sql`](supabase/migrations/001_initial.sql) (SQL Editor → New query → paste → Run).
+2. **SQL:** run the migrations in order:
+   - [`supabase/migrations/001_all_in_one.sql`](supabase/migrations/001_all_in_one.sql)
+   - [`supabase/migrations/002_security_hardening.sql`](supabase/migrations/002_security_hardening.sql)
 3. **Auth → Providers:** enable **Google** and configure the Google Cloud OAuth client (authorized redirect URIs must include your Supabase callback URL from the dashboard).
 4. **Project Settings → API:** copy **Project URL** and **anon public** key.
 
@@ -57,6 +59,13 @@ See [DOCKER.md](./DOCKER.md). `docker compose up` builds only the Next.js app; S
 
 - [`ai-community-lab-frontend/`](ai-community-lab-frontend/) — Next.js application
 - [`supabase/migrations/`](supabase/migrations/) — SQL schema (posts, comments, votes, RLS, triggers)
+- [`security/`](security/) — scan reports and infrastructure hardening runbook
+
+## Security operations
+
+- Application hardening details are documented in [`ai-community-lab-frontend/README.md`](ai-community-lab-frontend/README.md).
+- Infrastructure/security operations checklist is in [`security/INFRA_HARDENING_RUNBOOK.md`](security/INFRA_HARDENING_RUNBOOK.md).
+- After every major release, re-run website/API/network scans and compare findings with the previous baseline.
 
 ## Legacy
 

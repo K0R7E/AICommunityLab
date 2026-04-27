@@ -94,7 +94,7 @@ export default async function HomePage({
   }>;
 }) {
   const sp = await searchParams;
-  const sort = sp.sort === "top" ? "top" : "new";
+  const sort = sp.sort === "new" ? "new" : "top";
   const categoryLabels = categoryFilterFromSearchParams(sp);
   const listingKind = listingKindFromSearchParams(sp);
   const q = sp.q?.trim() || null;

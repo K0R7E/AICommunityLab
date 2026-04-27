@@ -6,7 +6,7 @@ import { categoryFilterFromUrlSearchParams, listingKindFromUrlSearchParams } fro
 
 export function FeedSortBar() {
   const sp = useSearchParams();
-  const sort = sp.get("sort") === "top" ? "top" : "new";
+  const sort = sp.get("sort") === "new" ? "new" : "top";
   const categories = categoryFilterFromUrlSearchParams(sp);
   const listingKind = listingKindFromUrlSearchParams(sp);
   const q = sp.get("q");
@@ -42,16 +42,6 @@ export function FeedSortBar() {
       <span className="text-sm text-zinc-500">Sort</span>
       <div className="inline-flex rounded-lg border border-zinc-800 bg-[#141414] p-0.5">
         <Link
-          href={newHref}
-          className={`rounded-md px-3 py-2 text-sm font-medium transition ${
-            sort === "new"
-              ? "bg-zinc-800 text-[#00ff9f]"
-              : "text-zinc-400 hover:text-zinc-200"
-          }`}
-        >
-          New
-        </Link>
-        <Link
           href={topHref}
           className={`rounded-md px-3 py-2 text-sm font-medium transition ${
             sort === "top"
@@ -60,6 +50,16 @@ export function FeedSortBar() {
           }`}
         >
           Top
+        </Link>
+        <Link
+          href={newHref}
+          className={`rounded-md px-3 py-2 text-sm font-medium transition ${
+            sort === "new"
+              ? "bg-zinc-800 text-[#00ff9f]"
+              : "text-zinc-400 hover:text-zinc-200"
+          }`}
+        >
+          New
         </Link>
       </div>
       {categories.length > 0 ? (

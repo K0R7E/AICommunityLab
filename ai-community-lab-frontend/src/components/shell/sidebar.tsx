@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { Home, Flame, Clock, PlusCircle } from "lucide-react";
+import { Home, Flame, Clock, Newspaper, PlusCircle } from "lucide-react";
 import { CategorySearch } from "@/components/shell/category-search";
 
 const nav = [
   { href: "/", label: "Home", icon: Home },
   { href: "/?sort=top", label: "Trending", icon: Flame },
   { href: "/?sort=new", label: "New", icon: Clock },
+  { href: "/news", label: "AI News", icon: Newspaper },
 ] as const;
 
 export function Sidebar() {

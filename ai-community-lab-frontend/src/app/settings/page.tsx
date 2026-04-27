@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfileByUserId } from "@/lib/data/profile";
-import { ChangePasswordForm } from "./change-password-form";
 import { SettingsForm } from "./settings-form";
 
 export const metadata = {
@@ -16,9 +15,6 @@ export default async function SettingsPage() {
   if (!user) {
     redirect("/login?next=/settings");
   }
-
-  const hasEmailPassword =
-    user.identities?.some((i) => i.provider === "email") ?? false;
 
   const profile = await getProfileByUserId(user.id);
   if (!profile) {
@@ -51,7 +47,6 @@ export default async function SettingsPage() {
           initialNotifyModerationUpdates={Boolean(profile.notify_moderation_updates ?? true)}
         />
       </div>
-      {hasEmailPassword ? <ChangePasswordForm /> : null}
     </div>
   );
 }

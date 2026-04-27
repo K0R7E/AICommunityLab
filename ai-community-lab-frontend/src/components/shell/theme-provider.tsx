@@ -63,20 +63,3 @@ export function useTheme(): ThemeContextValue {
   }
   return ctx;
 }
-
-/**
- * Inline script source that must run before hydration so the correct theme
- * is applied on first paint (no FOUC).
- */
-export const THEME_INIT_SCRIPT = `(() => {
-  try {
-    var k = '${STORAGE_KEY}';
-    var t = localStorage.getItem(k);
-    if (t !== 'light' && t !== 'dark') {
-      t = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-    }
-    document.documentElement.dataset.theme = t;
-  } catch (e) {
-    document.documentElement.dataset.theme = 'dark';
-  }
-})();`;

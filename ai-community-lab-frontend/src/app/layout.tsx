@@ -11,10 +11,7 @@ import { SiteHeader } from "@/components/shell/site-header";
 import { SiteFooter } from "@/components/shell/site-footer";
 import { Sidebar } from "@/components/shell/sidebar";
 import { RightPanel } from "@/components/shell/right-panel";
-import {
-  ThemeProvider,
-  THEME_INIT_SCRIPT,
-} from "@/components/shell/theme-provider";
+import { ThemeProvider } from "@/components/shell/theme-provider";
 import { ThemedToaster } from "@/components/shell/themed-toaster";
 import "./globals.css";
 
@@ -82,10 +79,7 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
-        <script
-          suppressHydrationWarning
-          dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
-        />
+        <script src="/theme-init.js" />
       </head>
       <body className="flex min-h-full flex-col bg-[#0f0f0f] font-sans text-zinc-100">
         <ThemeProvider>

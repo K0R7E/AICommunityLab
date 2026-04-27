@@ -1,7 +1,7 @@
 import "server-only";
 
 const GNEWS_BASE_URL = "https://gnews.io/api/v4/search";
-const TWO_HOURS_MS = 1 * 60 * 1000;
+const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
 const DEFAULT_PAGE_SIZE = 10;
 const DEFAULT_MAX_PAGES = 5;
 const DEFAULT_MAX_ARTICLES = 100;
@@ -58,6 +58,16 @@ type CacheState = {
   lastSuccessfulUrlSet: Set<string>;
   inFlight: Promise<AiNewsDataset> | null;
 };
+
+class GNewsHttpError extends Error {
+  status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "GNewsHttpError";
+    this.status = status;
+  }
+}
 
 const cacheState: CacheState = {
   dataset: null,
@@ -158,7 +168,8 @@ async function fetchPagesForQuery(
       } catch {
         details = "";
       }
-      throw new Error(
+      throw new GNewsHttpError(
+        response.status,
         `GNews request failed with status ${response.status}${details ? `: ${details}` : ""}`,
       );
     }
@@ -204,6 +215,10 @@ async function fetchAllArticlesFromGNews(): Promise<Omit<AiNewsArticle, "isNew">
     try {
       return await fetchPagesForQuery(config, query);
     } catch (error) {
+      if (error instanceof GNewsHttpError && error.status === 429) {
+        // Do not continue fallback attempts when rate-limited.
+        throw error;
+      }
       lastError = error instanceof Error ? error : new Error("Unknown GNews fetch error");
     }
   }

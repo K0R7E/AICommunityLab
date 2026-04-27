@@ -1,8 +1,9 @@
 import "server-only";
+import { unstable_cache } from "next/cache";
 
 const GNEWS_BASE_URL = "https://gnews.io/api/v4/search";
 const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
-const ERROR_COOLDOWN_MS = 10 * 60 * 1000;
+const TWO_HOURS_SECONDS = 2 * 60 * 60;
 const DEFAULT_PAGE_SIZE = 10;
 const DEFAULT_MAX_PAGES = 1;
 const DEFAULT_MAX_ARTICLES = 20;
@@ -282,16 +283,22 @@ async function refreshDataset(): Promise<AiNewsDataset> {
         errorMessage: message,
       };
       cacheState.dataset = staleDataset;
-      cacheState.expiresAt = Date.now() + ERROR_COOLDOWN_MS;
+      cacheState.expiresAt = Date.now() + TWO_HOURS_MS;
       return staleDataset;
     }
     const errorDataset = emptyDataset("error", message);
-    // Avoid hammering the API after an initial failure (e.g. 429 rate limit).
+    // Keep a fixed 2-hour cadence even after errors.
     cacheState.dataset = errorDataset;
-    cacheState.expiresAt = Date.now() + ERROR_COOLDOWN_MS;
+    cacheState.expiresAt = Date.now() + TWO_HOURS_MS;
     return errorDataset;
   }
 }
+
+const getAiNewsDatasetFromTimedCache = unstable_cache(
+  async () => refreshDataset(),
+  ["ai-news-dataset-v1"],
+  { revalidate: TWO_HOURS_SECONDS },
+);
 
 export async function getAiNewsDataset(): Promise<AiNewsDataset> {
   const cachedDataset = cacheState.dataset;
@@ -301,9 +308,17 @@ export async function getAiNewsDataset(): Promise<AiNewsDataset> {
   }
 
   if (!cacheState.inFlight) {
-    cacheState.inFlight = refreshDataset().finally(() => {
-      cacheState.inFlight = null;
-    });
+    cacheState.inFlight = getAiNewsDatasetFromTimedCache()
+      .then((dataset) => {
+        // Sync process-local cache with Next data cache result.
+        cacheState.dataset = dataset;
+        cacheState.expiresAt = Date.now() + TWO_HOURS_MS;
+        cacheState.lastSuccessfulUrlSet = new Set(dataset.articles.map((article) => article.url));
+        return dataset;
+      })
+      .finally(() => {
+        cacheState.inFlight = null;
+      });
   }
 
   return cacheState.inFlight;

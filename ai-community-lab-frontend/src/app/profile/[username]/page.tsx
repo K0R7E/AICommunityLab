@@ -2,10 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ToolCard } from "@/components/feed/tool-card";
 import {
-  getCommentsByUserId,
-  getPostsByUserId,
+  getCommentsByUserIdScoped,
+  getPostsByUserIdScoped,
   getProfileByUsername,
-  getUserProfileStats,
+  getUserProfileStatsScoped,
 } from "@/lib/data/profile";
 import { formatRelativeTime } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
@@ -14,6 +14,7 @@ import {
   safeHttpsImageUrl,
 } from "@/lib/safe-remote-media-url";
 import { Award, FileText } from "lucide-react";
+import { getCurrentUserIsAdmin } from "@/lib/admin";
 
 type Props = { params: Promise<{ username: string }> };
 
@@ -32,16 +33,18 @@ export default async function ProfilePage({ params }: Props) {
   const profile = await getProfileByUsername(username);
   if (!profile) notFound();
 
-  const [stats, posts, profileComments] = await Promise.all([
-    getUserProfileStats(profile.id),
-    getPostsByUserId(profile.id),
-    getCommentsByUserId(profile.id),
-  ]);
-
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const isAdmin = user ? await getCurrentUserIsAdmin() : false;
+  const includeUnpublished = Boolean(user && (user.id === profile.id || isAdmin));
+
+  const [stats, posts, profileComments] = await Promise.all([
+    getUserProfileStatsScoped(profile.id, { includeUnpublished }),
+    getPostsByUserIdScoped(profile.id, { includeUnpublished }),
+    getCommentsByUserIdScoped(profile.id, { includeUnpublished }),
+  ]);
 
   const myRatings = new Map<string, number>();
   if (user && posts.length > 0) {

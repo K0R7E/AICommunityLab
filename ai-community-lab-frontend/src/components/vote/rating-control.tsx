@@ -1,6 +1,6 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
+import { CSRF_COOKIE_NAME } from "@/lib/csrf-constants";
 import { formatRatingDisplay } from "@/lib/format";
 import { Star } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -25,7 +25,6 @@ export function RatingControl({
   canRate,
 }: Props) {
   const router = useRouter();
-  const supabase = createClient();
 
   const [inFlightCount, setInFlightCount] = useState(0);
   const [sum, setSum] = useState(initialRatingSum);
@@ -33,6 +32,7 @@ export function RatingControl({
   const [myRating, setMyRating] = useState<number | null>(initialMyRating);
   const latestOpId = useRef(0);
   const helperTextId = useId();
+  const csrfTokenRef = useRef<string | null>(null);
 
   const { avg, countLabel } = formatRatingDisplay(sum, count);
 
@@ -44,6 +44,55 @@ export function RatingControl({
       setSum((s) => s - prevMy + next);
     }
     setMyRating(next);
+  }
+
+  function readCookieValue(name: string): string | null {
+    if (typeof document === "undefined") return null;
+    const all = document.cookie ? document.cookie.split("; ") : [];
+    const pair = all.find((entry) => entry.startsWith(`${name}=`));
+    if (!pair) return null;
+    return decodeURIComponent(pair.slice(name.length + 1));
+  }
+
+  async function ensureCsrfToken(): Promise<string | null> {
+    if (csrfTokenRef.current) return csrfTokenRef.current;
+
+    const cookieToken = readCookieValue(CSRF_COOKIE_NAME);
+    if (cookieToken) {
+      csrfTokenRef.current = cookieToken;
+      return cookieToken;
+    }
+
+    const response = await fetch("/api/csrf-token", {
+      method: "GET",
+      headers: { "x-requested-with": "XMLHttpRequest" },
+      credentials: "same-origin",
+      cache: "no-store",
+    });
+    if (!response.ok) return null;
+
+    const json = (await response.json()) as { csrfToken?: string };
+    if (!json.csrfToken || typeof json.csrfToken !== "string") return null;
+    csrfTokenRef.current = json.csrfToken;
+    return json.csrfToken;
+  }
+
+  async function sendRatingRequest(method: "POST" | "DELETE", payload: object) {
+    const csrfToken = await ensureCsrfToken();
+    if (!csrfToken) return { ok: false, status: 0 };
+
+    const response = await fetch("/api/ratings", {
+      method,
+      headers: {
+        "content-type": "application/json",
+        "x-csrf-token": csrfToken,
+        "x-requested-with": "XMLHttpRequest",
+      },
+      credentials: "same-origin",
+      body: JSON.stringify(payload),
+    });
+
+    return response;
   }
 
   async function pickValue(next: number) {
@@ -63,32 +112,13 @@ export function RatingControl({
 
       const opId = ++latestOpId.current;
       setInFlightCount((c) => c + 1);
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
+      const response = await sendRatingRequest("DELETE", { postId });
+      if (!response.ok) {
         if (opId === latestOpId.current) {
           setSum(prevSum);
           setCount(prevCount);
           setMyRating(prevMy);
-          toast.error("Login to Vote");
-        }
-        setInFlightCount((c) => Math.max(0, c - 1));
-        return;
-      }
-
-      const { error } = await supabase
-        .from("ratings")
-        .delete()
-        .eq("post_id", postId)
-        .eq("user_id", user.id);
-
-      if (error) {
-        if (opId === latestOpId.current) {
-          setSum(prevSum);
-          setCount(prevCount);
-          setMyRating(prevMy);
-          toast.error(error.message);
+          toast.error(response.status === 401 ? "Login to Vote" : "Vote update failed");
         }
         setInFlightCount((c) => Math.max(0, c - 1));
         return;
@@ -104,35 +134,13 @@ export function RatingControl({
 
     const opId = ++latestOpId.current;
     setInFlightCount((c) => c + 1);
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
+    const response = await sendRatingRequest("POST", { postId, value: next });
+    if (!response.ok) {
       if (opId === latestOpId.current) {
         setSum(prevSum);
         setCount(prevCount);
         setMyRating(prevMy);
-        toast.error("Login to Vote");
-      }
-      setInFlightCount((c) => Math.max(0, c - 1));
-      return;
-    }
-
-    const { error } = await supabase.from("ratings").upsert(
-      {
-        post_id: postId,
-        user_id: user.id,
-        value: next,
-      },
-      { onConflict: "user_id,post_id" },
-    );
-
-    if (error) {
-      if (opId === latestOpId.current) {
-        setSum(prevSum);
-        setCount(prevCount);
-        setMyRating(prevMy);
-        toast.error(error.message);
+        toast.error(response.status === 401 ? "Login to Vote" : "Vote update failed");
       }
       setInFlightCount((c) => Math.max(0, c - 1));
       return;
@@ -152,51 +160,56 @@ export function RatingControl({
       <p className="text-[11px] text-zinc-500">
         {myRating === null ? "No vote yet" : `Your vote: ${myRating}/5`}
       </p>
-      <div
-        className="flex flex-wrap justify-center gap-0.5"
-        role="group"
-        aria-label="Your rating from one to five stars"
-        aria-describedby={helperTextId}
-      >
-        {SCALE.map((n) => {
-          const active = myRating === n;
-          const filled = myRating !== null && n <= myRating;
-          const tooltipText = active
-            ? `Remove your ${n}-star rating`
-            : `Rate this tool ${n} out of 5`;
-          return (
-            <span key={n} className="group/rate relative inline-flex">
-              <button
-                type="button"
-                onClick={() => void pickValue(n)}
-                className={`flex min-h-8 min-w-8 items-center justify-center rounded p-1 transition ${
-                  active
-                    ? "bg-[#00ff9f]/15 ring-1 ring-[#00ff9f]/50"
-                    : "hover:bg-zinc-800/90"
-                }`}
-                aria-pressed={active}
-                aria-busy={inFlightCount > 0}
-                aria-label={tooltipText}
-              >
-                <Star
-                  className={`size-4 transition ${
-                    filled
-                      ? "fill-[#00ff9f] text-[#00ff9f]"
-                      : "text-zinc-500 group-hover/rate:text-zinc-200 group-focus-within/rate:text-zinc-200"
+      {canRate ? (
+        <div
+          className="flex flex-wrap justify-center gap-0.5"
+          role="group"
+          aria-label="Your rating from one to five stars"
+          aria-describedby={helperTextId}
+        >
+          {SCALE.map((n) => {
+            const active = myRating === n;
+            const filled = myRating !== null && n <= myRating;
+            const tooltipText = active
+              ? `Remove your ${n}-star rating`
+              : `Rate this tool ${n} out of 5`;
+            return (
+              <span key={n} className="group/rate relative inline-flex">
+                <button
+                  type="button"
+                  onClick={() => void pickValue(n)}
+                  className={`flex min-h-8 min-w-8 items-center justify-center rounded p-1 transition ${
+                    active
+                      ? "bg-[#00ff9f]/15 ring-1 ring-[#00ff9f]/50"
+                      : "hover:bg-zinc-800/90"
                   }`}
-                  aria-hidden
-                />
-              </button>
-              <span className="pointer-events-none absolute -top-7 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded bg-zinc-900 px-1.5 py-0.5 text-[10px] text-zinc-100 opacity-0 shadow transition group-hover/rate:opacity-100 group-focus-within/rate:opacity-100">
-                {tooltipText}
+                  aria-pressed={active}
+                  aria-busy={inFlightCount > 0}
+                  aria-label={tooltipText}
+                >
+                  <Star
+                    className={`size-4 transition ${
+                      filled
+                        ? "fill-[#00ff9f] text-[#00ff9f]"
+                        : "text-zinc-500 group-hover/rate:text-zinc-200 group-focus-within/rate:text-zinc-200"
+                    }`}
+                    aria-hidden
+                  />
+                </button>
+                <span className="pointer-events-none absolute -top-7 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded bg-zinc-900 px-1.5 py-0.5 text-[10px] text-zinc-100 opacity-0 shadow transition group-hover/rate:opacity-100 group-focus-within/rate:opacity-100">
+                  {tooltipText}
+                </span>
               </span>
-            </span>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="text-center text-[11px] text-zinc-500">Sign in to vote.</p>
+      )}
       <p id={helperTextId} className="sr-only">
-        Choose from one to five stars. Press the currently selected rating again to
-        remove your vote.
+        {canRate
+          ? "Choose from one to five stars. Press the currently selected rating again to remove your vote."
+          : "Sign in to submit a rating."}
       </p>
     </div>
   );

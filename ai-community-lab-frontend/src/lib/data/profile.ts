@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { POST_MODERATION_PUBLISHED } from "@/lib/moderation";
 import type { PostRow } from "@/lib/types/post";
 import type { ProfileRow } from "@/lib/types/profile";
 
@@ -35,20 +36,38 @@ export async function getUserProfileStats(userId: string): Promise<{
   /** Sum of `rating_sum` across the user’s posts (all 1–5 scores from voters). */
   totalRatingPoints: number;
 }> {
+  return getUserProfileStatsScoped(userId, { includeUnpublished: false });
+}
+
+export async function getUserProfileStatsScoped(
+  userId: string,
+  options: { includeUnpublished: boolean },
+): Promise<{
+  totalPosts: number;
+  totalRatingPoints: number;
+}> {
   const supabase = await createClient();
-  const { count, error: countError } = await supabase
+  let countQuery = supabase
     .from("posts")
     .select("*", { count: "exact", head: true })
     .eq("user_id", userId);
+  if (!options.includeUnpublished) {
+    countQuery = countQuery.eq("moderation_status", POST_MODERATION_PUBLISHED);
+  }
+  const { count, error: countError } = await countQuery;
 
   if (countError) {
     return { totalPosts: 0, totalRatingPoints: 0 };
   }
 
-  const { data: rows } = await supabase
+  let rowsQuery = supabase
     .from("posts")
     .select("rating_sum")
     .eq("user_id", userId);
+  if (!options.includeUnpublished) {
+    rowsQuery = rowsQuery.eq("moderation_status", POST_MODERATION_PUBLISHED);
+  }
+  const { data: rows } = await rowsQuery;
 
   const totalRatingPoints =
     rows?.reduce((sum, r) => sum + (r.rating_sum as number), 0) ?? 0;
@@ -60,12 +79,23 @@ export async function getUserProfileStats(userId: string): Promise<{
 }
 
 export async function getPostsByUserId(userId: string): Promise<PostRow[]> {
+  return getPostsByUserIdScoped(userId, { includeUnpublished: false });
+}
+
+export async function getPostsByUserIdScoped(
+  userId: string,
+  options: { includeUnpublished: boolean },
+): Promise<PostRow[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("posts")
     .select("*")
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
+  if (!options.includeUnpublished) {
+    query = query.eq("moderation_status", POST_MODERATION_PUBLISHED);
+  }
+  const { data, error } = await query;
 
   if (error) return [];
   return (data ?? []) as PostRow[];
@@ -83,10 +113,18 @@ export async function getCommentsByUserId(
   userId: string,
   limit = 40,
 ): Promise<ProfileCommentRow[]> {
+  return getCommentsByUserIdScoped(userId, { includeUnpublished: false, limit });
+}
+
+export async function getCommentsByUserIdScoped(
+  userId: string,
+  options: { includeUnpublished: boolean; limit?: number },
+): Promise<ProfileCommentRow[]> {
   const supabase = await createClient();
+  const limit = options.limit ?? 40;
   const { data, error } = await supabase
     .from("comments")
-    .select("id, post_id, content, created_at, posts(title)")
+    .select("id, post_id, content, created_at, posts(title, moderation_status)")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(limit);
@@ -98,14 +136,23 @@ export async function getCommentsByUserId(
     post_id: string;
     content: string;
     created_at: string;
-    posts: { title: string } | { title: string }[] | null;
+    posts:
+      | { title: string; moderation_status?: string | null }
+      | { title: string; moderation_status?: string | null }[]
+      | null;
   }[]).map((r) => {
     const post = r.posts;
+    const firstPost = !Array.isArray(post) ? post : (post[0] ?? null);
+    if (
+      !options.includeUnpublished &&
+      firstPost &&
+      firstPost.moderation_status !== POST_MODERATION_PUBLISHED
+    ) {
+      return null;
+    }
     const title =
-      post && !Array.isArray(post)
-        ? post.title
-        : Array.isArray(post) && post[0]
-          ? post[0].title
+      firstPost
+        ? firstPost.title
           : "Post";
     return {
       id: r.id,
@@ -114,5 +161,5 @@ export async function getCommentsByUserId(
       created_at: r.created_at,
       post_title: title,
     };
-  });
+  }).filter((row): row is ProfileCommentRow => row !== null);
 }

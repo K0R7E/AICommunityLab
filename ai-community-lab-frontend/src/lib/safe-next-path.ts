@@ -3,6 +3,24 @@
  * (`//evil.com/...`), protocol injection, newlines, and other redirect tricks.
  */
 const PATH_CHECK_BASE = "https://__next_path_check__.invalid";
+const ALLOWED_NEXT_PREFIXES = [
+  "/",
+  "/admin",
+  "/news",
+  "/notifications",
+  "/post",
+  "/profile",
+  "/settings",
+  "/submit",
+] as const;
+
+function isWhitelistedNextPath(pathname: string): boolean {
+  return ALLOWED_NEXT_PREFIXES.some((prefix) =>
+    prefix === "/"
+      ? pathname === "/"
+      : pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
 
 export function safeRelativeNextPath(raw: string): string {
   const s = raw.trim();
@@ -18,6 +36,7 @@ export function safeRelativeNextPath(raw: string): string {
     if (resolved.origin !== new URL(PATH_CHECK_BASE).origin) {
       return "/";
     }
+    if (!isWhitelistedNextPath(resolved.pathname)) return "/";
     const out =
       resolved.pathname + resolved.search + resolved.hash || "/";
     if (!out.startsWith("/")) return "/";

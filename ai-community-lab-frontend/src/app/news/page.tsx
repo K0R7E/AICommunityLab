@@ -14,9 +14,7 @@ export default async function NewsPage() {
     <div className="space-y-4">
       <div className="mb-2">
         <h1 className="text-xl font-bold tracking-tight text-zinc-100 sm:text-2xl">AI News</h1>
-        <p className="mt-1 text-sm text-zinc-400">
-          Aggregated from GNews search with a broad AI query, refreshed every 2 hours.
-        </p>
+        <p className="mt-1 text-sm text-zinc-400">AI news, updated regularly.</p>
       </div>
 
       {dataset.hasNewArticles ? (

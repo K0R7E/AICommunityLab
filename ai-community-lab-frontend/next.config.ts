@@ -38,12 +38,22 @@ function buildCspValue() {
   return directives.join("; ");
 }
 
+function isCspReportOnlyMode(): boolean {
+  // Default: report-only rollout. Set CSP_REPORT_ONLY=false to enforce.
+  return process.env.CSP_REPORT_ONLY?.trim().toLowerCase() !== "false";
+}
+
 const securityHeaders = [
   // Best-effort fingerprint reduction for scanners that flag software disclosure.
   // Infrastructure (CDN/proxy/runtime) may still inject their own Server header.
   { key: "Server", value: "" },
   { key: "X-Powered-By", value: "" },
-  { key: "Content-Security-Policy", value: buildCspValue() },
+  {
+    key: isCspReportOnlyMode()
+      ? "Content-Security-Policy-Report-Only"
+      : "Content-Security-Policy",
+    value: buildCspValue(),
+  },
   {
     key: "Strict-Transport-Security",
     value: "max-age=63072000; includeSubDomains; preload",

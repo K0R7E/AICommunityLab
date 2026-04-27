@@ -19,7 +19,7 @@ Copy `.env.example` to `.env.local` and set Supabase URL and anon key. Required 
 
 ### Scan findings -> mitigation mapping
 
-- Missing/weak CSP: tightened in `next.config.ts` by removing broad `script-src` allowances (`unsafe-eval`, wildcard https scripts) and reducing `connect-src` to only app + Supabase origins.
+- Missing/weak CSP: tightened in `next.config.ts` by removing broad `script-src` allowances (`unsafe-eval`, wildcard https scripts) and reducing `connect-src` to only app + Supabase origins. Default rollout is `Content-Security-Policy-Report-Only` (`CSP_REPORT_ONLY=true`).
 - Software/version disclosure: `next.config.ts` disables framework branding (`poweredByHeader: false`) and adds best-effort blanking of `Server`/`X-Powered-By` response headers.
 - Missing security disclosure channel: `/.well-known/security.txt` is now generated from production-ready defaults in `src/app/.well-known/security.txt/route.ts`, with optional env overrides.
 - Password submitted in URL (scanner false positive risk): login form in `src/components/auth/email-auth-form.tsx` now explicitly uses `method="post"` and still submits via Supabase SDK.
@@ -56,7 +56,7 @@ curl https://aicommunitylab.com/robots.txt
 
 Expected outcomes:
 
-- `Content-Security-Policy` is present and does not include `unsafe-eval`.
+- `Content-Security-Policy-Report-Only` (or `Content-Security-Policy` when `CSP_REPORT_ONLY=false`) is present and does not include `unsafe-eval`.
 - `X-Frame-Options`, HSTS, and cross-origin hardening headers are present.
 - `Server`/`X-Powered-By` are minimized at the app layer; any remaining values are controlled by hosting edge/proxy.
 - `.well-known/security.txt` returns valid RFC 9116 style fields.

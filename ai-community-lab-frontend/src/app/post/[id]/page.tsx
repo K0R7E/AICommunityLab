@@ -75,6 +75,22 @@ export default async function PostDetailPage({ params }: Props) {
   const {
     data: { user: currentUser },
   } = await supabase.auth.getUser();
+  const feedPublished = isPostPublishedForFeed(post.moderation_status);
+  const isOwner = !!currentUser && currentUser.id === post.user_id;
+
+  let isAdmin = false;
+  if (currentUser) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_admin")
+      .eq("id", currentUser.id)
+      .maybeSingle();
+    isAdmin = Boolean((profile as { is_admin?: boolean } | null)?.is_admin);
+  }
+
+  if (!feedPublished && !isOwner && !isAdmin) {
+    notFound();
+  }
 
   const [comments, ratingState] = await Promise.all([
     getCommentsForPost(id),
@@ -82,9 +98,7 @@ export default async function PostDetailPage({ params }: Props) {
   ]);
 
   const canAct = !!currentUser;
-  const isOwner = !!currentUser && currentUser.id === post.user_id;
   const visitLink = safeHttpExternalLink(post.url);
-  const feedPublished = isPostPublishedForFeed(post.moderation_status);
   const modBanner = moderationStatusLabel(post.moderation_status);
   const modRejected = post.moderation_status === "rejected";
 

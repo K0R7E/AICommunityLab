@@ -15,13 +15,14 @@ export function SiteHeader() {
           <Sparkles className="size-5 text-accent" aria-hidden />
           <span className="truncate">AICommunityLab</span>
         </Link>
-        <div className="flex max-w-[min(100%,20rem)] items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-2">
           <Link
             href="/submit"
-            className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-zinc-700 bg-card px-2.5 py-2 text-xs font-medium text-zinc-200 transition hover:border-accent/45 lg:hidden"
+            className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-xs font-semibold text-accent transition hover:bg-accent/20 hover:border-accent/60"
           >
-            <PlusCircle className="size-4 shrink-0 text-accent" aria-hidden />
-            Submit
+            <PlusCircle className="size-4 shrink-0" aria-hidden />
+            <span className="hidden sm:inline">Submit Tool</span>
+            <span className="sm:hidden">Submit</span>
           </Link>
           <NotificationsInboxLink />
           <ThemeToggle />

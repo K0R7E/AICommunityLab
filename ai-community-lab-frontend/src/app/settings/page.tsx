@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfileByUserId } from "@/lib/data/profile";
 import { SettingsForm } from "./settings-form";
+import { DeleteAccountButton } from "./delete-account-button";
 
 export const metadata = {
   title: "Settings · AICommunityLab",
@@ -46,6 +47,17 @@ export default async function SettingsPage() {
           initialNotifyCommentsOnTools={Boolean(profile.notify_comments_on_tools ?? true)}
           initialNotifyModerationUpdates={Boolean(profile.notify_moderation_updates ?? true)}
         />
+      </div>
+
+      <div className="mt-12 border-t border-red-900/40 pt-8">
+        <h2 className="text-base font-semibold text-red-400">Danger Zone</h2>
+        <p className="mt-1 text-sm text-zinc-500">
+          Deleting your account is permanent and cannot be undone. All your
+          posts, comments, and data will be removed.
+        </p>
+        <div className="mt-4">
+          <DeleteAccountButton />
+        </div>
       </div>
     </div>
   );

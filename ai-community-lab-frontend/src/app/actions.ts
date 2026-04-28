@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { canonicalToolUrl } from "@/lib/canonical-tool-url";
 import {
   loadSimilarPostsForSubmit,
@@ -379,17 +380,37 @@ export async function acceptTerms(
     return { error: "You must be signed in to continue." };
   }
 
-  const { error } = await supabase
+  const now = new Date().toISOString();
+
+  const { data: updated, error } = await supabase
     .from("profiles")
     .update({
       has_accepted_terms: true,
-      accepted_terms_at: new Date().toISOString(),
+      accepted_terms_at: now,
       accepted_terms_version: CURRENT_TERMS_VERSION,
     })
-    .eq("id", user.id);
+    .eq("id", user.id)
+    .select("id");
 
   if (error) {
     return { error: genericActionError() };
+  }
+
+  // If 0 rows were updated the profile row doesn't exist yet (the
+  // handle_new_user trigger failed silently on signup). Create it now so
+  // consent is recorded and the gate doesn't loop forever.
+  if (!updated?.length) {
+    const fallback = `user_${user.id.replace(/-/g, "").slice(0, 8)}`;
+    const { error: insertError } = await supabase.from("profiles").insert({
+      id: user.id,
+      username: fallback,
+      has_accepted_terms: true,
+      accepted_terms_at: now,
+      accepted_terms_version: CURRENT_TERMS_VERSION,
+    });
+    if (insertError) {
+      return { error: genericActionError() };
+    }
   }
 
   // `revalidatePath('/', 'layout')` invalidates the root layout — including
@@ -400,5 +421,23 @@ export async function acceptTerms(
   const safeNext = safeRelativeNextPath(next);
   // Never bounce back through the consent gate itself.
   redirect(safeNext === "/welcome" ? "/" : safeNext);
+}
+
+export async function deleteAccount(): Promise<{ error: string } | void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "You must be signed in to delete your account." };
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin.auth.admin.deleteUser(user.id);
+  if (error) {
+    return { error: genericActionError() };
+  }
+
+  redirect("/");
 }
 

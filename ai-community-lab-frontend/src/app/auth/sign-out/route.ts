@@ -48,5 +48,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
   }
 
+  // @supabase/ssr sometimes misses chunked cookie variants (sb-*-auth-token.0,
+  // .1, …). Explicitly expire every matching cookie so the browser is fully
+  // signed out regardless of chunk count.
+  request.cookies.getAll()
+    .filter((c) => c.name.startsWith("sb-") && c.name.includes("auth-token"))
+    .forEach((c) => {
+      response.cookies.set(c.name, "", {
+        maxAge: 0,
+        path: "/",
+        sameSite: "lax",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+      });
+    });
+
   return response;
 }

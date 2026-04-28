@@ -21,6 +21,7 @@ import { safeRelativeNextPath } from "@/lib/safe-next-path";
 import { CURRENT_TERMS_VERSION } from "@/lib/terms-version";
 import { isValidUsername, normalizeUsername } from "@/lib/validate-profile";
 import type { ListingKind } from "@/lib/constants";
+import { logUserActivity } from "@/lib/user-activity-logger";
 
 const TITLE_MIN = 3;
 const TITLE_MAX = 200;
@@ -350,6 +351,8 @@ export async function updateProfile(
     return { error: genericActionError() };
   }
 
+  void logUserActivity(user.id, "profile_updated", { username });
+
   revalidatePath("/settings");
   revalidatePath("/", "layout");
   const prevName = before?.username as string | undefined;
@@ -416,6 +419,10 @@ export async function acceptTerms(
   // `revalidatePath('/', 'layout')` invalidates the root layout — including
   // the cached profile summary used by the consent gate — so the next render
   // sees has_accepted_terms = true and the gate disappears.
+  void logUserActivity(user.id, "terms_accepted", {
+    version: CURRENT_TERMS_VERSION,
+  });
+
   revalidatePath("/", "layout");
 
   const safeNext = safeRelativeNextPath(next);
@@ -433,6 +440,7 @@ export async function deleteAccount(): Promise<{ error: string } | void> {
   }
 
   const admin = createAdminClient();
+  await logUserActivity(user.id, "account_deleted");
   const { error } = await admin.auth.admin.deleteUser(user.id);
   if (error) {
     return { error: genericActionError() };

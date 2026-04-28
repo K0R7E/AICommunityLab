@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { canonicalSiteOrigin } from "@/lib/canonical-origin";
 import { safeRelativeNextPath } from "@/lib/safe-next-path";
+import { logUserActivity, getClientIp } from "@/lib/user-activity-logger";
 
 /**
  * OAuth returns with ?code= — exchange for session. Session cookies must be set on
@@ -54,6 +55,7 @@ export async function GET(request: NextRequest) {
   // through `safeNext` first.
   const userId = exchangeData?.user?.id;
   if (userId) {
+    void logUserActivity(userId, "login", undefined, getClientIp(request));
     const { data: profileRow } = await supabase
       .from("profiles")
       .select("has_accepted_terms")

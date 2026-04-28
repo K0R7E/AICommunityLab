@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { canonicalSiteOrigin } from "@/lib/canonical-origin";
+import { logUserActivity, getClientIp } from "@/lib/user-activity-logger";
 
 function isCrossSiteRequest(request: NextRequest): boolean {
   const secFetchSite = request.headers.get("sec-fetch-site");
@@ -43,9 +44,13 @@ export async function POST(request: NextRequest) {
     },
   });
 
+  const { data: { user: signingOutUser } } = await supabase.auth.getUser();
   const { error } = await supabase.auth.signOut();
   if (error) {
     return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
+  }
+  if (signingOutUser) {
+    void logUserActivity(signingOutUser.id, "logout", undefined, getClientIp(request));
   }
 
   // @supabase/ssr sometimes misses chunked cookie variants (sb-*-auth-token.0,

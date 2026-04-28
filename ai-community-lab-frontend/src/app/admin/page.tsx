@@ -8,6 +8,8 @@ import { FeedSearch } from "@/components/shell/feed-search";
 import { AdminCommentEditor } from "./admin-comment-editor";
 import { AdminPostEditor } from "./admin-post-editor";
 import { AdminAuditLogView } from "./admin-audit-log-view";
+import { AdminUserActivityView } from "./admin-user-activity-view";
+import type { EventCategory } from "@/lib/data/admin-user-activity";
 
 export const metadata = {
   title: "Moderation · AICommunityLab",
@@ -16,15 +18,19 @@ export const metadata = {
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; view?: string }>;
+  searchParams: Promise<{ q?: string; view?: string; category?: string; u?: string }>;
 }) {
   if (!(await getCurrentUserIsAdmin())) {
     redirect("/");
   }
 
   const sp = await searchParams;
-  const view = sp.view === "audit" ? "audit" : "moderation";
+  const view = sp.view === "audit" ? "audit" : sp.view === "activity" ? "activity" : "moderation";
   const q = sp.q?.trim() || null;
+  const category = (["all", "auth", "content", "account"].includes(sp.category ?? "")
+    ? sp.category
+    : "all") as EventCategory;
+  const userSearch = sp.u?.trim() || null;
 
   const { posts, comments } =
     view === "moderation" ? await getAdminModerationData({ q }) : { posts: [], comments: [] };
@@ -52,6 +58,16 @@ export default async function AdminPage({
           Moderation
         </Link>
         <Link
+          href="/admin?view=activity"
+          className={`rounded-md px-3 py-2 text-sm font-medium transition ${
+            view === "activity"
+              ? "bg-zinc-800 text-accent"
+              : "text-zinc-400 hover:text-zinc-200"
+          }`}
+        >
+          User activity
+        </Link>
+        <Link
           href="/admin?view=audit"
           className={`rounded-md px-3 py-2 text-sm font-medium transition ${
             view === "audit"
@@ -65,6 +81,8 @@ export default async function AdminPage({
 
       {view === "audit" ? (
         <AdminAuditLogView />
+      ) : view === "activity" ? (
+        <AdminUserActivityView category={category} userSearch={userSearch} />
       ) : (
         <>
           <Suspense fallback={null}>

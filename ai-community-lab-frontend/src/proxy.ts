@@ -51,8 +51,62 @@ function isCspReportOnly(): boolean {
 
 const PROTECTED_PATHS = ["/submit", "/settings", "/admin", "/notifications"];
 
+/**
+ * Paths that signed-in users without an accepted Terms/Privacy record may
+ * still reach. Everything else redirects them to `/welcome`. Order matters
+ * only for readability — matching is by exact path or `${prefix}/...`.
+ *
+ * - `/welcome` is the gate page itself.
+ * - `/privacy` and `/terms` must be reachable from the gate (links).
+ * - `/auth/...` covers the OAuth callback, email confirm, and sign-out.
+ * - `/login` lets users restart the OAuth flow if needed.
+ */
+const TERMS_GATE_ALLOWED_PATHS = [
+  "/welcome",
+  "/privacy",
+  "/terms",
+  "/auth",
+  "/login",
+] as const;
+
 function isProtected(path: string): boolean {
   return PROTECTED_PATHS.some((p) => path === p || path.startsWith(`${p}/`));
+}
+
+function isTermsGateAllowedPath(path: string): boolean {
+  return TERMS_GATE_ALLOWED_PATHS.some(
+    (p) => path === p || path.startsWith(`${p}/`),
+  );
+}
+
+/**
+ * The terms gate only fires for top-level page navigations (and RSC fetches
+ * for those navigations). We deliberately skip:
+ *   - non-GET requests (server actions, route handlers — those guard
+ *     themselves, see `acceptTerms` and the data-write actions in actions.ts)
+ *   - `/api/*` (route handlers serve their own auth)
+ *   - `/_next/*` (already excluded by the matcher, but kept for safety)
+ */
+function shouldRunTermsGate(request: NextRequest, path: string): boolean {
+  if (request.method !== "GET") return false;
+  if (path.startsWith("/api/")) return false;
+  if (path.startsWith("/_next/")) return false;
+  return true;
+}
+
+/**
+ * Fast anonymous-user check. Supabase SSR stores auth state in cookies named
+ * `sb-<project-ref>-auth-token` (and chunked variants). If no such cookie is
+ * present, the visitor is definitely signed out and we can skip Supabase
+ * altogether — saving a `getUser()` round-trip on every public page load.
+ */
+function hasSupabaseAuthCookie(request: NextRequest): boolean {
+  for (const c of request.cookies.getAll()) {
+    if (c.name.startsWith("sb-") && c.name.includes("-auth-token")) {
+      return true;
+    }
+  }
+  return false;
 }
 
 export async function proxy(request: NextRequest) {
@@ -106,8 +160,19 @@ export async function proxy(request: NextRequest) {
     return res;
   }
 
-  // getUser() is expensive — only call it for protected routes.
-  if (!isProtected(path)) {
+  const protectedRoute = isProtected(path);
+  const hasAuthCookie = hasSupabaseAuthCookie(request);
+  // The terms gate only matters for signed-in users — anonymous visitors
+  // can't have accepted yet, so we apply the gate logic only when an auth
+  // cookie is present. Without this short-circuit, every public page load
+  // would trigger a Supabase `getUser()` round-trip.
+  const gateApplies =
+    hasAuthCookie &&
+    !isTermsGateAllowedPath(path) &&
+    shouldRunTermsGate(request, path);
+
+  // Fast path: nothing on this route requires Supabase, so skip getUser().
+  if (!protectedRoute && !gateApplies) {
     const res = NextResponse.next({ request });
     res.headers.set(cspKey, cspValue);
     return res;
@@ -139,16 +204,44 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.search = "";
-    url.searchParams.set(
-      "next",
-      safeRelativeNextPath(`${path}${request.nextUrl.search}`),
-    );
-    const res = NextResponse.redirect(url);
-    res.headers.set(cspKey, cspValue);
-    return res;
+    if (protectedRoute) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.search = "";
+      url.searchParams.set(
+        "next",
+        safeRelativeNextPath(`${path}${request.nextUrl.search}`),
+      );
+      const res = NextResponse.redirect(url);
+      res.headers.set(cspKey, cspValue);
+      return res;
+    }
+    // Anonymous visitor on a publicly readable page — terms gate doesn't
+    // apply, so just pass through with the (already-set) CSP headers.
+    return supabaseResponse;
+  }
+
+  // Signed-in user: enforce the first-login consent gate. The gate fires for
+  // every non-allowlisted page navigation until `has_accepted_terms = true`.
+  if (gateApplies) {
+    const { data: profileRow } = await supabase
+      .from("profiles")
+      .select("has_accepted_terms")
+      .eq("id", user.id)
+      .maybeSingle<{ has_accepted_terms?: boolean | null }>();
+
+    if (profileRow?.has_accepted_terms !== true) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/welcome";
+      url.search = "";
+      url.searchParams.set(
+        "next",
+        safeRelativeNextPath(`${path}${request.nextUrl.search}`),
+      );
+      const res = NextResponse.redirect(url);
+      res.headers.set(cspKey, cspValue);
+      return res;
+    }
   }
 
   return supabaseResponse;

@@ -16,6 +16,8 @@ import {
   parseListingKindFromFormData,
   parseOptionalPostUrl,
 } from "@/lib/post-form";
+import { safeRelativeNextPath } from "@/lib/safe-next-path";
+import { CURRENT_TERMS_VERSION } from "@/lib/terms-version";
 import { isValidUsername, normalizeUsername } from "@/lib/validate-profile";
 import type { ListingKind } from "@/lib/constants";
 
@@ -357,3 +359,46 @@ export async function updateProfile(
 
   return { error: null, doneAt: Date.now() };
 }
+
+/**
+ * First-login consent gate. Records that the signed-in user has accepted the
+ * current Privacy Policy + Terms of Use, then redirects them to the original
+ * destination. Throws (via `redirect`) on success — never returns normally.
+ *
+ * The `next` parameter is sanitised against the same allowlist used for OAuth
+ * post-login redirects to prevent open-redirect abuse.
+ */
+export async function acceptTerms(
+  next: string,
+): Promise<{ error: string } | void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "You must be signed in to continue." };
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      has_accepted_terms: true,
+      accepted_terms_at: new Date().toISOString(),
+      accepted_terms_version: CURRENT_TERMS_VERSION,
+    })
+    .eq("id", user.id);
+
+  if (error) {
+    return { error: genericActionError() };
+  }
+
+  // `revalidatePath('/', 'layout')` invalidates the root layout — including
+  // the cached profile summary used by the consent gate — so the next render
+  // sees has_accepted_terms = true and the gate disappears.
+  revalidatePath("/", "layout");
+
+  const safeNext = safeRelativeNextPath(next);
+  // Never bounce back through the consent gate itself.
+  redirect(safeNext === "/welcome" ? "/" : safeNext);
+}
+

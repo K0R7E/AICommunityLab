@@ -41,10 +41,35 @@ export async function GET(request: NextRequest) {
     },
   });
 
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { data: exchangeData, error } =
+    await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
     return NextResponse.redirect(new URL("/?error=auth", origin));
+  }
+
+  // Skip the proxy bounce for first-time users by checking the consent flag
+  // here and redirecting straight to /welcome. The proxy is still the
+  // authoritative gate — this is just a UX optimization to avoid a hop
+  // through `safeNext` first.
+  const userId = exchangeData?.user?.id;
+  if (userId) {
+    const { data: profileRow } = await supabase
+      .from("profiles")
+      .select("has_accepted_terms")
+      .eq("id", userId)
+      .maybeSingle<{ has_accepted_terms?: boolean | null }>();
+
+    if (profileRow?.has_accepted_terms !== true) {
+      const welcomeUrl = new URL("/welcome", origin);
+      welcomeUrl.searchParams.set("next", safeNext);
+      const welcomeResponse = NextResponse.redirect(welcomeUrl);
+      // Carry over any cookies the Supabase client set during the exchange.
+      response.cookies.getAll().forEach((cookie) => {
+        welcomeResponse.cookies.set(cookie);
+      });
+      return welcomeResponse;
+    }
   }
 
   return response;

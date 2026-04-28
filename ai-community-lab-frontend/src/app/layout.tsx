@@ -76,7 +76,9 @@ export default async function RootLayout({
   if (user) {
     const { data: profileRow } = await supabase
       .from("profiles")
-      .select("username, avatar_url, is_admin")
+      .select(
+        "username, avatar_url, is_admin, has_accepted_terms, accepted_terms_version",
+      )
       .eq("id", user.id)
       .maybeSingle();
     initialProfile = profileRow
@@ -84,6 +86,13 @@ export default async function RootLayout({
           username: profileRow.username,
           avatar_url: profileRow.avatar_url,
           is_admin: Boolean((profileRow as { is_admin?: boolean }).is_admin),
+          has_accepted_terms: Boolean(
+            (profileRow as { has_accepted_terms?: boolean })
+              .has_accepted_terms,
+          ),
+          accepted_terms_version:
+            (profileRow as { accepted_terms_version?: string | null })
+              .accepted_terms_version ?? null,
         }
       : null;
   }

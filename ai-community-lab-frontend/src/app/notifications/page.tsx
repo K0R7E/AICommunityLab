@@ -125,21 +125,21 @@ export default async function NotificationsPage({
 
       <ul className="mt-4 flex flex-col gap-2">
         {rows.length === 0 ? (
-          <li className="rounded-lg border border-zinc-800 bg-[#141414] px-4 py-8 text-center text-sm text-zinc-500">
+          <li className="rounded-lg border border-zinc-800 bg-surface-sunken px-4 py-8 text-center text-sm text-zinc-500">
             No notifications yet.
           </li>
         ) : (
           rows.map((n) => (
             <li
               key={n.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-800 bg-[#141414] px-4 py-3"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-800 bg-surface-sunken px-4 py-3"
             >
               <div className="min-w-0">
                 <p className="text-sm text-zinc-200">
                   {notificationTitle(n)}
                 </p>
                 {n.message ? (
-                  <p className="mt-2 whitespace-pre-wrap rounded-md border border-zinc-800/80 bg-[#0f0f0f] px-2 py-1.5 text-xs text-zinc-300">
+                  <p className="mt-2 whitespace-pre-wrap rounded-md border border-zinc-800/80 bg-background px-2 py-1.5 text-xs text-zinc-300">
                     {n.message}
                   </p>
                 ) : null}
@@ -151,7 +151,7 @@ export default async function NotificationsPage({
                 {n.post_id ? (
                   <Link
                     href={`/post/${n.post_id}`}
-                    className="text-sm font-medium text-[#00ff9f] hover:underline"
+                    className="text-sm font-medium text-accent hover:underline"
                   >
                     Open post
                   </Link>
@@ -170,7 +170,7 @@ export default async function NotificationsPage({
         >
           <div>
             {hasPrev ? (
-              <Link href={pageHref(page - 1)} className="font-medium text-[#00ff9f] hover:underline">
+              <Link href={pageHref(page - 1)} className="font-medium text-accent hover:underline">
                 ← Newer
               </Link>
             ) : (
@@ -182,7 +182,7 @@ export default async function NotificationsPage({
           </p>
           <div>
             {hasNext ? (
-              <Link href={pageHref(page + 1)} className="font-medium text-[#00ff9f] hover:underline">
+              <Link href={pageHref(page + 1)} className="font-medium text-accent hover:underline">
                 Older →
               </Link>
             ) : (
@@ -193,7 +193,7 @@ export default async function NotificationsPage({
       ) : null}
 
       <p className="mt-10 text-center text-sm text-zinc-500">
-        <Link href="/" className="text-[#00ff9f] hover:underline">
+        <Link href="/" className="text-accent hover:underline">
           ← Back to feed
         </Link>
       </p>

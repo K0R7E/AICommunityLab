@@ -39,7 +39,7 @@ function PetriDish({ state }: { state: PetriState }) {
 
 export function EmptyFeed() {
   return (
-    <div className="rounded-xl border border-zinc-800 bg-[#1a1a1a] px-6 py-12">
+    <div className="rounded-xl border border-zinc-800 bg-card px-6 py-12">
       <div className="flex flex-col items-center gap-8 text-center sm:flex-row sm:gap-10 sm:text-left">
         <div className="shrink-0">
           <PetriDish state="empty" />
@@ -57,7 +57,7 @@ export function EmptyFeed() {
           <div className="mt-5 flex flex-wrap gap-3">
             <Link
               href="/submit"
-              className="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#00ff9f]/60 bg-gradient-to-b from-[#00ff9f] to-[#00d986] px-5 py-2 text-sm font-semibold text-[#061a13] shadow-[0_0_0_1px_rgba(0,255,159,0.35),0_8px_20px_-8px_rgba(0,255,159,0.6),inset_0_1px_0_rgba(255,255,255,0.35)] transition duration-[120ms] hover:-translate-y-px active:translate-y-0"
+              className="inline-flex min-h-10 items-center justify-center rounded-lg border border-accent/60 bg-gradient-to-b from-[#00ff9f] to-[#00d986] px-5 py-2 text-sm font-semibold text-on-accent shadow-[0_0_0_1px_rgba(0,255,159,0.35),0_8px_20px_-8px_rgba(0,255,159,0.6),inset_0_1px_0_rgba(255,255,255,0.35)] transition duration-[120ms] hover:-translate-y-px active:translate-y-0"
             >
               Submit the first tool
             </Link>
@@ -76,7 +76,7 @@ export function EmptyFeed() {
 
 export function EmptyCategory() {
   return (
-    <div className="rounded-xl border border-zinc-800 bg-[#1a1a1a] px-6 py-12">
+    <div className="rounded-xl border border-zinc-800 bg-card px-6 py-12">
       <div className="flex flex-col items-center gap-6 text-center">
         <PetriDish state="category" />
         <div>
@@ -94,7 +94,7 @@ export function EmptyCategory() {
 
 export function EmptySearch({ query }: { query: string }) {
   return (
-    <div className="rounded-xl border border-zinc-800 bg-[#1a1a1a] px-6 py-12">
+    <div className="rounded-xl border border-zinc-800 bg-card px-6 py-12">
       <div className="flex flex-col items-center gap-6 text-center">
         <PetriDish state="search" />
         <div>

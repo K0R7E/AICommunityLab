@@ -42,7 +42,7 @@ export function AdminCommentEditor({ id, postId, content, children }: Props) {
           <button
             type="button"
             onClick={() => setOpen((o) => !o)}
-            className="rounded-md border border-zinc-600 bg-zinc-800/80 px-3 py-1.5 text-xs font-medium text-zinc-200 transition hover:border-[#00ff9f]/45 hover:bg-zinc-800"
+            className="rounded-md border border-zinc-600 bg-zinc-800/80 px-3 py-1.5 text-xs font-medium text-zinc-200 transition hover:border-accent/45 hover:bg-zinc-800"
           >
             {open ? "Cancel" : "Edit"}
           </button>
@@ -50,18 +50,18 @@ export function AdminCommentEditor({ id, postId, content, children }: Props) {
         </div>
       </div>
       {open ? (
-        <form onSubmit={onSubmit} className="rounded-lg border border-zinc-700 bg-[#0f0f0f] p-3">
+        <form onSubmit={onSubmit} className="rounded-lg border border-zinc-700 bg-background p-3">
           <textarea
             name="content"
             required
             rows={4}
             defaultValue={content}
-            className="w-full rounded border border-zinc-700 bg-[#141414] px-2 py-1.5 text-sm text-zinc-100"
+            className="w-full rounded border border-zinc-700 bg-surface-sunken px-2 py-1.5 text-sm text-zinc-100"
           />
           <button
             type="submit"
             disabled={pending}
-            className="mt-2 rounded bg-[#00ff9f] px-3 py-1.5 text-xs font-semibold text-[#0f0f0f] disabled:opacity-50"
+            className="mt-2 rounded bg-accent px-3 py-1.5 text-xs font-semibold text-on-accent disabled:opacity-50"
           >
             {pending ? "Saving…" : "Save comment"}
           </button>

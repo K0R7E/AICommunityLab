@@ -47,7 +47,7 @@ export function SignInWithGoogle({
       disabled={loading}
       className={
         className ??
-        "inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#00ff9f] px-4 py-2.5 text-sm font-medium text-[#0f0f0f] transition hover:bg-[#33ffa8] disabled:opacity-50"
+        "inline-flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-on-accent transition hover:bg-accent-hover disabled:opacity-50"
       }
     >
       <LogIn className="size-4" />

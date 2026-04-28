@@ -52,7 +52,7 @@ export function AdminDeleteButtons(props: Props) {
   return (
     <div className="flex flex-col items-end gap-2">
       {props.kind === "comment" && commentStep ? (
-        <div className="w-full max-w-xs rounded-md border border-zinc-700 bg-[#0f0f0f] p-2">
+        <div className="w-full max-w-xs rounded-md border border-zinc-700 bg-background p-2">
           <label className="text-[10px] uppercase tracking-wide text-zinc-500">
             Note to author (optional)
           </label>
@@ -61,7 +61,7 @@ export function AdminDeleteButtons(props: Props) {
             onChange={(e) => setCommentNote(e.target.value)}
             rows={2}
             placeholder="Why this was removed…"
-            className="mt-1 w-full rounded border border-zinc-700 bg-[#141414] px-2 py-1 text-xs text-zinc-100"
+            className="mt-1 w-full rounded border border-zinc-700 bg-surface-sunken px-2 py-1 text-xs text-zinc-100"
           />
           <button
             type="button"

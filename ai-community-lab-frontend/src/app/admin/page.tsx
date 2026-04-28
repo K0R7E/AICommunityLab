@@ -55,13 +55,13 @@ export default async function AdminPage({
             posts.map((p) => (
               <li
                 key={p.id}
-                className="rounded-lg border border-zinc-800 bg-[#141414] px-4 py-3"
+                className="rounded-lg border border-zinc-800 bg-surface-sunken px-4 py-3"
               >
                 <AdminPostEditor post={p}>
                   <div>
                     <Link
                       href={`/post/${p.id}`}
-                      className="font-medium text-[#00ff9f] hover:underline"
+                      className="font-medium text-accent hover:underline"
                     >
                       {p.title}
                     </Link>
@@ -81,7 +81,7 @@ export default async function AdminPage({
                                   Same canonical URL as{" "}
                                   <Link
                                     href={`/post/${h.otherId}`}
-                                    className="font-medium text-[#00ff9f] hover:underline"
+                                    className="font-medium text-accent hover:underline"
                                   >
                                     {h.otherTitle}
                                   </Link>
@@ -91,7 +91,7 @@ export default async function AdminPage({
                                   Similar title/description (score {(h.score ?? 0).toFixed(2)}):{" "}
                                   <Link
                                     href={`/post/${h.otherId}`}
-                                    className="font-medium text-[#00ff9f] hover:underline"
+                                    className="font-medium text-accent hover:underline"
                                   >
                                     {h.otherTitle}
                                   </Link>
@@ -121,7 +121,7 @@ export default async function AdminPage({
             comments.map((c) => (
               <li
                 key={c.id}
-                className="rounded-lg border border-zinc-800 bg-[#141414] px-4 py-3"
+                className="rounded-lg border border-zinc-800 bg-surface-sunken px-4 py-3"
               >
                 <AdminCommentEditor id={c.id} postId={c.post_id} content={c.content}>
                   <div>
@@ -131,7 +131,7 @@ export default async function AdminPage({
                     <p className="mt-2 text-xs text-zinc-500">
                       <Link
                         href={`/post/${c.post_id}`}
-                        className="text-[#00ff9f] hover:underline"
+                        className="text-accent hover:underline"
                       >
                         Open post
                       </Link>
@@ -147,7 +147,7 @@ export default async function AdminPage({
       </section>
 
       <p className="text-center text-sm text-zinc-500">
-        <Link href="/" className="text-[#00ff9f] hover:underline">
+        <Link href="/" className="text-accent hover:underline">
           ← Back to feed
         </Link>
       </p>

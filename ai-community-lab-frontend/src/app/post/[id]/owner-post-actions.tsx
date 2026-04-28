@@ -70,7 +70,7 @@ export function OwnerPostActions({ post }: { post: OwnerPostEditorRow }) {
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
-          className="rounded-md border border-zinc-600 bg-zinc-800/80 px-3 py-1.5 text-xs font-medium text-zinc-200 transition hover:border-[#00ff9f]/45 hover:bg-zinc-800"
+          className="rounded-md border border-zinc-600 bg-zinc-800/80 px-3 py-1.5 text-xs font-medium text-zinc-200 transition hover:border-accent/45 hover:bg-zinc-800"
         >
           {open ? "Cancel edit" : "Edit tool"}
         </button>
@@ -84,7 +84,7 @@ export function OwnerPostActions({ post }: { post: OwnerPostEditorRow }) {
         </button>
       </div>
       {open ? (
-        <form onSubmit={onSubmit} className="space-y-3 rounded-lg border border-zinc-700 bg-[#0f0f0f] p-3">
+        <form onSubmit={onSubmit} className="space-y-3 rounded-lg border border-zinc-700 bg-background p-3">
           <div>
             <label htmlFor={`owner-title-${post.id}`} className="text-xs text-zinc-500">
               Title
@@ -95,7 +95,7 @@ export function OwnerPostActions({ post }: { post: OwnerPostEditorRow }) {
               required
               minLength={3}
               defaultValue={post.title}
-              className="mt-1 w-full rounded border border-zinc-700 bg-[#141414] px-2 py-1.5 text-sm text-zinc-100"
+              className="mt-1 w-full rounded border border-zinc-700 bg-surface-sunken px-2 py-1.5 text-sm text-zinc-100"
             />
           </div>
           <div>
@@ -108,7 +108,7 @@ export function OwnerPostActions({ post }: { post: OwnerPostEditorRow }) {
               type="url"
               defaultValue={post.url ?? ""}
               placeholder="https://... (optional)"
-              className="mt-1 w-full rounded border border-zinc-700 bg-[#141414] px-2 py-1.5 text-sm text-zinc-100"
+              className="mt-1 w-full rounded border border-zinc-700 bg-surface-sunken px-2 py-1.5 text-sm text-zinc-100"
             />
           </div>
           <div>
@@ -120,7 +120,7 @@ export function OwnerPostActions({ post }: { post: OwnerPostEditorRow }) {
               name="description"
               rows={3}
               defaultValue={post.description ?? ""}
-              className="mt-1 w-full rounded border border-zinc-700 bg-[#141414] px-2 py-1.5 text-sm text-zinc-100"
+              className="mt-1 w-full rounded border border-zinc-700 bg-surface-sunken px-2 py-1.5 text-sm text-zinc-100"
             />
           </div>
           <div>
@@ -137,7 +137,7 @@ export function OwnerPostActions({ post }: { post: OwnerPostEditorRow }) {
                 setListingKind(nextKind);
                 setCategory(CATEGORIES_BY_KIND[nextKind][0]);
               }}
-              className="mt-1 w-full rounded border border-zinc-700 bg-[#141414] px-2 py-1.5 text-sm text-zinc-100"
+              className="mt-1 w-full rounded border border-zinc-700 bg-surface-sunken px-2 py-1.5 text-sm text-zinc-100"
             >
               {LISTING_KINDS.map((kind) => (
                 <option key={kind} value={kind}>
@@ -156,7 +156,7 @@ export function OwnerPostActions({ post }: { post: OwnerPostEditorRow }) {
               required
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="mt-1 w-full rounded border border-zinc-700 bg-[#141414] px-2 py-1.5 text-sm text-zinc-100"
+              className="mt-1 w-full rounded border border-zinc-700 bg-surface-sunken px-2 py-1.5 text-sm text-zinc-100"
             >
               {CATEGORIES_BY_KIND[listingKind].map((category) => (
                 <option key={category} value={category}>
@@ -168,7 +168,7 @@ export function OwnerPostActions({ post }: { post: OwnerPostEditorRow }) {
           <button
             type="submit"
             disabled={pending}
-            className="rounded bg-[#00ff9f] px-3 py-1.5 text-xs font-semibold text-[#0f0f0f] disabled:opacity-50"
+            className="rounded bg-accent px-3 py-1.5 text-xs font-semibold text-on-accent disabled:opacity-50"
           >
             {pending ? "Saving..." : "Save changes"}
           </button>

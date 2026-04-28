@@ -72,7 +72,7 @@ export function AdminPostModerationButtons({
         ) : null}
       </div>
       {rejectOpen && s === "pending" ? (
-        <div className="max-w-md rounded-md border border-zinc-700 bg-[#0f0f0f] p-3">
+        <div className="max-w-md rounded-md border border-zinc-700 bg-background p-3">
           <label htmlFor={`reject-note-${postId}`} className="text-xs text-zinc-400">
             Message to the author (optional)
           </label>
@@ -82,7 +82,7 @@ export function AdminPostModerationButtons({
             onChange={(e) => setRejectNote(e.target.value)}
             rows={3}
             placeholder="What should they change before resubmitting?"
-            className="mt-1 w-full rounded border border-zinc-700 bg-[#141414] px-2 py-1.5 text-xs text-zinc-100"
+            className="mt-1 w-full rounded border border-zinc-700 bg-surface-sunken px-2 py-1.5 text-xs text-zinc-100"
           />
           <button
             type="button"

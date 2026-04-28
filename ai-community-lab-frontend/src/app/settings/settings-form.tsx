@@ -58,7 +58,7 @@ export function SettingsForm({
           required
           autoComplete="username"
           defaultValue={initialUsername}
-          className="mt-2 w-full rounded-lg border border-zinc-700 bg-[#141414] px-3 py-2 text-sm text-zinc-100 outline-none ring-[#00ff9f]/0 transition focus:border-[#00ff9f]/50 focus:ring-2 focus:ring-[#00ff9f]/20"
+          className="mt-2 w-full rounded-lg border border-zinc-700 bg-surface-sunken px-3 py-2 text-sm text-zinc-100 outline-none ring-accent/0 transition focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
         />
       </div>
       <div>
@@ -70,7 +70,7 @@ export function SettingsForm({
           name="bio"
           rows={4}
           defaultValue={initialBio}
-          className="mt-2 w-full resize-y rounded-lg border border-zinc-700 bg-[#141414] px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-[#00ff9f]/50 focus:ring-2 focus:ring-[#00ff9f]/20"
+          className="mt-2 w-full resize-y rounded-lg border border-zinc-700 bg-surface-sunken px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
         />
       </div>
       <div>
@@ -87,10 +87,10 @@ export function SettingsForm({
           inputMode="url"
           placeholder="https://example.com"
           defaultValue={initialWebsite}
-          className="mt-2 w-full rounded-lg border border-zinc-700 bg-[#141414] px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-[#00ff9f]/50 focus:ring-2 focus:ring-[#00ff9f]/20"
+          className="mt-2 w-full rounded-lg border border-zinc-700 bg-surface-sunken px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
         />
       </div>
-      <div className="rounded-lg border border-zinc-800 bg-[#141414] px-4 py-3">
+      <div className="rounded-lg border border-zinc-800 bg-surface-sunken px-4 py-3">
         <p className="text-sm font-medium text-zinc-200">Notifications</p>
         <p className="mt-1 text-xs text-zinc-500">
           Choose which inbox notifications you want to receive.
@@ -102,7 +102,7 @@ export function SettingsForm({
               type="checkbox"
               value="on"
               defaultChecked={initialNotifyCommentsOnTools}
-              className="mt-1 size-4 shrink-0 rounded border-zinc-600 bg-[#0f0f0f] text-[#00ff9f] focus:ring-[#00ff9f]/30"
+              className="mt-1 size-4 shrink-0 rounded border-zinc-600 bg-background text-accent focus:ring-accent/30"
             />
             <span>
               <span className="block text-sm font-medium text-zinc-200">
@@ -120,7 +120,7 @@ export function SettingsForm({
               type="checkbox"
               value="on"
               defaultChecked={initialNotifyModerationUpdates}
-              className="mt-1 size-4 shrink-0 rounded border-zinc-600 bg-[#0f0f0f] text-[#00ff9f] focus:ring-[#00ff9f]/30"
+              className="mt-1 size-4 shrink-0 rounded border-zinc-600 bg-background text-accent focus:ring-accent/30"
             />
             <span>
               <span className="block text-sm font-medium text-zinc-200">
@@ -138,7 +138,7 @@ export function SettingsForm({
               type="checkbox"
               value="on"
               defaultChecked={initialNotifyNewTools}
-              className="mt-1 size-4 shrink-0 rounded border-zinc-600 bg-[#0f0f0f] text-[#00ff9f] focus:ring-[#00ff9f]/30"
+              className="mt-1 size-4 shrink-0 rounded border-zinc-600 bg-background text-accent focus:ring-accent/30"
             />
             <span>
               <span className="block text-sm font-medium text-zinc-200">
@@ -155,7 +155,7 @@ export function SettingsForm({
       <button
         type="submit"
         disabled={pending}
-        className="rounded-lg bg-[#00ff9f] px-4 py-2 text-sm font-medium text-[#0f0f0f] transition hover:bg-[#33ffa8] disabled:opacity-50"
+        className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-on-accent transition hover:bg-accent-hover disabled:opacity-50"
       >
         {pending ? "Saving…" : "Save changes"}
       </button>

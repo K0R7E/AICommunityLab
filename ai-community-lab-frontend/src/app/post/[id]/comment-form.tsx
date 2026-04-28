@@ -49,7 +49,7 @@ export function CommentForm({ postId, canComment, signedIn }: Props) {
         onChange={(e) => setContent(e.target.value)}
         rows={3}
         disabled={!signedIn || !canComment || pending}
-        className="w-full rounded-lg border border-zinc-700 bg-[#141414] px-3 py-2 text-zinc-100 outline-none ring-[#00ff9f]/40 focus:ring-2 disabled:opacity-50"
+        className="w-full rounded-lg border border-zinc-700 bg-surface-sunken px-3 py-2 text-zinc-100 outline-none ring-accent/40 focus:ring-2 disabled:opacity-50"
         placeholder={
           !signedIn
             ? "Sign in to comment"
@@ -61,7 +61,7 @@ export function CommentForm({ postId, canComment, signedIn }: Props) {
       <button
         type="submit"
         disabled={!signedIn || !canComment || pending || !content.trim()}
-        className="self-start rounded-lg bg-[#00ff9f] px-4 py-2 text-sm font-semibold text-[#0f0f0f] transition hover:bg-[#33ffa8] disabled:opacity-50"
+        className="self-start rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition hover:bg-accent-hover disabled:opacity-50"
       >
         {pending ? "Posting…" : "Post comment"}
       </button>

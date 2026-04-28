@@ -8,7 +8,7 @@ export default function NewsLoading() {
       {Array.from({ length: 6 }).map((_, i) => (
         <div
           key={i}
-          className="rounded-xl border border-zinc-800/80 bg-[#1a1a1a] p-4"
+          className="rounded-xl border border-zinc-800/80 bg-card p-4"
         >
           <div className="h-5 w-3/4 animate-pulse rounded bg-zinc-800" />
           <div className="mt-2 h-3 w-1/2 animate-pulse rounded bg-zinc-800/70" />

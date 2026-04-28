@@ -72,7 +72,7 @@ export default async function ProfilePage({ params }: Props) {
 
   return (
     <div>
-      <div className="flex flex-col gap-6 rounded-xl border border-zinc-800/80 bg-[#1a1a1a] p-6 sm:flex-row sm:items-start">
+      <div className="flex flex-col gap-6 rounded-xl border border-zinc-800/80 bg-card p-6 sm:flex-row sm:items-start">
         <div className="relative size-24 shrink-0 overflow-hidden rounded-xl border border-zinc-700 bg-zinc-800">
           {avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -85,7 +85,7 @@ export default async function ProfilePage({ params }: Props) {
               referrerPolicy="no-referrer"
             />
           ) : (
-            <div className="flex size-full items-center justify-center text-2xl font-bold text-[#00ff9f]">
+            <div className="flex size-full items-center justify-center text-2xl font-bold text-accent">
               {profile.username.slice(0, 2).toUpperCase()}
             </div>
           )}
@@ -97,7 +97,7 @@ export default async function ProfilePage({ params }: Props) {
               href={websiteLink.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-1 inline-block text-sm text-[#00ff9f] hover:underline"
+              className="mt-1 inline-block text-sm text-accent hover:underline"
             >
               {websiteLink.label}
             </a>
@@ -133,7 +133,7 @@ export default async function ProfilePage({ params }: Props) {
       <section className="mt-10">
         <h2 className="text-lg font-semibold text-zinc-100">Submitted tools</h2>
         {posts.length === 0 ? (
-          <p className="mt-4 rounded-xl border border-zinc-800 bg-[#141414] px-6 py-10 text-center text-sm text-zinc-500">
+          <p className="mt-4 rounded-xl border border-zinc-800 bg-surface-sunken px-6 py-10 text-center text-sm text-zinc-500">
             No tools submitted yet.
           </p>
         ) : (
@@ -153,7 +153,7 @@ export default async function ProfilePage({ params }: Props) {
       <section className="mt-10">
         <h2 className="text-lg font-semibold text-zinc-100">Comments</h2>
         {profileComments.length === 0 ? (
-          <p className="mt-4 rounded-xl border border-zinc-800 bg-[#141414] px-6 py-10 text-center text-sm text-zinc-500">
+          <p className="mt-4 rounded-xl border border-zinc-800 bg-surface-sunken px-6 py-10 text-center text-sm text-zinc-500">
             No comments yet.
           </p>
         ) : (
@@ -161,7 +161,7 @@ export default async function ProfilePage({ params }: Props) {
             {profileComments.map((c) => (
               <li
                 key={c.id}
-                className="rounded-lg border border-zinc-800 bg-[#141414] px-4 py-3"
+                className="rounded-lg border border-zinc-800 bg-surface-sunken px-4 py-3"
               >
                 <p className="line-clamp-3 whitespace-pre-wrap text-sm text-zinc-200">
                   {c.content}
@@ -170,7 +170,7 @@ export default async function ProfilePage({ params }: Props) {
                   on{" "}
                   <Link
                     href={`/post/${c.post_id}`}
-                    className="text-[#00ff9f] hover:underline"
+                    className="text-accent hover:underline"
                   >
                     {c.post_title}
                   </Link>
@@ -184,7 +184,7 @@ export default async function ProfilePage({ params }: Props) {
       </section>
 
       <p className="mt-10 text-center text-sm text-zinc-500">
-        <Link href="/" className="text-[#00ff9f] hover:underline">
+        <Link href="/" className="text-accent hover:underline">
           ← Back to feed
         </Link>
       </p>

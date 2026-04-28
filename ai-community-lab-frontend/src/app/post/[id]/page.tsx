@@ -155,7 +155,7 @@ export default async function PostDetailPage({ params }: Props) {
           ) : null}
           <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-zinc-500">
             {post.post_kind ? (
-              <span className="rounded-md border border-[#00ff9f]/30 bg-[#00ff9f]/10 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-[#00ff9f]">
+              <span className="rounded-md border border-accent/30 bg-accent/10 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-accent">
                 {post.post_kind}
               </span>
             ) : null}
@@ -175,7 +175,7 @@ export default async function PostDetailPage({ params }: Props) {
               href={visitLink.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-4 inline-flex items-center gap-2 text-[#00ff9f] transition hover:underline"
+              className="mt-4 inline-flex items-center gap-2 text-accent transition hover:underline"
             >
               Visit site
               <ExternalLink className="size-4" aria-hidden />
@@ -199,7 +199,7 @@ export default async function PostDetailPage({ params }: Props) {
             comments.map((c) => (
               <li
                 key={c.id}
-                className="rounded-lg border border-zinc-800 bg-[#141414] px-4 py-3"
+                className="rounded-lg border border-zinc-800 bg-surface-sunken px-4 py-3"
               >
                 <p className="whitespace-pre-wrap text-sm text-zinc-200">
                   {c.content}
@@ -219,7 +219,7 @@ export default async function PostDetailPage({ params }: Props) {
           />
           {!canAct ? (
             <p className="mt-3 text-sm text-zinc-500">
-              <Link href="/" className="text-[#00ff9f] hover:underline">
+              <Link href="/" className="text-accent hover:underline">
                 Sign in
               </Link>{" "}
               to comment.

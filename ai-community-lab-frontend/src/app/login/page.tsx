@@ -33,7 +33,7 @@ export default async function LoginPage({
         <SignInWithGoogle nextPath={nextPath} />
       </div>
       <p className="mt-6 text-center text-sm text-zinc-500">
-        <Link href="/" className="text-[#00ff9f] hover:underline">
+        <Link href="/" className="text-accent hover:underline">
           ← Back to feed
         </Link>
       </p>

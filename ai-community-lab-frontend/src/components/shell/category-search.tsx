@@ -101,7 +101,7 @@ export function CategorySearch() {
           onChange={(e) => setFilter(e.target.value)}
           placeholder="Filter…"
           autoComplete="off"
-          className="w-full rounded-lg border border-zinc-800 bg-surface-sunken py-2 pl-9 pr-3 text-sm text-zinc-200 placeholder:text-zinc-600 outline-none ring-[#00ff9f]/0 transition focus:border-accent/40 focus:ring-2 focus:ring-accent/15"
+          className="w-full rounded-lg border border-zinc-800 bg-surface-sunken py-2 pl-9 pr-3 text-sm text-zinc-200 placeholder:text-zinc-600 outline-none ring-accent/0 transition focus:border-accent/40 focus:ring-2 focus:ring-accent/15"
           aria-label="Filter categories"
         />
       </div>

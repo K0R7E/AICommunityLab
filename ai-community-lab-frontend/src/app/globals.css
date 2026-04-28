@@ -52,6 +52,7 @@
   --color-card:           var(--card);
   --color-surface-sunken: var(--surface-sunken);
   --color-accent:         var(--accent);
+  --color-accent-hover:   var(--accent-hover);
   --color-on-accent:      var(--on-accent);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);

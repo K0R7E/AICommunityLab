@@ -48,7 +48,7 @@ export function SubmitToolForm() {
             {state.duplicateWarning.candidates.map((c) => (
               <li
                 key={c.id}
-                className="rounded-md border border-amber-900/40 bg-[#0f0f0f]/80 px-3 py-2"
+                className="rounded-md border border-amber-900/40 bg-background/80 px-3 py-2"
               >
                 <p className="font-medium text-zinc-100">{c.title}</p>
                 {c.excerpt ? (
@@ -59,7 +59,7 @@ export function SubmitToolForm() {
                   <span>Match {(Number(c.score) || 0).toFixed(2)}</span>
                   <Link
                     href={`/post/${c.id}`}
-                    className="font-medium text-[#00ff9f] hover:underline"
+                    className="font-medium text-accent hover:underline"
                   >
                     Open listing
                   </Link>
@@ -72,7 +72,7 @@ export function SubmitToolForm() {
               type="checkbox"
               name="confirm_duplicate"
               value="on"
-              className="mt-0.5 size-4 shrink-0 rounded border-zinc-600 bg-[#0f0f0f] text-[#00ff9f]"
+              className="mt-0.5 size-4 shrink-0 rounded border-zinc-600 bg-background text-accent"
             />
             <span>
               These are not duplicates of my tool; I still want to publish this submission.
@@ -91,7 +91,7 @@ export function SubmitToolForm() {
           required
           minLength={3}
           defaultValue={snap?.title ?? ""}
-          className="w-full rounded-lg border border-zinc-700 bg-[#141414] px-3 py-2 text-zinc-100 outline-none ring-[#00ff9f]/40 focus:ring-2"
+          className="w-full rounded-lg border border-zinc-700 bg-surface-sunken px-3 py-2 text-zinc-100 outline-none ring-accent/40 focus:ring-2"
           placeholder="e.g. Acme AI Writer"
         />
       </div>
@@ -104,7 +104,7 @@ export function SubmitToolForm() {
           name="url"
           type="url"
           defaultValue={snap?.url ?? ""}
-          className="w-full rounded-lg border border-zinc-700 bg-[#141414] px-3 py-2 text-zinc-100 outline-none ring-[#00ff9f]/40 focus:ring-2"
+          className="w-full rounded-lg border border-zinc-700 bg-surface-sunken px-3 py-2 text-zinc-100 outline-none ring-accent/40 focus:ring-2"
           placeholder="https://…"
         />
         <p className="mt-1 text-xs text-zinc-500">
@@ -123,7 +123,7 @@ export function SubmitToolForm() {
           name="description"
           rows={3}
           defaultValue={snap?.description ?? ""}
-          className="w-full rounded-lg border border-zinc-700 bg-[#141414] px-3 py-2 text-zinc-100 outline-none ring-[#00ff9f]/40 focus:ring-2"
+          className="w-full rounded-lg border border-zinc-700 bg-surface-sunken px-3 py-2 text-zinc-100 outline-none ring-accent/40 focus:ring-2"
           placeholder="One line about what it does"
         />
       </div>
@@ -144,7 +144,7 @@ export function SubmitToolForm() {
             setListingKind(nextKind);
             setCategory(CATEGORIES_BY_KIND[nextKind][0]);
           }}
-          className="w-full rounded-lg border border-zinc-700 bg-[#141414] px-3 py-2 text-zinc-100 outline-none ring-[#00ff9f]/40 focus:ring-2"
+          className="w-full rounded-lg border border-zinc-700 bg-surface-sunken px-3 py-2 text-zinc-100 outline-none ring-accent/40 focus:ring-2"
         >
           {LISTING_KINDS.map((kind) => (
             <option key={kind} value={kind}>
@@ -163,7 +163,7 @@ export function SubmitToolForm() {
           required
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="w-full rounded-lg border border-zinc-700 bg-[#141414] px-3 py-2 text-zinc-100 outline-none ring-[#00ff9f]/40 focus:ring-2"
+          className="w-full rounded-lg border border-zinc-700 bg-surface-sunken px-3 py-2 text-zinc-100 outline-none ring-accent/40 focus:ring-2"
         >
           {categoryOptions.map((c) => (
             <option key={c} value={c}>
@@ -181,7 +181,7 @@ export function SubmitToolForm() {
             <p className="text-sm">
               <Link
                 href={`/post/${state.duplicateUrlPostId}`}
-                className="font-medium text-[#00ff9f] hover:underline"
+                className="font-medium text-accent hover:underline"
               >
                 Open existing listing
               </Link>
@@ -192,7 +192,7 @@ export function SubmitToolForm() {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-lg bg-[#00ff9f] px-4 py-2.5 text-sm font-semibold text-[#0f0f0f] transition hover:bg-[#33ffa8] disabled:opacity-60"
+        className="rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-on-accent transition hover:bg-accent-hover disabled:opacity-60"
       >
         {pending ? "Publishing…" : state.duplicateWarning ? "Submit again" : "Publish"}
       </button>

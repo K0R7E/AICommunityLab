@@ -61,7 +61,6 @@ export async function submitPost(
 
   const title = normalizeUserText(String(formData.get("title") ?? ""));
   const description = normalizeUserText(String(formData.get("description") ?? ""));
-  const urlRaw = String(formData.get("url") ?? "");
   const confirmDuplicate = formData.get("confirm_duplicate") === "on";
 
   const kindParsed = parseListingKindFromFormData(formData);
@@ -74,11 +73,6 @@ export async function submitPost(
     return { error: categoriesParsed.error };
   }
 
-  const urlParsed = parseOptionalPostUrl(urlRaw, URL_MAX);
-  if (!urlParsed.ok) {
-    return { error: urlParsed.error };
-  }
-
   if (title.length < TITLE_MIN) {
     return { error: `Title must be at least ${TITLE_MIN} characters.` };
   }
@@ -89,44 +83,18 @@ export async function submitPost(
     return { error: `Description must be at most ${DESCRIPTION_MAX} characters.` };
   }
 
-  const urlCanonical = canonicalToolUrl(urlParsed.url);
-
   const fieldSnap: SubmitFieldSnapshot = {
     title,
     description,
-    url: urlRaw.trim(),
+    url: "",
     listingKind: kindParsed.kind,
     category: categoriesParsed.categories[0] ?? "",
   };
 
-  if (!urlCanonical) {
-    const candidates = await loadSimilarPostsForSubmit(
-      supabase,
-      title,
-      description || null,
-    );
-    const maxScore = maxSimilarityScore(candidates);
-    if (maxScore >= SIMILARITY_BLOCK_THRESHOLD && !confirmDuplicate) {
-      return {
-        error: null,
-        duplicateWarning: { candidates, fieldSnap },
-      };
-    }
-  } else {
-    const { data: clash } = await supabase
-      .from("posts")
-      .select("id,title")
-      .eq("url_canonical", urlCanonical)
-      .in("moderation_status", ["pending", "published"])
-      .maybeSingle();
-
-    if (clash) {
-      const row = clash as { id: string; title: string };
-      return {
-        error: `This link is already used by “${row.title}”. Change the URL or open the existing listing.`,
-        duplicateUrlPostId: row.id,
-      };
-    }
+  const candidates = await loadSimilarPostsForSubmit(supabase, title, description || null);
+  const maxScore = maxSimilarityScore(candidates);
+  if (maxScore >= SIMILARITY_BLOCK_THRESHOLD && !confirmDuplicate) {
+    return { error: null, duplicateWarning: { candidates, fieldSnap } };
   }
 
   const { data: inserted, error } = await supabase
@@ -134,8 +102,8 @@ export async function submitPost(
     .insert({
       user_id: user.id,
       title,
-      url: urlParsed.url,
-      url_canonical: urlCanonical,
+      url: null,
+      url_canonical: null,
       description: description || null,
       post_kind: kindParsed.kind,
       categories: categoriesParsed.categories,
@@ -144,21 +112,6 @@ export async function submitPost(
     .single();
 
   if (error) {
-    if (error.code === "23505" && urlCanonical) {
-      const { data: clash } = await supabase
-        .from("posts")
-        .select("id,title")
-        .eq("url_canonical", urlCanonical)
-        .in("moderation_status", ["pending", "published"])
-        .maybeSingle();
-      if (clash) {
-        const row = clash as { id: string; title: string };
-        return {
-          error: `This link is already used by “${row.title}”. Change the URL or open the existing listing.`,
-          duplicateUrlPostId: row.id,
-        };
-      }
-    }
     return { error: genericActionError() };
   }
 
@@ -194,11 +147,6 @@ export async function updateOwnPost(
     return { error: categoriesParsed.error };
   }
 
-  const urlParsed = parseOptionalPostUrl(String(formData.get("url") ?? ""), URL_MAX);
-  if (!urlParsed.ok) {
-    return { error: urlParsed.error };
-  }
-
   if (title.length < TITLE_MIN) {
     return { error: `Title must be at least ${TITLE_MIN} characters.` };
   }
@@ -209,13 +157,10 @@ export async function updateOwnPost(
     return { error: `Description must be at most ${DESCRIPTION_MAX} characters.` };
   }
 
-  const urlCanonical = canonicalToolUrl(urlParsed.url);
   const { data: updated, error } = await supabase
     .from("posts")
     .update({
       title,
-      url: urlParsed.url,
-      url_canonical: urlCanonical,
       description: description || null,
       post_kind: kindParsed.kind,
       categories: categoriesParsed.categories,
@@ -226,21 +171,6 @@ export async function updateOwnPost(
     .maybeSingle();
 
   if (error) {
-    if (error.code === "23505" && urlCanonical) {
-      const { data: clash } = await supabase
-        .from("posts")
-        .select("id,title")
-        .eq("url_canonical", urlCanonical)
-        .in("moderation_status", ["pending", "published"])
-        .neq("id", postId)
-        .maybeSingle();
-      if (clash) {
-        const row = clash as { id: string; title: string };
-        return {
-          error: `This link is already used by “${row.title}”. Change the URL or open the existing listing.`,
-        };
-      }
-    }
     if (error.code === "42501" || error.message?.toLowerCase().includes("policy")) {
       return { error: "You can only edit your own tool." };
     }
@@ -306,6 +236,9 @@ export async function addComment(postId: string, content: string) {
   }
   if (text.length > COMMENT_MAX) {
     return { error: `Comment must be at most ${COMMENT_MAX} characters.` };
+  }
+  if (/https?:\/\/\S+|www\.\S+\.\S+/i.test(text)) {
+    return { error: "Links are not allowed in comments." };
   }
 
   const { error } = await supabase.from("comments").insert({

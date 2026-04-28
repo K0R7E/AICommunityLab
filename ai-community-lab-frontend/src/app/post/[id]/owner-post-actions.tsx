@@ -99,19 +99,6 @@ export function OwnerPostActions({ post }: { post: OwnerPostEditorRow }) {
             />
           </div>
           <div>
-            <label htmlFor={`owner-url-${post.id}`} className="text-xs text-zinc-500">
-              URL
-            </label>
-            <input
-              id={`owner-url-${post.id}`}
-              name="url"
-              type="url"
-              defaultValue={post.url ?? ""}
-              placeholder="https://... (optional)"
-              className="mt-1 w-full rounded border border-zinc-700 bg-surface-sunken px-2 py-1.5 text-sm text-zinc-100"
-            />
-          </div>
-          <div>
             <label htmlFor={`owner-desc-${post.id}`} className="text-xs text-zinc-500">
               Description
             </label>

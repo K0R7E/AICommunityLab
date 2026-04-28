@@ -96,22 +96,6 @@ export function SubmitToolForm() {
         />
       </div>
       <div>
-        <label htmlFor="url" className="mb-1 block text-sm font-medium text-zinc-300">
-          Site URL (optional)
-        </label>
-        <input
-          id="url"
-          name="url"
-          type="url"
-          defaultValue={snap?.url ?? ""}
-          className="w-full rounded-lg border border-zinc-700 bg-surface-sunken px-3 py-2 text-zinc-100 outline-none ring-accent/40 focus:ring-2"
-          placeholder="https://…"
-        />
-        <p className="mt-1 text-xs text-zinc-500">
-          Leave empty if there is no public page yet (e.g. idea or desktop-only tool).
-        </p>
-      </div>
-      <div>
         <label
           htmlFor="description"
           className="mb-1 block text-sm font-medium text-zinc-300"

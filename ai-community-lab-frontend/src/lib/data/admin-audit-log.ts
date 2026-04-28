@@ -25,34 +25,42 @@ export function auditActionLabel(action: string): string {
 
 export async function getAdminAuditLog(options: {
   limit?: number;
-}): Promise<AuditLogEntry[]> {
-  const admin = createAdminClient();
-  const limit = options.limit ?? 100;
+}): Promise<{ entries: AuditLogEntry[]; error: string | null }> {
+  try {
+    const admin = createAdminClient();
+    const limit = options.limit ?? 100;
 
-  const { data: rows } = await admin
-    .from("admin_audit_log")
-    .select("id, admin_user_id, action, target_type, target_id, details, created_at")
-    .order("created_at", { ascending: false })
-    .limit(limit);
+    const { data: rows, error } = await admin
+      .from("admin_audit_log")
+      .select("id, admin_user_id, action, target_type, target_id, details, created_at")
+      .order("created_at", { ascending: false })
+      .limit(limit);
 
-  if (!rows || rows.length === 0) return [];
+    if (error) return { entries: [], error: error.message };
+    if (!rows || rows.length === 0) return { entries: [], error: null };
 
-  const userIds = [...new Set((rows as AuditLogEntry[]).map((r) => r.admin_user_id))];
-  const { data: profiles } = await admin
-    .from("profiles")
-    .select("id, username")
-    .in("id", userIds);
+    const userIds = [...new Set((rows as AuditLogEntry[]).map((r) => r.admin_user_id))];
+    const { data: profiles } = await admin
+      .from("profiles")
+      .select("id, username")
+      .in("id", userIds);
 
-  const usernameMap = new Map<string, string>();
-  for (const p of profiles ?? []) {
-    usernameMap.set(
-      (p as { id: string; username: string }).id,
-      (p as { id: string; username: string }).username,
-    );
+    const usernameMap = new Map<string, string>();
+    for (const p of profiles ?? []) {
+      usernameMap.set(
+        (p as { id: string; username: string }).id,
+        (p as { id: string; username: string }).username,
+      );
+    }
+
+    return {
+      entries: (rows as AuditLogEntry[]).map((r) => ({
+        ...r,
+        admin_username: usernameMap.get(r.admin_user_id) ?? null,
+      })),
+      error: null,
+    };
+  } catch (e) {
+    return { entries: [], error: e instanceof Error ? e.message : "Unknown error" };
   }
-
-  return (rows as AuditLogEntry[]).map((r) => ({
-    ...r,
-    admin_username: usernameMap.get(r.admin_user_id) ?? null,
-  }));
 }

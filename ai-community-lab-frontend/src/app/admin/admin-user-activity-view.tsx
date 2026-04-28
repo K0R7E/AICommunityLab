@@ -54,7 +54,7 @@ export async function AdminUserActivityView({
   category: EventCategory;
   userSearch: string | null;
 }) {
-  const entries = await getUserActivityLog({
+  const { entries, error } = await getUserActivityLog({
     limit: 150,
     category,
     userId: null,
@@ -96,7 +96,11 @@ export async function AdminUserActivityView({
       </div>
 
       <ul className="mt-4 flex flex-col gap-2">
-        {filtered.length === 0 ? (
+        {error ? (
+          <li className="rounded-lg border border-red-800/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
+            Failed to load activity log: {error}
+          </li>
+        ) : filtered.length === 0 ? (
           <li className="text-sm text-zinc-500">No activity found.</li>
         ) : (
           filtered.map((entry) => (

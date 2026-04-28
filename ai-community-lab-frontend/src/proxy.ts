@@ -36,7 +36,7 @@ function buildCspWithNonce(nonce: string): string {
     "object-src 'none'",
     "form-action 'self'",
     `script-src 'self' 'nonce-${nonce}'`,
-    "style-src 'self'",
+    "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
     `connect-src ${Array.from(connectSources).join(" ")}`,

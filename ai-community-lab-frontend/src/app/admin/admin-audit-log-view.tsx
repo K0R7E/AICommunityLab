@@ -21,7 +21,7 @@ function DetailsBadge({ details }: { details: Record<string, unknown> | null }) 
 }
 
 export async function AdminAuditLogView() {
-  const entries = await getAdminAuditLog({ limit: 150 });
+  const { entries, error } = await getAdminAuditLog({ limit: 150 });
 
   return (
     <section>
@@ -30,7 +30,11 @@ export async function AdminAuditLogView() {
         Last 150 admin actions, newest first.
       </p>
       <ul className="mt-4 flex flex-col gap-2">
-        {entries.length === 0 ? (
+        {error ? (
+          <li className="rounded-lg border border-red-800/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
+            Failed to load audit log: {error}
+          </li>
+        ) : entries.length === 0 ? (
           <li className="text-sm text-zinc-500">No audit log entries yet.</li>
         ) : (
           entries.map((entry) => (

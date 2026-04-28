@@ -46,7 +46,7 @@ function buildCspWithNonce(nonce: string): string {
 }
 
 function isCspReportOnly(): boolean {
-  return process.env.CSP_REPORT_ONLY?.trim().toLowerCase() !== "false";
+  return process.env.CSP_REPORT_ONLY?.trim().toLowerCase() === "true";
 }
 
 const PROTECTED_PATHS = ["/submit", "/settings", "/admin", "/notifications"];

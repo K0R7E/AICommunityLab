@@ -1,6 +1,5 @@
 "use client";
 
-import { CSRF_COOKIE_NAME } from "@/lib/csrf-constants";
 import { formatRatingDisplay } from "@/lib/format";
 import { Lock, Star } from "lucide-react";
 import Link from "next/link";
@@ -50,22 +49,8 @@ export function RatingControl({
     setMyRating(next);
   }
 
-  function readCookieValue(name: string): string | null {
-    if (typeof document === "undefined") return null;
-    const all = document.cookie ? document.cookie.split("; ") : [];
-    const pair = all.find((entry) => entry.startsWith(`${name}=`));
-    if (!pair) return null;
-    return decodeURIComponent(pair.slice(name.length + 1));
-  }
-
   async function ensureCsrfToken(): Promise<string | null> {
     if (csrfTokenRef.current) return csrfTokenRef.current;
-
-    const cookieToken = readCookieValue(CSRF_COOKIE_NAME);
-    if (cookieToken) {
-      csrfTokenRef.current = cookieToken;
-      return cookieToken;
-    }
 
     const response = await fetch("/api/csrf-token", {
       method: "GET",

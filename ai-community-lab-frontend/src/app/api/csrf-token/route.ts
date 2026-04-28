@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     response.cookies.set({
       name: CSRF_COOKIE_NAME,
       value: token,
-      httpOnly: false,
+      httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       path: "/",

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentUserIsAdmin } from "@/lib/admin";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { canonicalToolUrl } from "@/lib/canonical-tool-url";
 import { normalizeUserText } from "@/lib/normalize-user-text";
 import {
@@ -13,6 +13,47 @@ import {
 
 function forbidden(): { error: string } {
   return { error: "Not allowed." };
+}
+
+async function requireAdmin(): Promise<
+  | { supabase: Awaited<ReturnType<typeof createClient>>; userId: string }
+  | { error: string }
+> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return forbidden();
+
+  const { data } = await supabase
+    .from("profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!((data as { is_admin?: boolean } | null)?.is_admin)) return forbidden();
+  return { supabase, userId: user.id };
+}
+
+async function logAdminAction(
+  adminUserId: string,
+  action: string,
+  targetType: string,
+  targetId: string,
+  details?: Record<string, unknown>,
+): Promise<void> {
+  try {
+    const admin = createAdminClient();
+    await admin.from("admin_audit_log").insert({
+      admin_user_id: adminUserId,
+      action,
+      target_type: targetType,
+      target_id: targetId,
+      details: details ?? null,
+    });
+  } catch {
+    // Audit log failures must not block the admin operation.
+  }
 }
 
 const TITLE_MIN = 3;
@@ -26,11 +67,12 @@ export async function adminSetPostModerationStatus(
   status: "published" | "rejected" | "pending",
   rejectionReason?: string | null,
 ): Promise<{ error?: string }> {
-  if (!(await getCurrentUserIsAdmin())) return forbidden();
+  const auth = await requireAdmin();
+  if ("error" in auth) return auth;
   if (status !== "published" && status !== "rejected" && status !== "pending") {
     return { error: "Invalid status." };
   }
-  const supabase = await createClient();
+  const { supabase, userId } = auth;
   const trimmed = rejectionReason?.trim() || null;
   const patch =
     status === "rejected"
@@ -38,6 +80,10 @@ export async function adminSetPostModerationStatus(
       : { moderation_status: status, moderation_rejection_reason: null };
   const { error } = await supabase.from("posts").update(patch).eq("id", postId);
   if (error) return { error: "Could not update moderation status." };
+  await logAdminAction(userId, "set_moderation_status", "post", postId, {
+    status,
+    rejectionReason: trimmed,
+  });
   revalidatePath("/");
   revalidatePath("/admin");
   revalidatePath(`/post/${postId}`);
@@ -45,10 +91,12 @@ export async function adminSetPostModerationStatus(
 }
 
 export async function adminDeletePost(postId: string): Promise<{ error?: string }> {
-  if (!(await getCurrentUserIsAdmin())) return forbidden();
-  const supabase = await createClient();
+  const auth = await requireAdmin();
+  if ("error" in auth) return auth;
+  const { supabase, userId } = auth;
   const { error } = await supabase.from("posts").delete().eq("id", postId);
   if (error) return { error: "Could not delete post." };
+  await logAdminAction(userId, "delete_post", "post", postId);
   revalidatePath("/");
   revalidatePath("/admin");
   revalidatePath(`/post/${postId}`);
@@ -60,8 +108,9 @@ export async function adminDeleteComment(
   postId: string,
   moderatorNote?: string | null,
 ): Promise<{ error?: string }> {
-  if (!(await getCurrentUserIsAdmin())) return forbidden();
-  const supabase = await createClient();
+  const auth = await requireAdmin();
+  if ("error" in auth) return auth;
+  const { supabase, userId } = auth;
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -99,6 +148,10 @@ export async function adminDeleteComment(
 
   const { error } = await supabase.from("comments").delete().eq("id", commentId);
   if (error) return { error: "Could not delete comment." };
+  await logAdminAction(userId, "delete_comment", "comment", commentId, {
+    postId,
+    moderatorNote: moderatorNote?.trim() || null,
+  });
   revalidatePath(`/post/${postId}`);
   revalidatePath("/admin");
   return {};
@@ -108,7 +161,8 @@ export async function adminUpdatePost(
   postId: string,
   formData: FormData,
 ): Promise<{ error?: string }> {
-  if (!(await getCurrentUserIsAdmin())) return forbidden();
+  const auth = await requireAdmin();
+  if ("error" in auth) return auth;
 
   const title = normalizeUserText(String(formData.get("title") ?? ""));
   const description = normalizeUserText(String(formData.get("description") ?? ""));
@@ -141,7 +195,7 @@ export async function adminUpdatePost(
     return { error: `Description must be at most ${DESCRIPTION_MAX} characters.` };
   }
 
-  const supabase = await createClient();
+  const { supabase, userId } = auth;
   const urlCanonical = canonicalToolUrl(urlParsed.url);
   const { error } = await supabase
     .from("posts")
@@ -156,6 +210,7 @@ export async function adminUpdatePost(
     .eq("id", postId);
 
   if (error) return { error: "Could not update post." };
+  await logAdminAction(userId, "update_post", "post", postId, { title });
   revalidatePath("/");
   revalidatePath("/admin");
   revalidatePath(`/post/${postId}`);
@@ -167,7 +222,8 @@ export async function adminUpdateComment(
   postId: string,
   content: string,
 ): Promise<{ error?: string }> {
-  if (!(await getCurrentUserIsAdmin())) return forbidden();
+  const auth = await requireAdmin();
+  if ("error" in auth) return auth;
 
   const text = normalizeUserText(content);
   if (text.length < 1) return { error: "Comment cannot be empty." };
@@ -175,13 +231,14 @@ export async function adminUpdateComment(
     return { error: `Comment must be at most ${COMMENT_MAX} characters.` };
   }
 
-  const supabase = await createClient();
+  const { supabase, userId } = auth;
   const { error } = await supabase
     .from("comments")
     .update({ content: text })
     .eq("id", commentId);
 
   if (error) return { error: "Could not update comment." };
+  await logAdminAction(userId, "update_comment", "comment", commentId, { postId });
   revalidatePath(`/post/${postId}`);
   revalidatePath("/admin");
   return {};

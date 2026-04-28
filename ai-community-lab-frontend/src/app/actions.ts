@@ -25,6 +25,7 @@ const URL_MAX = 2048;
 const DESCRIPTION_MAX = 10_000;
 const COMMENT_MAX = 8000;
 const BIO_MAX = 2000;
+const URL_PATTERN = /https?:\/\/\S+|www\.\S+\.\S+/i;
 
 function genericActionError(): string {
   return "Something went wrong. Please try again.";
@@ -81,6 +82,9 @@ export async function submitPost(
   }
   if (description.length > DESCRIPTION_MAX) {
     return { error: `Description must be at most ${DESCRIPTION_MAX} characters.` };
+  }
+  if (URL_PATTERN.test(title) || URL_PATTERN.test(description)) {
+    return { error: "Links are not allowed in tool submissions." };
   }
 
   const fieldSnap: SubmitFieldSnapshot = {
@@ -155,6 +159,9 @@ export async function updateOwnPost(
   }
   if (description.length > DESCRIPTION_MAX) {
     return { error: `Description must be at most ${DESCRIPTION_MAX} characters.` };
+  }
+  if (URL_PATTERN.test(title) || URL_PATTERN.test(description)) {
+    return { error: "Links are not allowed in tool submissions." };
   }
 
   const { data: updated, error } = await supabase
@@ -237,7 +244,7 @@ export async function addComment(postId: string, content: string) {
   if (text.length > COMMENT_MAX) {
     return { error: `Comment must be at most ${COMMENT_MAX} characters.` };
   }
-  if (/https?:\/\/\S+|www\.\S+\.\S+/i.test(text)) {
+  if (URL_PATTERN.test(text)) {
     return { error: "Links are not allowed in comments." };
   }
 

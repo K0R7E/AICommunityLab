@@ -9,9 +9,11 @@ const ALLOWED_NEXT_PREFIXES = [
   "/news",
   "/notifications",
   "/post",
+  "/privacy",
   "/profile",
   "/settings",
   "/submit",
+  "/terms",
 ] as const;
 
 function isWhitelistedNextPath(pathname: string): boolean {

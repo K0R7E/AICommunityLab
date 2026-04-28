@@ -8,7 +8,6 @@ import { toast } from "sonner";
 type Props = {
   initialUsername: string;
   initialBio: string;
-  initialWebsite: string;
   initialNotifyNewTools: boolean;
   initialNotifyCommentsOnTools: boolean;
   initialNotifyModerationUpdates: boolean;
@@ -17,7 +16,6 @@ type Props = {
 export function SettingsForm({
   initialUsername,
   initialBio,
-  initialWebsite,
   initialNotifyNewTools,
   initialNotifyCommentsOnTools,
   initialNotifyModerationUpdates,
@@ -73,23 +71,7 @@ export function SettingsForm({
           className="mt-2 w-full resize-y rounded-lg border border-zinc-700 bg-surface-sunken px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
         />
       </div>
-      <div>
-        <label
-          htmlFor="website"
-          className="block text-sm font-medium text-zinc-300"
-        >
-          Website
-        </label>
-        <input
-          id="website"
-          name="website"
-          type="text"
-          inputMode="url"
-          placeholder="https://example.com"
-          defaultValue={initialWebsite}
-          className="mt-2 w-full rounded-lg border border-zinc-700 bg-surface-sunken px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
-        />
-      </div>
+
       <div className="rounded-lg border border-zinc-800 bg-surface-sunken px-4 py-3">
         <p className="text-sm font-medium text-zinc-200">Notifications</p>
         <p className="mt-1 text-xs text-zinc-500">

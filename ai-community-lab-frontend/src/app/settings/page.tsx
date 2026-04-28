@@ -42,10 +42,9 @@ export default async function SettingsPage() {
         <SettingsForm
           initialUsername={profile.username}
           initialBio={profile.bio ?? ""}
-          initialWebsite={profile.website ?? ""}
           initialNotifyNewTools={Boolean(profile.notify_new_tools)}
-          initialNotifyCommentsOnTools={Boolean(profile.notify_comments_on_tools ?? true)}
-          initialNotifyModerationUpdates={Boolean(profile.notify_moderation_updates ?? true)}
+          initialNotifyCommentsOnTools={Boolean((profile as Record<string, unknown>).notify_comments_on_tools ?? true)}
+          initialNotifyModerationUpdates={Boolean((profile as Record<string, unknown>).notify_moderation_updates ?? true)}
         />
       </div>
 

@@ -293,7 +293,6 @@ export async function updateProfile(
 
   const username = normalizeUsername(String(formData.get("username") ?? ""));
   const bio = normalizeUserText(String(formData.get("bio") ?? ""));
-  const websiteRaw = normalizeUserText(String(formData.get("website") ?? ""));
 
   if (bio.length > BIO_MAX) {
     return { error: `Bio must be at most ${BIO_MAX} characters.` };
@@ -306,25 +305,9 @@ export async function updateProfile(
     };
   }
 
-  let website: string | null = null;
-  if (websiteRaw) {
-    try {
-      const u = new URL(
-        websiteRaw.includes("://") ? websiteRaw : `https://${websiteRaw}`,
-      );
-      if (u.protocol !== "http:" && u.protocol !== "https:") {
-        return { error: "Website must be an http(s) URL." };
-      }
-      website = u.href;
-    } catch {
-      return { error: "Invalid website URL." };
-    }
-  }
-
   const notifyNewTools = formData.get("notify_new_tools") === "on";
   const notifyCommentsOnTools = formData.get("notify_comments_on_tools") === "on";
-  const notifyModerationUpdates =
-    formData.get("notify_moderation_updates") === "on";
+  const notifyModerationUpdates = formData.get("notify_moderation_updates") === "on";
 
   const { data: before } = await supabase
     .from("profiles")
@@ -337,7 +320,6 @@ export async function updateProfile(
     .update({
       username,
       bio: bio || null,
-      website,
       notify_new_tools: notifyNewTools,
       notify_comments_on_tools: notifyCommentsOnTools,
       notify_moderation_updates: notifyModerationUpdates,

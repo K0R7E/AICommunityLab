@@ -52,15 +52,13 @@ export function UserMenu() {
       });
       const body = (await res.json().catch(() => ({}))) as { ok?: boolean };
       if (!res.ok || body.ok !== true) throw new Error("Server sign-out failed");
-      await supabase.auth.signOut();
-      toast.success("Signed out");
-      window.location.assign("/");
+      await supabase.auth.signOut().catch(() => {});
     } catch {
-      const { error } = await supabase.auth.signOut();
-      if (error) toast.error(error.message);
-      else { toast.success("Signed out"); window.location.assign("/"); }
+      await supabase.auth.signOut().catch(() => {});
     } finally {
       setLoading(false);
+      // Always redirect — server cookie may already be cleared even if client signOut threw
+      window.location.assign("/");
     }
   }
 

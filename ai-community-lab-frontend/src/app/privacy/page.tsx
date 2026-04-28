@@ -2,92 +2,93 @@ export default function PrivacyPage() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-10 text-sm leading-6">
       <h1 className="text-2xl font-semibold mb-6">
-        Adatkezelési Tájékoztató
+        Privacy Policy
       </h1>
 
       <p className="mb-6 text-zinc-400">
-        Ez a szolgáltatás egy nem kereskedelmi, ingyenes közösségi projekt.
+        This service is a free, non-commercial community project.
       </p>
 
-      <h2 className="font-semibold mt-6 mb-2">1. Adatkezelő</h2>
+      <h2 className="font-semibold mt-6 mb-2">1. Data Controller</h2>
       <p>
-        Név: AICommunityLab (közösségi projekt)<br />
-        Kapcsolat: aicommunitylab@gmail.com
+        Name: AICommunityLab (community project)<br />
+        Contact: aicommunitylab@gmail.com
       </p>
 
       <p className="mt-2 text-zinc-400">
-        A projekt nem gazdasági társaság, nem végez kereskedelmi tevékenységet.
+        This project is not a business entity and does not carry out commercial
+        activity.
       </p>
 
-      <h2 className="font-semibold mt-6 mb-2">2. Kezelt adatok köre</h2>
+      <h2 className="font-semibold mt-6 mb-2">2. Categories of Data Processed</h2>
       <ul className="list-disc ml-6">
-        <li>Google fiók azonosító (OAuth)</li>
-        <li>E-mail cím (Google-től)</li>
-        <li>Felhasználónév (ha megadod)</li>
-        <li>Technikai adatok (IP, böngésző, session)</li>
+        <li>Google account identifier (OAuth)</li>
+        <li>Email address (from Google)</li>
+        <li>Username (if provided)</li>
+        <li>Technical data (IP, browser, session)</li>
       </ul>
 
-      <h2 className="font-semibold mt-6 mb-2">3. Adatkezelés célja</h2>
+      <h2 className="font-semibold mt-6 mb-2">3. Purpose of Data Processing</h2>
       <ul className="list-disc ml-6">
-        <li>Felhasználói fiók létrehozása</li>
-        <li>Bejelentkezés biztosítása</li>
-        <li>Közösségi funkciók működtetése</li>
-        <li>Biztonság és visszaélések megelőzése</li>
+        <li>Creating user accounts</li>
+        <li>Providing sign-in</li>
+        <li>Operating community features</li>
+        <li>Security and abuse prevention</li>
       </ul>
 
-      <h2 className="font-semibold mt-6 mb-2">4. Jogalap</h2>
+      <h2 className="font-semibold mt-6 mb-2">4. Legal Basis</h2>
       <ul className="list-disc ml-6">
-        <li>GDPR 6. cikk (1) b) – szolgáltatás nyújtása</li>
-        <li>GDPR 6. cikk (1) f) – jogos érdek (biztonság)</li>
+        <li>GDPR Article 6(1)(b) - provision of the service</li>
+        <li>GDPR Article 6(1)(f) - legitimate interest (security)</li>
       </ul>
 
-      <h2 className="font-semibold mt-6 mb-2">5. Adatfeldolgozók</h2>
+      <h2 className="font-semibold mt-6 mb-2">5. Data Processors</h2>
       <ul className="list-disc ml-6">
-        <li>Supabase (EU – adatbázis és auth)</li>
-        <li>Vercel (EU – hosting)</li>
-        <li>Google (OAuth bejelentkezés)</li>
+        <li>Supabase (EU - database and auth)</li>
+        <li>Vercel (EU - hosting)</li>
+        <li>Google (OAuth sign-in)</li>
       </ul>
 
-      <h2 className="font-semibold mt-6 mb-2">6. Adattárolás ideje</h2>
+      <h2 className="font-semibold mt-6 mb-2">6. Data Retention Period</h2>
       <p>
-        Az adatokat a fiók törléséig tároljuk. Törlés után az adatok véglegesen
-        eltávolításra kerülnek.
+        We store data until the account is deleted. After deletion, data is
+        permanently removed.
       </p>
 
-      <h2 className="font-semibold mt-6 mb-2">7. Érintetti jogok</h2>
+      <h2 className="font-semibold mt-6 mb-2">7. Data Subject Rights</h2>
       <ul className="list-disc ml-6">
-        <li>Hozzáférés</li>
-        <li>Helyesbítés</li>
-        <li>Törlés</li>
-        <li>Korlátozás</li>
-        <li>Tiltakozás</li>
+        <li>Access</li>
+        <li>Rectification</li>
+        <li>Erasure</li>
+        <li>Restriction</li>
+        <li>Objection</li>
       </ul>
 
       <p className="mt-2">
-        Jogérvényesítés: aicommunitylab@gmail.com
+        Contact for exercising rights: aicommunitylab@gmail.com
       </p>
 
-      <h2 className="font-semibold mt-6 mb-2">8. Jogorvoslat</h2>
+      <h2 className="font-semibold mt-6 mb-2">8. Legal Remedies</h2>
       <p>
-        Panasz benyújtható a Nemzeti Adatvédelmi és Információszabadság
-        Hatóságnál (NAIH).
+        Complaints can be submitted to the Hungarian National Authority for Data
+        Protection and Freedom of Information (NAIH).
       </p>
 
-      <h2 className="font-semibold mt-6 mb-2">9. Cookie-k</h2>
+      <h2 className="font-semibold mt-6 mb-2">9. Cookies</h2>
       <p>
-        A szolgáltatás kizárólag működéshez szükséges cookie-kat használ
-        (pl. session, biztonsági tokenek).
+        The service only uses cookies required for operation (for example,
+        session and security tokens).
       </p>
 
-      <h2 className="font-semibold mt-6 mb-2">10. Adatbiztonság</h2>
+      <h2 className="font-semibold mt-6 mb-2">10. Data Security</h2>
       <p>
-        Az alkalmazás technikai és szervezési intézkedésekkel védi az adatokat
-        (HTTPS, hozzáférés-korlátozás, naplózás).
+        The application protects data through technical and organizational
+        measures (HTTPS, access controls, logging).
       </p>
 
-      <h2 className="font-semibold mt-6 mb-2">11. Módosítás</h2>
+      <h2 className="font-semibold mt-6 mb-2">11. Changes</h2>
       <p>
-        A tájékoztató módosulhat. A változásokat ezen az oldalon tesszük közzé.
+        This policy may be updated. Changes are published on this page.
       </p>
     </main>
   );

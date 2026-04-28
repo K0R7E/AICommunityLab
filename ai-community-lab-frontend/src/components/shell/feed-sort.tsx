@@ -40,12 +40,12 @@ export function FeedSortBar() {
   return (
     <div className="mb-6 flex flex-wrap items-center gap-2.5">
       <span className="text-sm text-zinc-500">Sort</span>
-      <div className="inline-flex rounded-lg border border-zinc-800 bg-[#141414] p-0.5">
+      <div className="inline-flex rounded-lg border border-zinc-800 bg-surface-sunken p-0.5">
         <Link
           href={topHref}
           className={`rounded-md px-3 py-2 text-sm font-medium transition ${
             sort === "top"
-              ? "bg-zinc-800 text-[#00ff9f]"
+              ? "bg-zinc-800 text-accent"
               : "text-zinc-400 hover:text-zinc-200"
           }`}
         >
@@ -55,7 +55,7 @@ export function FeedSortBar() {
           href={newHref}
           className={`rounded-md px-3 py-2 text-sm font-medium transition ${
             sort === "new"
-              ? "bg-zinc-800 text-[#00ff9f]"
+              ? "bg-zinc-800 text-accent"
               : "text-zinc-400 hover:text-zinc-200"
           }`}
         >
@@ -65,7 +65,7 @@ export function FeedSortBar() {
       {categories.length > 0 ? (
         <Link
           href={clearCategoryHref}
-          className="text-sm text-[#00ff9f] underline-offset-2 hover:underline"
+          className="text-sm text-accent underline-offset-2 hover:underline"
         >
           Clear categories
         </Link>

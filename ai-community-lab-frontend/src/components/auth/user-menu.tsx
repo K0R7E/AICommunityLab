@@ -51,19 +51,14 @@ export function UserMenu() {
         headers: { Accept: "application/json" },
       });
       const body = (await res.json().catch(() => ({}))) as { ok?: boolean };
-      if (!res.ok || body.ok !== true) {
-        throw new Error("Server sign-out failed");
-      }
+      if (!res.ok || body.ok !== true) throw new Error("Server sign-out failed");
       await supabase.auth.signOut();
       toast.success("Signed out");
       window.location.assign("/");
     } catch {
       const { error } = await supabase.auth.signOut();
       if (error) toast.error(error.message);
-      else {
-        toast.success("Signed out");
-        window.location.assign("/");
-      }
+      else { toast.success("Signed out"); window.location.assign("/"); }
     } finally {
       setLoading(false);
     }
@@ -74,7 +69,7 @@ export function UserMenu() {
     return (
       <Link
         href={`/login?next=${encodeURIComponent(next)}`}
-        className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-700 bg-[#1a1a1a] px-3 py-2 text-sm font-medium text-zinc-200 transition hover:border-[#00ff9f]/50"
+        className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-700 bg-card px-3 py-2 text-sm font-medium text-zinc-200 transition hover:border-accent/50"
       >
         <LogIn className="size-4 shrink-0" aria-hidden />
         Sign in
@@ -93,13 +88,13 @@ export function UserMenu() {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex min-h-10 items-center gap-2 rounded-lg border border-zinc-700 bg-[#1a1a1a] py-1.5 pl-1.5 pr-2 text-sm text-zinc-200 transition hover:border-[#00ff9f]/50"
+        className="flex min-h-10 items-center gap-2 rounded-lg border border-zinc-700 bg-card py-1.5 pl-1.5 pr-2 text-sm text-zinc-200 transition hover:border-accent/50"
         aria-expanded={open}
         aria-haspopup="menu"
       >
         <span className="relative size-8 overflow-hidden rounded-md bg-zinc-800">
           {avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- remote Google avatar URLs
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={avatarUrl}
               alt=""
@@ -109,7 +104,7 @@ export function UserMenu() {
               referrerPolicy="no-referrer"
             />
           ) : (
-            <span className="flex size-full items-center justify-center text-xs font-semibold text-[#00ff9f]">
+            <span className="flex size-full items-center justify-center text-xs font-semibold text-accent">
               {initials(user.email ?? undefined, profile?.username)}
             </span>
           )}
@@ -125,12 +120,12 @@ export function UserMenu() {
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 top-[calc(100%+6px)] z-50 min-w-[13rem] rounded-lg border border-zinc-700 bg-[#141414] py-1 shadow-xl"
+          className="menu-enter absolute right-0 top-[calc(100%+6px)] z-50 min-w-[13rem] rounded-lg border border-zinc-700 bg-surface-sunken py-1 shadow-xl"
         >
           <Link
             href={profileHref}
             role="menuitem"
-            className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800/80"
+            className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-200 transition hover:bg-zinc-800/80"
             onClick={() => setOpen(false)}
           >
             <UserRound className="size-4 text-zinc-400" />
@@ -139,7 +134,7 @@ export function UserMenu() {
           <Link
             href="/notifications"
             role="menuitem"
-            className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800/80"
+            className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-200 transition hover:bg-zinc-800/80"
             onClick={() => setOpen(false)}
           >
             <Bell className="size-4 text-zinc-400" />
@@ -148,7 +143,7 @@ export function UserMenu() {
           <Link
             href="/settings"
             role="menuitem"
-            className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800/80"
+            className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-200 transition hover:bg-zinc-800/80"
             onClick={() => setOpen(false)}
           >
             <Settings className="size-4 text-zinc-400" />
@@ -158,7 +153,7 @@ export function UserMenu() {
             <Link
               href="/admin"
               role="menuitem"
-              className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800/80"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-200 transition hover:bg-zinc-800/80"
               onClick={() => setOpen(false)}
             >
               <Shield className="size-4 text-zinc-400" />
@@ -169,12 +164,8 @@ export function UserMenu() {
             type="button"
             role="menuitem"
             disabled={loading}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              void signOut();
-            }}
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800/80 disabled:opacity-50"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); void signOut(); }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-200 transition hover:bg-zinc-800/80 disabled:opacity-50"
           >
             <LogOut className="size-4 text-zinc-400" />
             Logout
@@ -185,13 +176,13 @@ export function UserMenu() {
   );
 }
 
-/** Compact sign-in for sidebars (same Google flow, optional next path). */
+/** Compact sign-in for sidebars. */
 export function SignInCard({ nextPath = "/" }: { nextPath?: string }) {
   return (
     <SignInWithGoogle
       nextPath={nextPath}
       label="Continue with Google"
-      className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#00ff9f] px-4 py-2.5 text-sm font-medium text-[#0f0f0f] transition hover:bg-[#33ffa8] disabled:opacity-50"
+      className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-accent/60 bg-gradient-to-b from-[#00ff9f] to-[#00d986] px-4 py-2.5 text-sm font-semibold text-on-accent shadow-[0_0_0_1px_rgba(0,255,159,0.35),0_8px_20px_-8px_rgba(0,255,159,0.55),inset_0_1px_0_rgba(255,255,255,0.35)] transition duration-[120ms] hover:-translate-y-px disabled:opacity-50"
     />
   );
 }

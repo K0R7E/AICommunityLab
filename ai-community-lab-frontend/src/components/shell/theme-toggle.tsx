@@ -15,7 +15,7 @@ export function ThemeToggle() {
       aria-label={label}
       title={label}
       aria-pressed={isLight}
-      className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-700 bg-[#1a1a1a] text-zinc-200 transition hover:border-[#00ff9f]/45"
+      className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-700 bg-card text-zinc-200 transition hover:border-accent/45"
     >
       {isLight ? (
         <Sun className="size-4" aria-hidden />

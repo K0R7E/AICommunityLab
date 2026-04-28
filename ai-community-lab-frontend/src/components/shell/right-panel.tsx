@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { POST_MODERATION_PUBLISHED } from "@/lib/moderation";
 import { SignInCard } from "@/components/auth/user-menu";
+import { CtaSubmitButton } from "@/components/shell/cta-submit-button";
 import { Newspaper, TrendingUp } from "lucide-react";
 import { getAiNewsPreview } from "@/lib/data/ai-news";
 
@@ -27,12 +28,12 @@ async function AiNewsSection() {
     <section>
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-zinc-400">
-          <Newspaper className="size-4 text-[#00ff9f]" aria-hidden />
+          <Newspaper className="size-4 text-cyan-400" aria-hidden />
           AI News
         </h2>
         <Link
           href="/news"
-          className="inline-flex min-h-10 items-center rounded-md border border-zinc-700 px-2.5 py-1 text-xs font-medium text-[#00ff9f] transition hover:bg-zinc-800/80"
+          className="inline-flex min-h-10 items-center rounded-md border border-zinc-700 px-2.5 py-1 text-xs font-medium text-cyan-400 transition hover:bg-zinc-800/80"
         >
           Read News
         </Link>
@@ -41,13 +42,13 @@ async function AiNewsSection() {
         {dataset.articles.map((article) => (
           <article
             key={article.id}
-            className="rounded-lg border border-zinc-800 bg-[#141414] p-3"
+            className="rounded-lg border border-zinc-800 bg-surface-sunken p-3"
           >
             <a
               href={article.url}
               target="_blank"
               rel="noreferrer noopener"
-              className="text-sm font-semibold text-zinc-100 transition hover:text-[#00ff9f]"
+              className="text-sm font-semibold text-zinc-100 transition hover:text-cyan-400"
             >
               {article.title}
             </a>
@@ -79,7 +80,7 @@ export async function RightPanel({ userEmail }: Props) {
 
       <section>
         <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-zinc-100">
-          <TrendingUp className="size-4 text-[#00ff9f]" aria-hidden />
+          <TrendingUp className="size-4 text-cyan-400" aria-hidden />
           Trending tools
         </h2>
         <ol className="flex flex-col gap-2">
@@ -90,7 +91,7 @@ export async function RightPanel({ userEmail }: Props) {
               <li key={p.id}>
                 <Link
                   href={`/post/${p.id}`}
-                  className="line-clamp-2 text-sm text-zinc-300 transition hover:text-[#00ff9f]"
+                  className="line-clamp-2 text-sm text-zinc-300 transition hover:text-cyan-400"
                 >
                   <span className="mr-2 font-mono text-xs text-zinc-600">
                     {i + 1}.
@@ -110,7 +111,7 @@ export async function RightPanel({ userEmail }: Props) {
       </section>
 
       {!userEmail ? (
-        <section className="rounded-xl border border-zinc-800 bg-[#1a1a1a] p-4">
+        <section className="rounded-xl border border-zinc-800 bg-card p-4">
           <h3 className="text-sm font-semibold text-zinc-100">Join the feed</h3>
           <p className="mt-1 text-sm text-zinc-500">
             Sign in with Google to submit tools, vote, and comment.
@@ -121,17 +122,12 @@ export async function RightPanel({ userEmail }: Props) {
         </section>
       ) : null}
 
-      <section className="rounded-xl border border-[#00ff9f]/30 bg-[#141414] p-4">
-        <h3 className="text-sm font-semibold text-[#00ff9f]">Share a tool</h3>
+      <section className="rounded-xl border border-accent/30 bg-surface-sunken p-4">
+        <h3 className="text-sm font-semibold text-accent">Share a tool</h3>
         <p className="mt-1 text-sm text-zinc-400">
           Found something the community should know about?
         </p>
-        <Link
-          href="/submit"
-          className="mt-3 inline-flex w-full items-center justify-center rounded-lg border border-[#00ff9f]/60 bg-gradient-to-b from-[#00ff9f] to-[#00d986] px-4 py-2 text-sm font-semibold text-[#061a13] shadow-[0_0_0_1px_rgba(0,255,159,0.35),0_10px_28px_-10px_rgba(0,255,159,0.65),inset_0_1px_0_rgba(255,255,255,0.35)] transition duration-[120ms] hover:-translate-y-px active:translate-y-0"
-        >
-          Submit a tool
-        </Link>
+        <CtaSubmitButton href="/submit">Submit a tool</CtaSubmitButton>
       </section>
     </aside>
   );

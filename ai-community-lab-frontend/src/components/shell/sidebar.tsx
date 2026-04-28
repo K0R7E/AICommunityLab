@@ -16,7 +16,7 @@ export function Sidebar() {
           <Link
             key={href + label}
             href={href}
-            className="flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-sm text-zinc-300 transition hover:bg-zinc-800/80 hover:text-[#00ff9f]"
+            className="flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-sm text-zinc-300 transition hover:bg-zinc-800/80 hover:text-cyan-400"
           >
             <Icon className="size-4 shrink-0 text-zinc-500" aria-hidden />
             {label}

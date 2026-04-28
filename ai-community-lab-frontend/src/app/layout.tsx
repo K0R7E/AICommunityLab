@@ -97,13 +97,14 @@ export default async function RootLayout({
       <head>
         <Script src="/theme-init.js" strategy="beforeInteractive" />
       </head>
-      <body className="flex min-h-full flex-col bg-[#0f0f0f] font-sans text-zinc-100">
+      <body className="flex min-h-full flex-col bg-background font-sans text-zinc-100">
         <ThemeProvider>
           <AuthProvider
             key={`${user?.id ?? "anon"}:${initialProfile?.username ?? ""}:${initialProfile?.avatar_url ?? ""}`}
             initialUser={user ?? null}
             initialProfile={initialProfile}
           >
+            <div className="hero-gradient" aria-hidden />
             <SiteHeader />
 
             <aside
@@ -123,7 +124,7 @@ export default async function RootLayout({
 
             <div className="mx-auto w-full max-w-[1400px] flex-1 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:pt-6 lg:max-w-none lg:px-0">
               <div className="mb-8 lg:hidden">
-                <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 -mx-4 max-h-[calc(100dvh-8.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] overflow-y-auto overflow-x-hidden border-b border-zinc-800/60 bg-[#0f0f0f]/95 px-4 py-3 backdrop-blur-sm sm:-mx-6 sm:px-6">
+                <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 -mx-4 max-h-[calc(100dvh-8.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] overflow-y-auto overflow-x-hidden border-b border-zinc-800/60 bg-background/95 px-4 py-3 backdrop-blur-sm sm:-mx-6 sm:px-6">
                   <Sidebar />
                 </div>
               </div>

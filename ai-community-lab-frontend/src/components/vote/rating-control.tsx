@@ -33,6 +33,7 @@ export function RatingControl({
   const [sum, setSum] = useState(initialRatingSum);
   const [count, setCount] = useState(initialRatingCount);
   const [myRating, setMyRating] = useState<number | null>(initialMyRating);
+  const [springingStar, setSpringingStar] = useState<number | null>(null);
   const latestOpId = useRef(0);
   const helperTextId = useId();
   const csrfTokenRef = useRef<string | null>(null);
@@ -135,6 +136,9 @@ export function RatingControl({
 
     applyOptimistic(next, prevMy);
 
+    setSpringingStar(next);
+    setTimeout(() => setSpringingStar(null), 600);
+
     const opId = ++latestOpId.current;
     setInFlightCount((c) => c + 1);
     const response = await sendRatingRequest("POST", { postId, value: next });
@@ -155,9 +159,9 @@ export function RatingControl({
   }
 
   return (
-    <div className="flex min-w-[5.75rem] flex-col items-center gap-1.5 rounded-lg border border-zinc-800 bg-[#141414] px-1.5 py-2 sm:min-w-[6.5rem]">
+    <div className="flex min-w-[5.75rem] flex-col items-center gap-1.5 rounded-lg border border-zinc-800 bg-surface-sunken px-1.5 py-2 sm:min-w-[6.5rem]">
       <div className="text-center leading-tight">
-        <span className="text-lg font-bold tabular-nums text-[#00ff9f]">{avg}</span>
+        <span className="text-lg font-bold tabular-nums text-accent">{avg}</span>
         <p className="text-[11px] text-zinc-500">{countLabel}</p>
       </div>
       <p className="text-[11px] text-zinc-500">
@@ -183,9 +187,9 @@ export function RatingControl({
                   onClick={() => void pickValue(n)}
                   className={`flex min-h-8 min-w-8 items-center justify-center rounded p-1 transition ${
                     active
-                      ? "bg-[#00ff9f]/15 ring-1 ring-[#00ff9f]/50"
+                      ? "bg-accent/15 ring-1 ring-accent/50"
                       : "hover:bg-zinc-800/90"
-                  }`}
+                  } ${springingStar === n ? "star-spring" : ""}`}
                   aria-pressed={active}
                   aria-busy={inFlightCount > 0}
                   aria-label={tooltipText}
@@ -193,7 +197,7 @@ export function RatingControl({
                   <Star
                     className={`size-4 transition ${
                       filled
-                        ? "fill-[#00ff9f] text-[#00ff9f]"
+                        ? "fill-accent text-accent"
                         : "text-zinc-500 group-hover/rate:text-zinc-200 group-focus-within/rate:text-zinc-200"
                     }`}
                     aria-hidden
@@ -210,7 +214,7 @@ export function RatingControl({
         <Link
           href={loginHref}
           aria-label="Sign in to vote"
-          className="flex items-center justify-center rounded p-1 text-zinc-500 transition hover:text-[#00ff9f]"
+          className="flex items-center justify-center rounded p-1 text-zinc-500 transition hover:text-accent"
         >
           <Lock className="size-4" aria-hidden />
         </Link>

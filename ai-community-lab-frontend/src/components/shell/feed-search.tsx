@@ -61,7 +61,7 @@ export function FeedSearch({
 
   const stickyClass =
     sticky === true || sticky === ""
-      ? "sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-[25] -mx-4 border-b border-zinc-800/70 bg-[#0f0f0f]/95 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6"
+      ? "sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-[25] -mx-4 border-b border-zinc-800/70 bg-background/95 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6"
       : typeof sticky === "string"
         ? sticky
         : "";
@@ -79,7 +79,7 @@ export function FeedSearch({
           onChange={(e) => setValue(e.target.value)}
           placeholder={placeholder}
           autoComplete="off"
-          className="min-h-11 w-full rounded-xl border border-zinc-800 bg-[#141414] py-2.5 pl-10 pr-10 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none transition focus:border-[#00ff9f]/40 focus:ring-2 focus:ring-[#00ff9f]/15"
+          className="min-h-11 w-full rounded-xl border border-zinc-800 bg-surface-sunken py-2.5 pl-10 pr-10 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none transition focus:border-accent/40 focus:ring-2 focus:ring-accent/15"
           aria-label={ariaLabel}
         />
         {value ? (

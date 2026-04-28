@@ -14,7 +14,7 @@ function FeedSkeleton() {
       {Array.from({ length: 5 }).map((_, i) => (
         <div
           key={i}
-          className="flex gap-3 rounded-xl border border-zinc-800/80 bg-[#1a1a1a] p-4"
+          className="flex gap-3 rounded-xl border border-zinc-800/80 bg-card p-4"
         >
           <div className="h-16 w-12 animate-pulse rounded-lg bg-zinc-800" />
           <div className="flex-1 space-y-2">
@@ -131,7 +131,7 @@ export default async function HomePage({
             {categorySummary ? (
               <Link
                 href={clearCategoryHref}
-                className="inline-flex min-h-8 items-center rounded-md border border-zinc-600 px-2 py-0.5 text-xs font-medium text-[#00ff9f] transition hover:bg-zinc-800/80"
+                className="inline-flex min-h-8 items-center rounded-md border border-zinc-600 px-2 py-0.5 text-xs font-medium text-accent transition hover:bg-zinc-800/80"
               >
                 Clear categories
               </Link>
@@ -145,7 +145,7 @@ export default async function HomePage({
             </span>
             <Link
               href={clearCategoryHref}
-              className="inline-flex min-h-8 items-center rounded-md border border-zinc-600 px-2 py-0.5 text-xs font-medium text-[#00ff9f] transition hover:bg-zinc-800/80"
+              className="inline-flex min-h-8 items-center rounded-md border border-zinc-600 px-2 py-0.5 text-xs font-medium text-accent transition hover:bg-zinc-800/80"
             >
               Clear categories
             </Link>

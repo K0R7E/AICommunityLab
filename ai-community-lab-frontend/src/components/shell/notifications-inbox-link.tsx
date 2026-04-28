@@ -14,9 +14,7 @@ export function NotificationsInboxLink() {
 
   useEffect(() => {
     mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-    };
+    return () => { mountedRef.current = false; };
   }, []);
 
   const load = useCallback(async () => {
@@ -37,11 +35,7 @@ export function NotificationsInboxLink() {
 
   useEffect(() => {
     const initial = window.setTimeout(() => void load(), 0);
-
-    function onInboxChanged() {
-      void load();
-    }
-
+    function onInboxChanged() { void load(); }
     window.addEventListener(INBOX_CHANGED, onInboxChanged);
     window.addEventListener("focus", onInboxChanged);
     return () => {
@@ -63,12 +57,12 @@ export function NotificationsInboxLink() {
   return (
     <Link
       href="/notifications"
-      className="relative inline-flex size-10 items-center justify-center rounded-lg border border-zinc-700 bg-[#1a1a1a] text-zinc-200 transition hover:border-[#00ff9f]/40"
+      className="relative inline-flex size-10 items-center justify-center rounded-lg border border-zinc-700 bg-card text-zinc-200 transition hover:border-accent/40"
       aria-label={showBadge ? `Notifications, ${count} in inbox` : "Notifications"}
     >
       <Bell className="size-5" aria-hidden />
       {showBadge ? (
-        <span className="absolute -right-1 -top-1 flex min-w-[1.125rem] items-center justify-center rounded-full bg-[#00ff9f] px-1 text-[10px] font-bold leading-none text-[#0f0f0f]">
+        <span className="absolute -right-1 -top-1 flex min-w-[1.125rem] items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold leading-none text-on-accent">
           {count > 99 ? "99+" : count}
         </span>
       ) : null}

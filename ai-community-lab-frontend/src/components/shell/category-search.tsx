@@ -71,14 +71,14 @@ export function CategorySearch() {
         Categories
       </p>
       <div className="mb-2 px-3">
-        <div className="inline-flex w-full rounded-lg border border-zinc-800 bg-[#141414] p-0.5">
+        <div className="inline-flex w-full rounded-lg border border-zinc-800 bg-surface-sunken p-0.5">
           {LISTING_KINDS.map((kind) => (
             <Link
               key={kind}
               href={kindHref(kind)}
               className={`flex-1 rounded-md px-3 py-1.5 text-center text-xs font-medium transition ${
                 effectiveKind === kind
-                  ? "bg-zinc-800 text-[#00ff9f]"
+                  ? "bg-zinc-800 text-accent"
                   : "text-zinc-400 hover:text-zinc-200"
               }`}
             >
@@ -101,7 +101,7 @@ export function CategorySearch() {
           onChange={(e) => setFilter(e.target.value)}
           placeholder="Filter…"
           autoComplete="off"
-          className="w-full rounded-lg border border-zinc-800 bg-[#141414] py-2 pl-9 pr-3 text-sm text-zinc-200 placeholder:text-zinc-600 outline-none ring-[#00ff9f]/0 transition focus:border-[#00ff9f]/40 focus:ring-2 focus:ring-[#00ff9f]/15"
+          className="w-full rounded-lg border border-zinc-800 bg-surface-sunken py-2 pl-9 pr-3 text-sm text-zinc-200 placeholder:text-zinc-600 outline-none ring-[#00ff9f]/0 transition focus:border-accent/40 focus:ring-2 focus:ring-accent/15"
           aria-label="Filter categories"
         />
       </div>
@@ -110,7 +110,7 @@ export function CategorySearch() {
           <li>
             <Link
               href={clearCategoriesHref(new URLSearchParams(sp.toString()))}
-              className="flex items-center gap-3 rounded-lg border border-zinc-700/80 bg-zinc-900/50 px-3 py-2 text-sm font-medium text-[#00ff9f] transition hover:border-[#00ff9f]/35 hover:bg-zinc-800/80"
+              className="flex items-center gap-3 rounded-lg border border-zinc-700/80 bg-zinc-900/50 px-3 py-2 text-sm font-medium text-accent transition hover:border-accent/35 hover:bg-zinc-800/80"
             >
               <ListX className="size-4 shrink-0" aria-hidden />
               Clear categories ({active.length})
@@ -128,8 +128,8 @@ export function CategorySearch() {
                   href={toggleCategoryHref(c, new URLSearchParams(sp.toString()))}
                   className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${
                     selected
-                      ? "border border-[#00ff9f]/35 bg-[#00ff9f]/10 text-[#00ff9f]"
-                      : "border border-transparent text-zinc-300 hover:bg-zinc-800/80 hover:text-[#00ff9f]"
+                      ? "border border-accent/35 bg-accent/10 text-accent"
+                      : "border border-transparent text-zinc-300 hover:bg-zinc-800/80 hover:text-accent"
                   }`}
                   aria-current={selected ? "true" : undefined}
                 >

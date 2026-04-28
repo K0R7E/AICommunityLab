@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { ExternalLink, MessageCircle } from "lucide-react";
 import { RatingControl } from "@/components/vote/rating-control";
@@ -18,9 +19,11 @@ type Props = {
   myRating: number | null;
   canVote: boolean;
   rank?: number;
+  className?: string;
+  style?: React.CSSProperties;
 };
 
-export function ToolCard({ post, myRating, canVote, rank }: Props) {
+export function ToolCard({ post, myRating, canVote, rank, className, style }: Props) {
   const trendingLevel = rank != null ? getTrendingLevel(rank, post.created_at) : null;
   const external = safeHttpExternalLink(post.url);
   const line = (() => {
@@ -42,11 +45,11 @@ export function ToolCard({ post, myRating, canVote, rank }: Props) {
   const canRateHere = canVote && isPostPublishedForFeed(post.moderation_status);
 
   return (
-    <article className="group relative flex gap-2.5 overflow-hidden rounded-xl border border-zinc-800/80 bg-[#1a1a1a] p-3 transition duration-200 hover:-translate-y-px hover:border-[#00ff9f]/35 hover:shadow-[0_0_0_1px_rgba(0,255,159,0.08),_0_12px_30px_-18px_rgba(0,255,159,0.55)] sm:gap-3 sm:p-4">
+    <article className={`card-hover group relative flex gap-2.5 overflow-hidden rounded-xl border border-zinc-800/80 bg-card p-3 transition duration-200 sm:gap-3 sm:p-4${className ? ` ${className}` : ""}`} style={style}>
       {/* Full-card hit target (comments); rating & external link sit above with z-index */}
       <Link
         href={postHref}
-        className="absolute inset-0 z-0 rounded-xl outline-none ring-[#00ff9f]/0 transition focus-visible:ring-2 focus-visible:ring-[#00ff9f]/70 focus-visible:ring-inset"
+        className="absolute inset-0 z-0 rounded-xl outline-none ring-accent/0 transition focus-visible:ring-2 focus-visible:ring-accent/70 focus-visible:ring-inset"
         aria-label={`${post.title} — open post and comments`}
       />
 
@@ -64,7 +67,7 @@ export function ToolCard({ post, myRating, canVote, rank }: Props) {
       <div className="pointer-events-none relative z-10 min-w-0 flex-1">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <span className="flex flex-wrap items-center gap-2">
-            <span className="text-base font-semibold leading-snug text-zinc-100 transition-colors group-hover:text-[#00ff9f] sm:text-lg">
+            <span className="text-base font-semibold leading-snug text-zinc-100 transition-colors group-hover:text-accent sm:text-lg">
               {post.title}
             </span>
             {trendingLevel && <TrendingBadge level={trendingLevel} rank={rank!} />}
@@ -74,7 +77,7 @@ export function ToolCard({ post, myRating, canVote, rank }: Props) {
               href={external.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="pointer-events-auto relative z-20 inline-flex min-h-10 shrink-0 items-center gap-1 text-sm font-medium text-[#00ff9f] transition hover:underline"
+              className="pointer-events-auto relative z-20 inline-flex min-h-10 shrink-0 items-center gap-1 text-sm font-medium text-accent transition hover:underline"
             >
               Visit →
               <ExternalLink className="size-3.5" aria-hidden />
@@ -97,7 +100,7 @@ export function ToolCard({ post, myRating, canVote, rank }: Props) {
             </span>
           ) : null}
           {post.post_kind ? (
-            <span className="rounded-md border border-[#00ff9f]/30 bg-[#00ff9f]/10 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-[#00ff9f]">
+            <span className="rounded-md border border-accent/30 bg-accent/10 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-accent">
               {post.post_kind}
             </span>
           ) : null}

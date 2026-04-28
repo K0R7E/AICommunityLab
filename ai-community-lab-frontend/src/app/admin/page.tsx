@@ -7,6 +7,7 @@ import { getAdminModerationData } from "@/lib/data/admin-moderation";
 import { FeedSearch } from "@/components/shell/feed-search";
 import { AdminCommentEditor } from "./admin-comment-editor";
 import { AdminPostEditor } from "./admin-post-editor";
+import { AdminAuditLogView } from "./admin-audit-log-view";
 
 export const metadata = {
   title: "Moderation · AICommunityLab",
@@ -15,136 +16,168 @@ export const metadata = {
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; view?: string }>;
 }) {
   if (!(await getCurrentUserIsAdmin())) {
     redirect("/");
   }
 
   const sp = await searchParams;
+  const view = sp.view === "audit" ? "audit" : "moderation";
   const q = sp.q?.trim() || null;
 
-  const { posts, comments } = await getAdminModerationData({ q });
+  const { posts, comments } =
+    view === "moderation" ? await getAdminModerationData({ q }) : { posts: [], comments: [] };
 
   return (
     <div className="space-y-12">
       <div>
-        <h1 className="text-2xl font-bold text-zinc-100">Moderation</h1>
+        <h1 className="text-2xl font-bold text-zinc-100">Admin</h1>
         <p className="mt-2 text-sm text-zinc-400">
-          Approve new submissions for the public feed, edit or delete posts and
-          comments, and review reports. Changes apply immediately.
+          {view === "moderation"
+            ? "Approve new submissions for the public feed, edit or delete posts and comments, and review reports. Changes apply immediately."
+            : "Full history of all admin moderation actions."}
         </p>
       </div>
 
-      <Suspense fallback={null}>
-        <FeedSearch
-          basePath="/admin"
-          placeholder="Search posts and comments…"
-          aria-label="Search moderation queue"
-        />
-      </Suspense>
+      <div className="inline-flex rounded-lg border border-zinc-800 bg-surface-sunken p-0.5">
+        <Link
+          href="/admin"
+          className={`rounded-md px-3 py-2 text-sm font-medium transition ${
+            view === "moderation"
+              ? "bg-zinc-800 text-accent"
+              : "text-zinc-400 hover:text-zinc-200"
+          }`}
+        >
+          Moderation
+        </Link>
+        <Link
+          href="/admin?view=audit"
+          className={`rounded-md px-3 py-2 text-sm font-medium transition ${
+            view === "audit"
+              ? "bg-zinc-800 text-accent"
+              : "text-zinc-400 hover:text-zinc-200"
+          }`}
+        >
+          Audit log
+        </Link>
+      </div>
 
-      <section>
-        <h2 className="text-lg font-semibold text-zinc-100">Recent posts</h2>
-        <ul className="mt-4 flex flex-col gap-2">
-          {posts.length === 0 ? (
-            <li className="text-sm text-zinc-500">
-              {q ? "No posts match your search." : "No posts."}
-            </li>
-          ) : (
-            posts.map((p) => (
-              <li
-                key={p.id}
-                className="rounded-lg border border-zinc-800 bg-surface-sunken px-4 py-3"
-              >
-                <AdminPostEditor post={p}>
-                  <div>
-                    <Link
-                      href={`/post/${p.id}`}
-                      className="font-medium text-accent hover:underline"
-                    >
-                      {p.title}
-                    </Link>
-                    <p className="mt-1 text-xs text-zinc-500">
-                      {p.post_kind ?? "AI Engine"} ·{" "}
-                      {(p.categories ?? []).join(" · ")} ·{" "}
-                      {formatRelativeTime(p.created_at)}
-                    </p>
-                    {p.duplicateHints?.length ? (
-                      <div className="mt-2 rounded-md border border-amber-800/45 bg-amber-950/25 px-2.5 py-2 text-xs text-amber-100/95">
-                        <p className="font-semibold text-amber-50">Duplicate / similar listings</p>
-                        <ul className="mt-1.5 list-inside list-disc space-y-1 text-amber-100/90">
-                          {p.duplicateHints.map((h) => (
-                            <li key={`${h.type}-${h.otherId}`}>
-                              {h.type === "url" ? (
-                                <>
-                                  Same canonical URL as{" "}
-                                  <Link
-                                    href={`/post/${h.otherId}`}
-                                    className="font-medium text-accent hover:underline"
-                                  >
-                                    {h.otherTitle}
-                                  </Link>
-                                </>
-                              ) : (
-                                <>
-                                  Similar title/description (score {(h.score ?? 0).toFixed(2)}):{" "}
-                                  <Link
-                                    href={`/post/${h.otherId}`}
-                                    className="font-medium text-accent hover:underline"
-                                  >
-                                    {h.otherTitle}
-                                  </Link>
-                                </>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
+      {view === "audit" ? (
+        <AdminAuditLogView />
+      ) : (
+        <>
+          <Suspense fallback={null}>
+            <FeedSearch
+              basePath="/admin"
+              placeholder="Search posts and comments…"
+              aria-label="Search moderation queue"
+            />
+          </Suspense>
+
+          <section>
+            <h2 className="text-lg font-semibold text-zinc-100">Recent posts</h2>
+            <ul className="mt-4 flex flex-col gap-2">
+              {posts.length === 0 ? (
+                <li className="text-sm text-zinc-500">
+                  {q ? "No posts match your search." : "No posts."}
+                </li>
+              ) : (
+                posts.map((p) => (
+                  <li
+                    key={p.id}
+                    className="rounded-lg border border-zinc-800 bg-surface-sunken px-4 py-3"
+                  >
+                    <AdminPostEditor post={p}>
+                      <div>
+                        <Link
+                          href={`/post/${p.id}`}
+                          className="font-medium text-accent hover:underline"
+                        >
+                          {p.title}
+                        </Link>
+                        <p className="mt-1 text-xs text-zinc-500">
+                          {p.post_kind ?? "AI Engine"} ·{" "}
+                          {(p.categories ?? []).join(" · ")} ·{" "}
+                          {formatRelativeTime(p.created_at)}
+                        </p>
+                        {p.duplicateHints?.length ? (
+                          <div className="mt-2 rounded-md border border-amber-800/45 bg-amber-950/25 px-2.5 py-2 text-xs text-amber-100/95">
+                            <p className="font-semibold text-amber-50">Duplicate / similar listings</p>
+                            <ul className="mt-1.5 list-inside list-disc space-y-1 text-amber-100/90">
+                              {p.duplicateHints.map((h) => (
+                                <li key={`${h.type}-${h.otherId}`}>
+                                  {h.type === "url" ? (
+                                    <>
+                                      Same canonical URL as{" "}
+                                      <Link
+                                        href={`/post/${h.otherId}`}
+                                        className="font-medium text-accent hover:underline"
+                                      >
+                                        {h.otherTitle}
+                                      </Link>
+                                    </>
+                                  ) : (
+                                    <>
+                                      Similar title/description (score {(h.score ?? 0).toFixed(2)}):{" "}
+                                      <Link
+                                        href={`/post/${h.otherId}`}
+                                        className="font-medium text-accent hover:underline"
+                                      >
+                                        {h.otherTitle}
+                                      </Link>
+                                    </>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : null}
                       </div>
-                    ) : null}
-                  </div>
-                </AdminPostEditor>
-              </li>
-            ))
-          )}
-        </ul>
-      </section>
+                    </AdminPostEditor>
+                  </li>
+                ))
+              )}
+            </ul>
+          </section>
 
-      <section>
-        <h2 className="text-lg font-semibold text-zinc-100">Recent comments</h2>
-        <ul className="mt-4 flex flex-col gap-2">
-          {comments.length === 0 ? (
-            <li className="text-sm text-zinc-500">
-              {q ? "No comments match your search." : "No comments."}
-            </li>
-          ) : (
-            comments.map((c) => (
-              <li
-                key={c.id}
-                className="rounded-lg border border-zinc-800 bg-surface-sunken px-4 py-3"
-              >
-                <AdminCommentEditor id={c.id} postId={c.post_id} content={c.content}>
-                  <div>
-                    <p className="line-clamp-3 whitespace-pre-wrap text-sm text-zinc-200">
-                      {c.content}
-                    </p>
-                    <p className="mt-2 text-xs text-zinc-500">
-                      <Link
-                        href={`/post/${c.post_id}`}
-                        className="text-accent hover:underline"
-                      >
-                        Open post
-                      </Link>
-                      {" · "}
-                      {formatRelativeTime(c.created_at)}
-                    </p>
-                  </div>
-                </AdminCommentEditor>
-              </li>
-            ))
-          )}
-        </ul>
-      </section>
+          <section>
+            <h2 className="text-lg font-semibold text-zinc-100">Recent comments</h2>
+            <ul className="mt-4 flex flex-col gap-2">
+              {comments.length === 0 ? (
+                <li className="text-sm text-zinc-500">
+                  {q ? "No comments match your search." : "No comments."}
+                </li>
+              ) : (
+                comments.map((c) => (
+                  <li
+                    key={c.id}
+                    className="rounded-lg border border-zinc-800 bg-surface-sunken px-4 py-3"
+                  >
+                    <AdminCommentEditor id={c.id} postId={c.post_id} content={c.content}>
+                      <div>
+                        <p className="line-clamp-3 whitespace-pre-wrap text-sm text-zinc-200">
+                          {c.content}
+                        </p>
+                        <p className="mt-2 text-xs text-zinc-500">
+                          <Link
+                            href={`/post/${c.post_id}`}
+                            className="text-accent hover:underline"
+                          >
+                            Open post
+                          </Link>
+                          {" · "}
+                          {formatRelativeTime(c.created_at)}
+                        </p>
+                      </div>
+                    </AdminCommentEditor>
+                  </li>
+                ))
+              )}
+            </ul>
+          </section>
+        </>
+      )}
 
       <p className="text-center text-sm text-zinc-500">
         <Link href="/" className="text-accent hover:underline">

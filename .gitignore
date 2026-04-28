@@ -61,5 +61,4 @@ coverage/
 .cursor/
 
 --- Supabase ---
-supabase/
 supabase/migrations/

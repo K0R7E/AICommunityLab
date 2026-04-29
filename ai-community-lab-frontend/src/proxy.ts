@@ -91,6 +91,7 @@ function withNonce(
  * Everything else requires authentication (opt-out model).
  */
 const PUBLIC_PATHS = new Set([
+  "/",
   "/login",
   "/login/forgot-password",
   "/terms",

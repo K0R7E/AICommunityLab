@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { Home, Newspaper } from "lucide-react";
+import { Home, Newspaper, Users } from "lucide-react";
 import { CategorySearch } from "@/components/shell/category-search";
 
 const nav = [
   { href: "/", label: "Home", icon: Home },
   { href: "/news", label: "AI News", icon: Newspaper },
+  { href: "/users", label: "Find Users", icon: Users },
 ] as const;
 
 type Props = {

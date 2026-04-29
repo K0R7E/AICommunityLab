@@ -3,13 +3,14 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { formatRelativeTime } from "@/lib/format";
 import { getCurrentUserIsAdmin } from "@/lib/admin";
-import { getAdminModerationData } from "@/lib/data/admin-moderation";
+import { getAdminModerationData, POSTS_PAGE_SIZE, COMMENTS_PAGE_SIZE } from "@/lib/data/admin-moderation";
 import { FeedSearch } from "@/components/shell/feed-search";
 import { AdminCommentEditor } from "./admin-comment-editor";
 import { AdminPostEditor } from "./admin-post-editor";
 import { AdminAuditLogView } from "./admin-audit-log-view";
 import { AdminUserActivityView } from "./admin-user-activity-view";
 import type { EventCategory } from "@/lib/data/admin-user-activity";
+import { safeHttpsImageUrl } from "@/lib/safe-remote-media-url";
 
 export const metadata = {
   title: "Moderation · AICommunityLab",
@@ -18,7 +19,7 @@ export const metadata = {
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; view?: string; category?: string; u?: string }>;
+  searchParams: Promise<{ q?: string; view?: string; category?: string; u?: string; postsPage?: string; commentsPage?: string }>;
 }) {
   if (!(await getCurrentUserIsAdmin())) {
     redirect("/");
@@ -31,9 +32,24 @@ export default async function AdminPage({
     ? sp.category
     : "all") as EventCategory;
   const userSearch = sp.u?.trim() || null;
+  const postsPage = Math.max(1, parseInt(sp.postsPage ?? "1", 10) || 1);
+  const commentsPage = Math.max(1, parseInt(sp.commentsPage ?? "1", 10) || 1);
 
-  const { posts, comments } =
-    view === "moderation" ? await getAdminModerationData({ q }) : { posts: [], comments: [] };
+  const { posts, comments, hasMorePosts, hasMoreComments } =
+    view === "moderation"
+      ? await getAdminModerationData({ q, postsPage, commentsPage })
+      : { posts: [], comments: [], hasMorePosts: false, hasMoreComments: false };
+
+  // Build "load more" hrefs that preserve existing params
+  function buildHref(extra: Record<string, string | number>) {
+    const p = new URLSearchParams();
+    if (q) p.set("q", q);
+    if (postsPage > 1) p.set("postsPage", String(postsPage));
+    if (commentsPage > 1) p.set("commentsPage", String(commentsPage));
+    for (const [k, v] of Object.entries(extra)) p.set(k, String(v));
+    const qs = p.toString();
+    return `/admin${qs ? `?${qs}` : ""}`;
+  }
 
   return (
     <div className="space-y-12">
@@ -94,7 +110,12 @@ export default async function AdminPage({
           </Suspense>
 
           <section>
-            <h2 className="text-lg font-semibold text-zinc-100">Recent posts</h2>
+            <div className="flex items-baseline justify-between gap-4">
+              <h2 className="text-lg font-semibold text-zinc-100">Posts</h2>
+              <span className="text-xs text-zinc-500">
+                Showing {posts.length} · pending first
+              </span>
+            </div>
             <ul className="mt-4 flex flex-col gap-2">
               {posts.length === 0 ? (
                 <li className="text-sm text-zinc-500">
@@ -108,12 +129,25 @@ export default async function AdminPage({
                   >
                     <AdminPostEditor post={p}>
                       <div>
-                        <Link
-                          href={`/post/${p.id}`}
-                          className="font-medium text-accent hover:underline"
-                        >
-                          {p.title}
-                        </Link>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span
+                            className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                              p.moderation_status === "pending"
+                                ? "bg-amber-900/50 text-amber-300"
+                                : p.moderation_status === "published"
+                                  ? "bg-emerald-900/50 text-emerald-300"
+                                  : "bg-red-900/50 text-red-300"
+                            }`}
+                          >
+                            {p.moderation_status}
+                          </span>
+                          <Link
+                            href={`/post/${p.id}`}
+                            className="font-medium text-accent hover:underline"
+                          >
+                            {p.title}
+                          </Link>
+                        </div>
                         <p className="mt-1 text-xs text-zinc-500">
                           {p.post_kind ?? "AI Engine"} ·{" "}
                           {(p.categories ?? []).join(" · ")} ·{" "}
@@ -157,10 +191,27 @@ export default async function AdminPage({
                 ))
               )}
             </ul>
+            {hasMorePosts ? (
+              <div className="mt-4 text-center">
+                <Link
+                  href={buildHref({ postsPage: postsPage + 1 })}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-surface-sunken px-4 py-2 text-sm text-zinc-300 transition hover:border-accent/50 hover:text-accent"
+                >
+                  Load {POSTS_PAGE_SIZE} more posts
+                </Link>
+              </div>
+            ) : posts.length > 0 ? (
+              <p className="mt-4 text-center text-xs text-zinc-600">All posts shown</p>
+            ) : null}
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-zinc-100">Recent comments</h2>
+            <div className="flex items-baseline justify-between gap-4">
+              <h2 className="text-lg font-semibold text-zinc-100">Comments</h2>
+              <span className="text-xs text-zinc-500">
+                Showing {comments.length} · newest first
+              </span>
+            </div>
             <ul className="mt-4 flex flex-col gap-2">
               {comments.length === 0 ? (
                 <li className="text-sm text-zinc-500">
@@ -174,6 +225,33 @@ export default async function AdminPage({
                   >
                     <AdminCommentEditor id={c.id} postId={c.post_id} content={c.content}>
                       <div>
+                        <div className="mb-2 flex items-center gap-2">
+                          {c.author_avatar_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={safeHttpsImageUrl(c.author_avatar_url) ?? ""}
+                              alt=""
+                              width={18}
+                              height={18}
+                              className="size-[18px] rounded-full object-cover"
+                              referrerPolicy="no-referrer"
+                            />
+                          ) : (
+                            <span className="flex size-[18px] items-center justify-center rounded-full bg-zinc-700 text-[9px] font-semibold text-accent">
+                              {(c.author_username ?? "?").slice(0, 1).toUpperCase()}
+                            </span>
+                          )}
+                          {c.author_username ? (
+                            <Link
+                              href={`/profile/${encodeURIComponent(c.author_username)}`}
+                              className="text-xs font-medium text-zinc-300 hover:text-accent hover:underline"
+                            >
+                              {c.author_username}
+                            </Link>
+                          ) : (
+                            <span className="text-xs text-zinc-500">deleted user</span>
+                          )}
+                        </div>
                         <p className="line-clamp-3 whitespace-pre-wrap text-sm text-zinc-200">
                           {c.content}
                         </p>
@@ -193,6 +271,18 @@ export default async function AdminPage({
                 ))
               )}
             </ul>
+            {hasMoreComments ? (
+              <div className="mt-4 text-center">
+                <Link
+                  href={buildHref({ commentsPage: commentsPage + 1 })}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-surface-sunken px-4 py-2 text-sm text-zinc-300 transition hover:border-accent/50 hover:text-accent"
+                >
+                  Load {COMMENTS_PAGE_SIZE} more comments
+                </Link>
+              </div>
+            ) : comments.length > 0 ? (
+              <p className="mt-4 text-center text-xs text-zinc-600">All comments shown</p>
+            ) : null}
           </section>
         </>
       )}

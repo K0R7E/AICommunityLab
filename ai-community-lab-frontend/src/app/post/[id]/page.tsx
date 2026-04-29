@@ -201,11 +201,37 @@ export default async function PostDetailPage({ params }: Props) {
                 key={c.id}
                 className="rounded-lg border border-zinc-800 bg-surface-sunken px-4 py-3"
               >
+                <div className="mb-2 flex items-center gap-2">
+                  {c.author_avatar_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={c.author_avatar_url}
+                      alt=""
+                      width={20}
+                      height={20}
+                      className="size-5 rounded-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <span className="flex size-5 items-center justify-center rounded-full bg-zinc-700 text-[10px] font-semibold text-accent">
+                      {(c.author_username ?? "?").slice(0, 1).toUpperCase()}
+                    </span>
+                  )}
+                  {c.author_username ? (
+                    <Link
+                      href={`/profile/${encodeURIComponent(c.author_username)}`}
+                      className="text-xs font-medium text-zinc-300 hover:text-accent hover:underline"
+                    >
+                      {c.author_username}
+                    </Link>
+                  ) : (
+                    <span className="text-xs text-zinc-500">deleted user</span>
+                  )}
+                  <span className="text-xs text-zinc-600">·</span>
+                  <span className="text-xs text-zinc-500">{formatRelativeTime(c.created_at)}</span>
+                </div>
                 <p className="whitespace-pre-wrap text-sm text-zinc-200">
                   {c.content}
-                </p>
-                <p className="mt-2 text-xs text-zinc-500">
-                  {formatRelativeTime(c.created_at)}
                 </p>
               </li>
             ))

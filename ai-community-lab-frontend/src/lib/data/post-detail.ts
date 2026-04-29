@@ -7,6 +7,8 @@ export type CommentRow = {
   user_id: string;
   content: string;
   created_at: string;
+  author_username: string | null;
+  author_avatar_url: string | null;
 };
 
 export async function getPostById(id: string): Promise<PostRow | null> {
@@ -27,12 +29,38 @@ export async function getCommentsForPost(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("comments")
-    .select("*")
+    .select("id, post_id, user_id, content, created_at")
     .eq("post_id", postId)
     .order("created_at", { ascending: true });
 
-  if (error) return [];
-  return (data ?? []) as CommentRow[];
+  if (error || !data?.length) return [];
+
+  const userIds = [...new Set(data.map((c) => (c as { user_id: string }).user_id))];
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, username, avatar_url")
+    .in("id", userIds);
+
+  const profileMap = new Map(
+    (profiles ?? []).map((p) => [
+      (p as { id: string }).id,
+      p as { id: string; username: string; avatar_url: string | null },
+    ]),
+  );
+
+  return data.map((c) => {
+    const row = c as { id: string; post_id: string; user_id: string; content: string; created_at: string };
+    const profile = profileMap.get(row.user_id);
+    return {
+      id: row.id,
+      post_id: row.post_id,
+      user_id: row.user_id,
+      content: row.content,
+      created_at: row.created_at,
+      author_username: profile?.username ?? null,
+      author_avatar_url: profile?.avatar_url ?? null,
+    };
+  });
 }
 
 export async function getMyRatingForPost(

@@ -7,6 +7,9 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { escapeLikePattern } from "@/lib/search-utils";
 
+export const POSTS_PAGE_SIZE = 20;
+export const COMMENTS_PAGE_SIZE = 30;
+
 const POST_FIELDS =
   "id, title, url, url_canonical, description, categories, post_kind, moderation_status, created_at, user_id" as const;
 
@@ -34,6 +37,8 @@ export type AdminModerationComment = {
   content: string;
   created_at: string;
   user_id: string;
+  author_username: string | null;
+  author_avatar_url: string | null;
 };
 
 function effectiveUrlCanonical(p: AdminModerationPost): string | null {
@@ -148,63 +153,117 @@ async function enrichModerationDuplicateHints(
   });
 }
 
+/** Attach author username/avatar to raw comment rows. */
+async function enrichCommentAuthors(
+  comments: { id: string; post_id: string; content: string; created_at: string; user_id: string }[],
+  supabase: SupabaseClient,
+): Promise<AdminModerationComment[]> {
+  if (comments.length === 0) return [];
+
+  const userIds = [...new Set(comments.map((c) => c.user_id))];
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, username, avatar_url")
+    .in("id", userIds);
+
+  const profileMap = new Map(
+    (profiles ?? []).map((p) => [
+      (p as { id: string }).id,
+      p as { id: string; username: string; avatar_url: string | null },
+    ]),
+  );
+
+  return comments.map((c) => {
+    const profile = profileMap.get(c.user_id);
+    return {
+      ...c,
+      author_username: profile?.username ?? null,
+      author_avatar_url: profile?.avatar_url ?? null,
+    };
+  });
+}
+
 export async function getAdminModerationData(options: {
   q: string | null;
-}): Promise<{ posts: AdminModerationPost[]; comments: AdminModerationComment[] }> {
+  /** 1-based page number — each page loads PAGE_SIZE more items cumulatively. */
+  postsPage?: number;
+  commentsPage?: number;
+}): Promise<{
+  posts: AdminModerationPost[];
+  comments: AdminModerationComment[];
+  hasMorePosts: boolean;
+  hasMoreComments: boolean;
+}> {
   const supabase = await createClient();
   const term = options.q?.trim() || null;
+  const postsPage = Math.max(1, options.postsPage ?? 1);
+  const commentsPage = Math.max(1, options.commentsPage ?? 1);
+  // Fetch one extra to detect whether more pages exist.
+  const postsLimit = postsPage * POSTS_PAGE_SIZE + 1;
+  const commentsLimit = commentsPage * COMMENTS_PAGE_SIZE + 1;
 
-  let posts: AdminModerationPost[];
+  let rawPosts: AdminModerationPost[];
+  let rawComments: { id: string; post_id: string; content: string; created_at: string; user_id: string }[];
 
   if (!term) {
     const [{ data: recentPosts }, { data: recentComments }] = await Promise.all([
       supabase
         .from("posts")
         .select(POST_FIELDS)
+        // pending first, then published, then rejected (alphabetical sort achieves this)
         .order("moderation_status", { ascending: true })
         .order("created_at", { ascending: false })
-        .limit(40),
+        .limit(postsLimit),
       supabase
         .from("comments")
         .select("id, post_id, content, created_at, user_id")
         .order("created_at", { ascending: false })
-        .limit(60),
-    ]);
-    posts = (recentPosts ?? []) as AdminModerationPost[];
-    const comments = (recentComments ?? []) as AdminModerationComment[];
-    posts = await enrichModerationDuplicateHints(posts, supabase);
-    return { posts, comments };
-  }
-
-  const pattern = `%${escapeLikePattern(term)}%`;
-  const [{ data: byTitle }, { data: byDesc }, { data: byUrl }, { data: byComments }] =
-    await Promise.all([
-      supabase.from("posts").select(POST_FIELDS).ilike("title", pattern).limit(80),
-      supabase.from("posts").select(POST_FIELDS).ilike("description", pattern).limit(80),
-      supabase.from("posts").select(POST_FIELDS).ilike("url", pattern).limit(80),
-      supabase
-        .from("comments")
-        .select("id, post_id, content, created_at, user_id")
-        .ilike("content", pattern)
-        .order("created_at", { ascending: false })
-        .limit(80),
+        .limit(commentsLimit),
     ]);
 
-  const postMap = new Map<string, AdminModerationPost>();
-  for (const row of [...(byTitle ?? []), ...(byDesc ?? []), ...(byUrl ?? [])]) {
-    postMap.set((row as AdminModerationPost).id, row as AdminModerationPost);
+    rawPosts = (recentPosts ?? []) as AdminModerationPost[];
+    rawComments = (recentComments ?? []) as typeof rawComments;
+  } else {
+    const pattern = `%${escapeLikePattern(term)}%`;
+    const [{ data: byTitle }, { data: byDesc }, { data: byUrl }, { data: byComments }] =
+      await Promise.all([
+        supabase.from("posts").select(POST_FIELDS).ilike("title", pattern).limit(postsLimit),
+        supabase.from("posts").select(POST_FIELDS).ilike("description", pattern).limit(postsLimit),
+        supabase.from("posts").select(POST_FIELDS).ilike("url", pattern).limit(postsLimit),
+        supabase
+          .from("comments")
+          .select("id, post_id, content, created_at, user_id")
+          .ilike("content", pattern)
+          .order("created_at", { ascending: false })
+          .limit(commentsLimit),
+      ]);
+
+    const postMap = new Map<string, AdminModerationPost>();
+    for (const row of [...(byTitle ?? []), ...(byDesc ?? []), ...(byUrl ?? [])]) {
+      postMap.set((row as AdminModerationPost).id, row as AdminModerationPost);
+    }
+    rawPosts = [...postMap.values()].sort((a, b) => {
+      const st = (s: string) => (s === "pending" ? 0 : s === "published" ? 1 : 2);
+      const c = st(a.moderation_status) - st(b.moderation_status);
+      if (c !== 0) return c;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+
+    rawComments = (byComments ?? []) as typeof rawComments;
   }
-  posts = [...postMap.values()].sort((a, b) => {
-    const st = (s: string) => (s === "pending" ? 0 : s === "published" ? 1 : 2);
-    const c = st(a.moderation_status) - st(b.moderation_status);
-    if (c !== 0) return c;
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-  });
 
-  posts = await enrichModerationDuplicateHints(posts, supabase);
+  // Detect whether more items exist beyond the current page.
+  const hasMorePosts = rawPosts.length > postsPage * POSTS_PAGE_SIZE;
+  const hasMoreComments = rawComments.length > commentsPage * COMMENTS_PAGE_SIZE;
 
-  return {
-    posts,
-    comments: (byComments ?? []) as AdminModerationComment[],
-  };
+  // Slice to exactly the requested page size (drop the sentinel extra item).
+  rawPosts = rawPosts.slice(0, postsPage * POSTS_PAGE_SIZE);
+  rawComments = rawComments.slice(0, commentsPage * COMMENTS_PAGE_SIZE);
+
+  const [posts, comments] = await Promise.all([
+    enrichModerationDuplicateHints(rawPosts, supabase),
+    enrichCommentAuthors(rawComments, supabase),
+  ]);
+
+  return { posts, comments, hasMorePosts, hasMoreComments };
 }

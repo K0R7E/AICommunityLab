@@ -43,7 +43,7 @@ export function SettingsForm({
         <div
           role="alert"
           aria-live="polite"
-          className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200"
+          className="rounded-lg border border-red-800/40 bg-red-200/10 px-4 py-3 text-sm text-red-800"
         >
           {state.error}
         </div>

@@ -98,6 +98,9 @@ const PUBLIC_PATHS = new Set([
   "/privacy",
   "/security-policy",
   "/.well-known/security.txt",
+  "/robots.txt",
+  "/sitemap.xml",
+  "/feed.xml",
 ]);
 
 /**

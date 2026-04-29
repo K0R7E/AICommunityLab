@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Newspaper } from "lucide-react";
 import { getAiNewsPreview } from "@/lib/data/ai-news";
+import { safeHttpExternalUrl } from "@/lib/safe-external-url";
+import { createClient } from "@/lib/supabase/server";
 
 async function AiNewsSection() {
   const dataset = await getAiNewsPreview(6);
@@ -22,19 +24,25 @@ async function AiNewsSection() {
         </Link>
       </div>
       <div className="flex flex-col gap-2">
-        {dataset.articles.map((article) => (
+        {dataset.articles.map((article) => {
+          const safeUrl = safeHttpExternalUrl(article.url);
+          return (
           <article
             key={article.id}
             className="rounded-lg border border-zinc-800 bg-surface-sunken p-3 transition hover:border-zinc-700"
           >
+            {safeUrl ? (
             <a
-              href={article.url}
+              href={safeUrl}
               target="_blank"
               rel="noreferrer noopener"
               className="text-sm font-semibold text-zinc-100 transition hover:text-cyan-400"
             >
               {article.title}
             </a>
+            ) : (
+            <span className="text-sm font-semibold text-zinc-100">{article.title}</span>
+            )}
             {article.description ? (
               <p className="mt-1 line-clamp-2 text-xs text-zinc-400">{article.description}</p>
             ) : null}
@@ -42,18 +50,26 @@ async function AiNewsSection() {
               {article.source} · {new Date(article.publishedAt).toLocaleString()}
             </p>
           </article>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
 }
 
 export async function RightPanel() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <aside className="flex flex-col gap-8">
-      <Suspense fallback={null}>
-        <AiNewsSection />
-      </Suspense>
+      {user ? (
+        <Suspense fallback={null}>
+          <AiNewsSection />
+        </Suspense>
+      ) : null}
     </aside>
   );
 }

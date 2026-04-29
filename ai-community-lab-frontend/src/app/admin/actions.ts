@@ -135,7 +135,7 @@ export async function adminDeleteComment(
     if (rpcError) {
       return {
         error:
-          "Could not notify the comment author. Apply migration 021_notification_preferences_and_rpc_hardening.sql or try again.",
+          "Could not notify the comment author. Please try again.",
       };
     }
     if (rpcResult !== "inserted" && rpcResult !== "skipped") {

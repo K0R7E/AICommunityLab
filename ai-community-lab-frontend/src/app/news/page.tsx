@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getAiNewsDataset } from "@/lib/data/ai-news";
+import { safeHttpExternalUrl } from "@/lib/safe-external-url";
 
 export const metadata: Metadata = {
   title: "AI News",
@@ -43,21 +44,29 @@ export default async function NewsPage() {
 
       {articles.length > 0 ? (
         <div className="flex flex-col gap-4">
-          {articles.map((article) => (
+          {articles.map((article) => {
+            const safeUrl = safeHttpExternalUrl(article.url);
+            return (
             <article
               key={article.id}
               className="rounded-xl border border-zinc-800/80 bg-card p-4"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
+                  {safeUrl ? (
                   <a
-                    href={article.url}
+                    href={safeUrl}
                     target="_blank"
                     rel="noreferrer noopener"
                     className="text-base font-semibold text-zinc-100 transition hover:text-accent"
                   >
                     {article.title}
                   </a>
+                  ) : (
+                  <span className="text-base font-semibold text-zinc-100">
+                    {article.title}
+                  </span>
+                  )}
                   <p className="mt-1 text-xs text-zinc-500">
                     {article.source} · {new Date(article.publishedAt).toLocaleString()}
                   </p>
@@ -72,7 +81,8 @@ export default async function NewsPage() {
                 <p className="mt-2 text-sm text-zinc-400">{article.description}</p>
               ) : null}
             </article>
-          ))}
+            );
+          })}
         </div>
       ) : null}
     </div>

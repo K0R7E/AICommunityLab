@@ -40,7 +40,7 @@ export async function dismissNotification(id: string): Promise<{ error?: string 
     if (error.code === "42501" || msg.includes("permission") || msg.includes("policy")) {
       return {
         error:
-          "Removing notifications is blocked until the database allows deletes. Apply migration 016_notifications_user_delete.sql (policy + grant) on Supabase, then try again.",
+          "Removing notifications is currently unavailable. Please try again later.",
       };
     }
     return { error: error.message || "Could not remove notification." };

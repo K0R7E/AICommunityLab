@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ExternalLink, MessageCircle } from "lucide-react";
 import { RatingControl } from "@/components/vote/rating-control";
 import { TrendingBadge, getTrendingLevel } from "@/components/feed/trending-badge";
-import { formatRelativeTime } from "@/lib/format";
+import { formatRatingDisplay, formatRelativeTime } from "@/lib/format";
 import {
   isPostPublishedForFeed,
   moderationStatusLabel,
@@ -13,6 +13,18 @@ import {
 import { PostCategoryBadges } from "@/components/feed/post-category-badges";
 import { safeHttpExternalLink, safeHttpExternalUrl } from "@/lib/safe-external-url";
 import type { PostRow } from "@/lib/types/post";
+
+function StaticRating({ sum, count }: { sum: number; count: number }) {
+  const { avg, countLabel } = formatRatingDisplay(sum, count);
+  return (
+    <div className="flex min-w-[5.75rem] flex-col items-center gap-1.5 rounded-lg border border-zinc-800 bg-surface-sunken px-1.5 py-2 sm:min-w-[6.5rem]">
+      <div className="text-center leading-tight">
+        <span className="text-lg font-bold tabular-nums text-accent">{avg}</span>
+        <p className="text-[11px] text-zinc-500">{countLabel}</p>
+      </div>
+    </div>
+  );
+}
 
 type Props = {
   post: PostRow;
@@ -45,23 +57,29 @@ export function ToolCard({ post, myRating, canVote, rank, className, style }: Pr
   const canRateHere = canVote && isPostPublishedForFeed(post.moderation_status);
 
   return (
-    <article className={`card-hover group relative flex gap-2.5 overflow-hidden rounded-xl border border-zinc-800/80 bg-card p-3 transition duration-200 sm:gap-3 sm:p-4${className ? ` ${className}` : ""}`} style={style}>
-      {/* Full-card hit target (comments); rating & external link sit above with z-index */}
-      <Link
-        href={postHref}
-        className="absolute inset-0 z-0 rounded-xl outline-none ring-accent/0 transition focus-visible:ring-2 focus-visible:ring-accent/70 focus-visible:ring-inset"
-        aria-label={`${post.title} — open post and comments`}
-      />
+    <article className={`${canVote ? "card-hover" : ""} group relative flex gap-2.5 overflow-hidden rounded-xl border border-zinc-800/80 bg-card p-3 transition duration-200 sm:gap-3 sm:p-4${className ? ` ${className}` : ""}`} style={style}>
+      {/* Full-card hit target (comments) — only for authenticated users */}
+      {canVote ? (
+        <Link
+          href={postHref}
+          className="absolute inset-0 z-0 rounded-xl outline-none ring-accent/0 transition focus-visible:ring-2 focus-visible:ring-accent/70 focus-visible:ring-inset"
+          aria-label={`${post.title} — open post and comments`}
+        />
+      ) : null}
 
       <div className="relative z-10 flex shrink-0 flex-col items-center gap-2 self-start">
-        <RatingControl
-          key={`${post.id}-${post.rating_sum}-${post.rating_count}-${myRating ?? "x"}`}
-          postId={post.id}
-          initialRatingSum={post.rating_sum}
-          initialRatingCount={post.rating_count}
-          initialMyRating={myRating}
-          canRate={canRateHere}
-        />
+        {canVote ? (
+          <RatingControl
+            key={`${post.id}-${post.rating_sum}-${post.rating_count}-${myRating ?? "x"}`}
+            postId={post.id}
+            initialRatingSum={post.rating_sum}
+            initialRatingCount={post.rating_count}
+            initialMyRating={myRating}
+            canRate={canRateHere}
+          />
+        ) : (
+          <StaticRating sum={post.rating_sum} count={post.rating_count} />
+        )}
       </div>
 
       <div className="pointer-events-none relative z-10 min-w-0 flex-1">
@@ -72,24 +90,33 @@ export function ToolCard({ post, myRating, canVote, rank, className, style }: Pr
             </span>
             {trendingLevel && <TrendingBadge level={trendingLevel} rank={rank!} />}
           </span>
-          {external ? (
-            <a
-              href={external.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="pointer-events-auto relative z-20 inline-flex min-h-10 shrink-0 items-center gap-1 text-sm font-medium text-accent transition hover:underline"
-            >
-              Visit →
-              <ExternalLink className="size-3.5" aria-hidden />
-            </a>
-          ) : post.url?.trim() ? (
-            <span className="pointer-events-auto relative z-20 shrink-0 text-sm text-zinc-500">
-              Invalid URL
-            </span>
+          {canVote ? (
+            external ? (
+              <a
+                href={external.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="pointer-events-auto relative z-20 inline-flex min-h-10 shrink-0 items-center gap-1 text-sm font-medium text-accent transition hover:underline"
+              >
+                Visit →
+                <ExternalLink className="size-3.5" aria-hidden />
+              </a>
+            ) : post.url?.trim() ? (
+              <span className="pointer-events-auto relative z-20 shrink-0 text-sm text-zinc-500">
+                Invalid URL
+              </span>
+            ) : (
+              <span className="pointer-events-auto relative z-20 shrink-0 text-sm text-zinc-500">
+                No URL
+              </span>
+            )
           ) : (
-            <span className="pointer-events-auto relative z-20 shrink-0 text-sm text-zinc-500">
-              No URL
-            </span>
+            <Link
+              href="/login"
+              className="pointer-events-auto relative z-20 inline-flex min-h-10 shrink-0 items-center rounded-md border border-zinc-700 px-2.5 py-1 text-xs font-medium text-zinc-400 transition hover:border-accent hover:text-accent"
+            >
+              Sign in to explore
+            </Link>
           )}
         </div>
         <p className="mt-1 line-clamp-2 text-sm text-zinc-400">{line}</p>
@@ -105,11 +132,13 @@ export function ToolCard({ post, myRating, canVote, rank, className, style }: Pr
             </span>
           ) : null}
           <PostCategoryBadges categories={post.categories ?? []} />
-          <span className="inline-flex items-center gap-1">
-            <MessageCircle className="size-3.5" aria-hidden />
-            {post.comments_count}{" "}
-            {post.comments_count === 1 ? "comment" : "comments"}
-          </span>
+          {canVote ? (
+            <span className="inline-flex items-center gap-1">
+              <MessageCircle className="size-3.5" aria-hidden />
+              {post.comments_count}{" "}
+              {post.comments_count === 1 ? "comment" : "comments"}
+            </span>
+          ) : null}
           <span>{formatRelativeTime(post.created_at)}</span>
         </div>
       </div>

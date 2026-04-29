@@ -111,9 +111,6 @@ export async function adminDeleteComment(
   const auth = await requireAdmin();
   if ("error" in auth) return auth;
   const { supabase, userId } = auth;
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
   const { data: row } = await supabase
     .from("comments")
@@ -122,27 +119,29 @@ export async function adminDeleteComment(
     .maybeSingle();
 
   const authorId = (row as { user_id?: string } | null)?.user_id;
-  if (authorId && user && authorId !== user.id) {
-    const { data: rpcResult, error: rpcError } = await supabase.rpc(
-      "moderation_push_notification",
-      {
-        p_user_id: authorId,
-        p_type: "comment_removed",
-        p_post_id: postId,
-        p_message: moderatorNote?.trim() || null,
-      },
-    );
-    if (rpcError) {
-      return {
-        error:
-          "Could not notify the comment author. Please try again.",
-      };
-    }
-    if (rpcResult !== "inserted" && rpcResult !== "skipped") {
-      return {
-        error:
-          "Could not notify the comment author due to an unexpected moderation RPC result.",
-      };
+  if (authorId && authorId !== userId) {
+    // Use the admin client (service_role) so we can insert a notification for
+    // the comment author without going through the moderation_push_notification
+    // RPC. That RPC's authenticated grant has been revoked (migration 009).
+    const admin = createAdminClient();
+    const { data: prefs } = await admin
+      .from("profiles")
+      .select("notify_moderation_updates")
+      .eq("id", authorId)
+      .maybeSingle();
+    const wantsNotification =
+      (prefs as { notify_moderation_updates?: boolean | null } | null)
+        ?.notify_moderation_updates !== false;
+    if (wantsNotification) {
+      const { error: notifyError } = await admin.from("notifications").insert({
+        user_id: authorId,
+        type: "comment_removed",
+        post_id: postId,
+        message: moderatorNote?.trim() || null,
+      });
+      if (notifyError) {
+        return { error: "Could not notify the comment author. Please try again." };
+      }
     }
   }
 

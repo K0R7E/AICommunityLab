@@ -36,7 +36,7 @@ export type AdminModerationComment = {
   post_id: string;
   content: string;
   created_at: string;
-  user_id: string;
+  user_id: string | null;
   author_username: string | null;
   author_avatar_url: string | null;
 };
@@ -155,26 +155,33 @@ async function enrichModerationDuplicateHints(
 
 /** Attach author username/avatar to raw comment rows. */
 async function enrichCommentAuthors(
-  comments: { id: string; post_id: string; content: string; created_at: string; user_id: string }[],
+  comments: { id: string; post_id: string; content: string; created_at: string; user_id: string | null }[],
   supabase: SupabaseClient,
 ): Promise<AdminModerationComment[]> {
   if (comments.length === 0) return [];
 
-  const userIds = [...new Set(comments.map((c) => c.user_id))];
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("id, username, avatar_url")
-    .in("id", userIds);
+  const userIds = [
+    ...new Set(comments.map((c) => c.user_id).filter((id): id is string => id !== null)),
+  ];
+  const profiles =
+    userIds.length === 0
+      ? []
+      : (
+          await supabase
+            .from("profiles")
+            .select("id, username, avatar_url")
+            .in("id", userIds)
+        ).data ?? [];
 
   const profileMap = new Map(
-    (profiles ?? []).map((p) => [
+    profiles.map((p) => [
       (p as { id: string }).id,
       p as { id: string; username: string; avatar_url: string | null },
     ]),
   );
 
   return comments.map((c) => {
-    const profile = profileMap.get(c.user_id);
+    const profile = c.user_id ? profileMap.get(c.user_id) : undefined;
     return {
       ...c,
       author_username: profile?.username ?? null,
@@ -203,7 +210,13 @@ export async function getAdminModerationData(options: {
   const commentsLimit = commentsPage * COMMENTS_PAGE_SIZE + 1;
 
   let rawPosts: AdminModerationPost[];
-  let rawComments: { id: string; post_id: string; content: string; created_at: string; user_id: string }[];
+  let rawComments: {
+    id: string;
+    post_id: string;
+    content: string;
+    created_at: string;
+    user_id: string | null;
+  }[];
 
   if (!term) {
     const [{ data: recentPosts }, { data: recentComments }] = await Promise.all([

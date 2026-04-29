@@ -9,8 +9,17 @@ export type UserEventType =
   | "account_deleted";
 
 export function getClientIp(request: NextRequest): string | null {
+  // x-real-ip is injected by Vercel/nginx and is not forwarded from clients.
+  const realIp = request.headers.get("x-real-ip")?.trim();
+  if (realIp) return realIp;
+
+  // x-forwarded-for: "client, proxy1, proxy2" — take the rightmost entry,
+  // which is appended by the last trusted proxy (Vercel Edge), not by the client.
   const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0].trim();
+  if (forwarded) {
+    const last = forwarded.split(",").at(-1)?.trim();
+    return last || null;
+  }
   return null;
 }
 

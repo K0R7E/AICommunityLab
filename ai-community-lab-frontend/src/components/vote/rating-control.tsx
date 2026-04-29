@@ -1,5 +1,6 @@
 "use client";
 
+import { CSRF_COOKIE_NAME } from "@/lib/csrf-constants";
 import { formatRatingDisplay } from "@/lib/format";
 import { Lock, Star } from "lucide-react";
 import Link from "next/link";
@@ -52,6 +53,7 @@ export function RatingControl({
   async function ensureCsrfToken(): Promise<string | null> {
     if (csrfTokenRef.current) return csrfTokenRef.current;
 
+    // Ensure the cookie exists (set on first call if missing).
     const response = await fetch("/api/csrf-token", {
       method: "GET",
       headers: { "x-requested-with": "XMLHttpRequest" },
@@ -60,10 +62,16 @@ export function RatingControl({
     });
     if (!response.ok) return null;
 
-    const json = (await response.json()) as { csrfToken?: string };
-    if (!json.csrfToken || typeof json.csrfToken !== "string") return null;
-    csrfTokenRef.current = json.csrfToken;
-    return json.csrfToken;
+    // Read the token directly from the (non-httpOnly) cookie so the JSON
+    // response body never needs to carry the token value.
+    const match = document.cookie
+      .split("; ")
+      .find((c) => c.startsWith(`${CSRF_COOKIE_NAME}=`));
+    const token = match?.split("=")[1]?.trim();
+    if (!token) return null;
+
+    csrfTokenRef.current = token;
+    return token;
   }
 
   async function sendRatingRequest(method: "POST" | "DELETE", payload: object) {

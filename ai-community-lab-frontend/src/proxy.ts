@@ -96,6 +96,8 @@ const PUBLIC_PATHS = new Set([
   "/login/forgot-password",
   "/terms",
   "/privacy",
+  "/security-policy",
+  "/.well-known/security.txt",
 ]);
 
 /**

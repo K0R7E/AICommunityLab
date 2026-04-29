@@ -293,14 +293,21 @@ export async function updateProfile(
 
   const admin = createAdminClient();
   const windowStart = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-  const { count: recentUpdates } = await admin
+  const { data: recentEvents } = await admin
     .from("user_activity_log")
-    .select("id", { count: "exact", head: true })
+    .select("created_at")
     .eq("user_id", user.id)
     .eq("event_type", "profile_updated")
-    .gte("created_at", windowStart);
-  if ((recentUpdates ?? 0) >= 5) {
-    return { error: "You are updating your profile too frequently. Please wait before trying again." };
+    .gte("created_at", windowStart)
+    .order("created_at", { ascending: true })
+    .limit(5);
+  if ((recentEvents?.length ?? 0) >= 5) {
+    const oldestTs = recentEvents![0].created_at as string;
+    const retryAt = new Date(new Date(oldestTs).getTime() + 60 * 60 * 1000);
+    const minutesLeft = Math.max(1, Math.ceil((retryAt.getTime() - Date.now()) / 60_000));
+    return {
+      error: `Profile update limit reached (5 per hour). You can update again in ${minutesLeft} minute${minutesLeft === 1 ? "" : "s"}.`,
+    };
   }
 
   const username = normalizeUsername(String(formData.get("username") ?? ""));

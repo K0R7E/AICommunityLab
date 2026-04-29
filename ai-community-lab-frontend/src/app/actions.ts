@@ -447,6 +447,7 @@ export async function deleteAccount(): Promise<{ error: string } | void> {
     return { error: genericActionError() };
   }
 
+  await supabase.auth.signOut();
   redirect("/");
 }
 

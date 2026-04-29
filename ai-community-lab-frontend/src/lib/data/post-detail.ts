@@ -4,7 +4,7 @@ import type { PostRow } from "@/lib/types/post";
 export type CommentRow = {
   id: string;
   post_id: string;
-  user_id: string;
+  user_id: string | null;
   content: string;
   created_at: string;
   author_username: string | null;
@@ -35,7 +35,13 @@ export async function getCommentsForPost(
 
   if (error || !data?.length) return [];
 
-  const userIds = [...new Set(data.map((c) => (c as { user_id: string }).user_id))];
+  const userIds = [
+    ...new Set(
+      data
+        .map((c) => (c as { user_id: string | null }).user_id)
+        .filter((id): id is string => id !== null),
+    ),
+  ];
   const { data: profiles } = await supabase
     .from("profiles")
     .select("id, username, avatar_url")
@@ -49,8 +55,8 @@ export async function getCommentsForPost(
   );
 
   return data.map((c) => {
-    const row = c as { id: string; post_id: string; user_id: string; content: string; created_at: string };
-    const profile = profileMap.get(row.user_id);
+    const row = c as { id: string; post_id: string; user_id: string | null; content: string; created_at: string };
+    const profile = row.user_id ? profileMap.get(row.user_id) : undefined;
     return {
       id: row.id,
       post_id: row.post_id,

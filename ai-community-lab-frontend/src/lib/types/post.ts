@@ -1,6 +1,6 @@
 export type PostRow = {
   id: string;
-  user_id: string;
+  user_id: string | null;
   post_kind?: "AI Engine" | "AI Agent" | string;
   title: string;
   /** Optional public site URL (may be null). */

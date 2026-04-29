@@ -101,6 +101,7 @@ const PUBLIC_PATHS = new Set([
   "/robots.txt",
   "/sitemap.xml",
   "/feed.xml",
+  "/api/feed",
 ]);
 
 /**

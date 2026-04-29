@@ -291,6 +291,18 @@ export async function updateProfile(
     return { error: "You must be signed in to update your profile." };
   }
 
+  const admin = createAdminClient();
+  const windowStart = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  const { count: recentUpdates } = await admin
+    .from("user_activity_log")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .eq("event_type", "profile_updated")
+    .gte("created_at", windowStart);
+  if ((recentUpdates ?? 0) >= 5) {
+    return { error: "You are updating your profile too frequently. Please wait before trying again." };
+  }
+
   const username = normalizeUsername(String(formData.get("username") ?? ""));
   const bio = normalizeUserText(String(formData.get("bio") ?? ""));
 

@@ -9,7 +9,8 @@ export async function GET(request: Request) {
   const sort = searchParams.get("sort") === "top" ? "top" : "new";
   const categoryLabels = categoryFilterFromUrlSearchParams(searchParams);
   const listingKind = listingKindFromUrlSearchParams(searchParams);
-  const searchQuery = searchParams.get("q")?.trim() || null;
+  const rawQ = searchParams.get("q")?.trim() || null;
+  const searchQuery = rawQ && rawQ.length <= 200 ? rawQ : null;
   const cursor = searchParams.get("cursor")?.trim() || null;
 
   const payload = await getFeedPosts({

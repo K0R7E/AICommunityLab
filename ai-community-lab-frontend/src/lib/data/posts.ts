@@ -11,12 +11,16 @@ type FeedCursor = {
   id: string;
 };
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function decodeFeedCursor(rawCursor: string | null | undefined): FeedCursor | null {
   if (!rawCursor) return null;
   const params = new URLSearchParams(rawCursor);
   const createdAt = params.get("createdAt")?.trim();
   const id = params.get("id")?.trim();
   if (!createdAt || !id) return null;
+  if (!UUID_RE.test(id)) return null;
+  if (isNaN(Date.parse(createdAt))) return null;
   return { createdAt, id };
 }
 
@@ -47,7 +51,7 @@ async function collectPostIdsForSearch(
     maxResults: number;
   },
 ): Promise<string[]> {
-  const term = rawQuery.trim();
+  const term = rawQuery.trim().slice(0, 200);
   if (!term) return [];
 
   const { data, error } = await supabase.rpc("search_published_posts", {

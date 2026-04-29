@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { getSiteMetadataBase } from "@/lib/site-metadata-base";
 import { Geist, Geist_Mono } from "next/font/google";
+import { headers } from "next/headers";
 import Script from "next/script";
 import { Suspense } from "react";
 import {
@@ -66,6 +67,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   const supabase = await createClient();
   const {
     data: { user },
@@ -103,7 +105,7 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
-        <Script src="/theme-init.js" strategy="beforeInteractive" />
+        <Script src="/theme-init.js" strategy="beforeInteractive" nonce={nonce} />
       </head>
       <body className="flex min-h-full flex-col bg-background font-sans text-zinc-100">
         <ThemeProvider>

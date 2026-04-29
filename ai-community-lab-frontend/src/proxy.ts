@@ -19,6 +19,7 @@ function parseEnvOrigin(name: string): string | undefined {
 }
 
 function buildCspWithNonce(nonce: string): string {
+  const isDev = process.env.NODE_ENV === "development";
   const connectSources = new Set<string>(["'self'"]);
   const supabaseOrigin = parseEnvOrigin("NEXT_PUBLIC_SUPABASE_URL");
   if (supabaseOrigin) {
@@ -35,8 +36,18 @@ function buildCspWithNonce(nonce: string): string {
     "frame-ancestors 'none'",
     "object-src 'none'",
     "form-action 'self'",
-    `script-src 'self' 'nonce-${nonce}'`,
-    "style-src 'self' 'unsafe-inline'",
+    // 'strict-dynamic' lets scripts loaded by a nonced script inherit trust
+    // (needed for Next.js's lazy chunk loading). In dev, React also needs
+    // 'unsafe-eval' for its enhanced error stack reconstruction.
+    isDev
+      ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-eval'`
+      : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+    // In production the nonce replaces 'unsafe-inline' for styles.
+    // In dev, Next.js fast-refresh injects style tags without nonces so we
+    // fall back to 'unsafe-inline' only there.
+    isDev
+      ? "style-src 'self' 'unsafe-inline'"
+      : `style-src 'self' 'nonce-${nonce}'`,
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
     `connect-src ${Array.from(connectSources).join(" ")}`,
@@ -49,7 +60,42 @@ function isCspReportOnly(): boolean {
   return process.env.CSP_REPORT_ONLY?.trim().toLowerCase() === "true";
 }
 
-const PROTECTED_PATHS = ["/submit", "/settings", "/admin", "/notifications"];
+/**
+ * Creates a pass-through NextResponse that forwards the CSP nonce to Next.js.
+ *
+ * Sets `x-nonce` and `Content-Security-Policy` on the outgoing *request*
+ * headers so Next.js can automatically stamp the nonce on its own injected
+ * framework scripts, page bundles, and inline styles during SSR.
+ * Also sets the CSP header on the *response* so the browser enforces it.
+ *
+ * Note: we always forward the canonical `Content-Security-Policy` header (not
+ * the report-only variant) on the request side — Next.js only parses the
+ * canonical name when extracting the nonce.
+ */
+function withNonce(
+  request: NextRequest,
+  nonce: string,
+  cspKey: string,
+  cspValue: string,
+): NextResponse {
+  const h = new Headers(request.headers);
+  h.set("x-nonce", nonce);
+  h.set("Content-Security-Policy", cspValue);
+  const res = NextResponse.next({ request: { headers: h } });
+  res.headers.set(cspKey, cspValue);
+  return res;
+}
+
+/**
+ * Routes that are accessible without being signed in.
+ * Everything else requires authentication (opt-out model).
+ */
+const PUBLIC_PATHS = new Set([
+  "/login",
+  "/login/forgot-password",
+  "/terms",
+  "/privacy",
+]);
 
 /**
  * Paths that signed-in users without an accepted Terms/Privacy record may
@@ -69,8 +115,11 @@ const TERMS_GATE_ALLOWED_PATHS = [
   "/login",
 ] as const;
 
-function isProtected(path: string): boolean {
-  return PROTECTED_PATHS.some((p) => path === p || path.startsWith(`${p}/`));
+function isPublicPath(path: string): boolean {
+  if (PUBLIC_PATHS.has(path)) return true;
+  // OAuth callbacks and sign-out live under /auth
+  if (path.startsWith("/auth/")) return true;
+  return false;
 }
 
 function isTermsGateAllowedPath(path: string): boolean {
@@ -138,11 +187,14 @@ export async function proxy(request: NextRequest) {
     : "Content-Security-Policy";
   const cspValue = buildCspWithNonce(nonce);
 
+  const publicPath = isPublicPath(path);
+  const hasAuthCookie = hasSupabaseAuthCookie(request);
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
-    if (isProtected(path)) {
+    if (!publicPath) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       url.search = "";
@@ -155,13 +207,9 @@ export async function proxy(request: NextRequest) {
       res.headers.set(cspKey, cspValue);
       return res;
     }
-    const res = NextResponse.next({ request });
-    res.headers.set(cspKey, cspValue);
-    return res;
+    return withNonce(request, nonce, cspKey, cspValue);
   }
 
-  const protectedRoute = isProtected(path);
-  const hasAuthCookie = hasSupabaseAuthCookie(request);
   // The terms gate only matters for signed-in users — anonymous visitors
   // can't have accepted yet, so we apply the gate logic only when an auth
   // cookie is present. Without this short-circuit, every public page load
@@ -171,15 +219,13 @@ export async function proxy(request: NextRequest) {
     !isTermsGateAllowedPath(path) &&
     shouldRunTermsGate(request, path);
 
-  // Fast path: nothing on this route requires Supabase, so skip getUser().
-  if (!protectedRoute && !gateApplies) {
-    const res = NextResponse.next({ request });
-    res.headers.set(cspKey, cspValue);
-    return res;
+  // Fast path: public page + no auth cookie → definitely anonymous, no
+  // Supabase call needed (terms gate can't apply without a session).
+  if (publicPath && !hasAuthCookie) {
+    return withNonce(request, nonce, cspKey, cspValue);
   }
 
-  let supabaseResponse = NextResponse.next({ request });
-  supabaseResponse.headers.set(cspKey, cspValue);
+  let supabaseResponse = withNonce(request, nonce, cspKey, cspValue);
 
   const supabase = createServerClient(supabaseUrl, supabaseKey, {
     cookies: {
@@ -190,7 +236,12 @@ export async function proxy(request: NextRequest) {
         cookiesToSet.forEach(({ name, value }) =>
           request.cookies.set(name, value),
         );
-        supabaseResponse = NextResponse.next({ request });
+        // Rebuild headers from the now-mutated request (updated cookies) and
+        // re-attach the nonce so Next.js keeps stamping it on injected tags.
+        const h = new Headers(request.headers);
+        h.set("x-nonce", nonce);
+        h.set("Content-Security-Policy", cspValue);
+        supabaseResponse = NextResponse.next({ request: { headers: h } });
         supabaseResponse.headers.set(cspKey, cspValue);
         cookiesToSet.forEach(({ name, value, options }) =>
           supabaseResponse.cookies.set(name, value, options),
@@ -204,7 +255,8 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    if (protectedRoute) {
+    if (!publicPath) {
+      // Opt-out model: every non-public page requires authentication.
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       url.search = "";
@@ -216,8 +268,8 @@ export async function proxy(request: NextRequest) {
       res.headers.set(cspKey, cspValue);
       return res;
     }
-    // Anonymous visitor on a publicly readable page — terms gate doesn't
-    // apply, so just pass through with the (already-set) CSP headers.
+    // Anonymous visitor on a public page — terms gate doesn't apply,
+    // so just pass through with the (already-set) CSP headers.
     return supabaseResponse;
   }
 

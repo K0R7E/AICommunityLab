@@ -19,6 +19,12 @@ export function AdminPostModerationButtons({
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectNote, setRejectNote] = useState("");
 
+  const statusLabel: Record<"published" | "rejected" | "pending", string> = {
+    published: "Post approved",
+    rejected: "Post rejected",
+    pending: "Post unlisted",
+  };
+
   function run(
     next: "published" | "rejected" | "pending",
     rejectionReason?: string | null,
@@ -27,7 +33,7 @@ export function AdminPostModerationButtons({
       const res = await adminSetPostModerationStatus(postId, next, rejectionReason);
       if (res.error) toast.error(res.error);
       else {
-        toast.success("Updated");
+        toast.success(statusLabel[next]);
         setRejectOpen(false);
         setRejectNote("");
         router.refresh();

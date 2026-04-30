@@ -22,7 +22,7 @@ export function AdminDeleteButtons(props: Props) {
         const res = await adminDeletePost(props.id);
         if (res.error) toast.error(res.error);
         else {
-          toast.success("Deleted");
+          toast.success("Post deleted");
           router.refresh();
         }
       });
@@ -41,7 +41,7 @@ export function AdminDeleteButtons(props: Props) {
       );
       if (res.error) toast.error(res.error);
       else {
-        toast.success("Deleted");
+        toast.success("Comment removed");
         setCommentStep(false);
         setCommentNote("");
         router.refresh();

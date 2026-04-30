@@ -15,6 +15,7 @@ import { Sidebar } from "@/components/shell/sidebar";
 import { RightPanel } from "@/components/shell/right-panel";
 import { ThemeProvider } from "@/components/shell/theme-provider";
 import { ThemedToaster } from "@/components/shell/themed-toaster";
+import { FlashToast } from "@/components/shell/flash-toast";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -147,6 +148,9 @@ export default async function RootLayout({
             <SiteFooter />
           </AuthProvider>
           <ThemedToaster />
+          <Suspense>
+            <FlashToast />
+          </Suspense>
         </ThemeProvider>
       </body>
     </html>

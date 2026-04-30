@@ -72,6 +72,15 @@ export async function GET(request: NextRequest) {
       });
       return welcomeResponse;
     }
+
+    // Returning user — add a one-shot param so the client can show a toast.
+    const returnTarget = new URL(safeNext, origin);
+    returnTarget.searchParams.set("signed_in", "1");
+    const returnResponse = NextResponse.redirect(returnTarget);
+    response.cookies.getAll().forEach((cookie) => {
+      returnResponse.cookies.set(cookie);
+    });
+    return returnResponse;
   }
 
   return response;

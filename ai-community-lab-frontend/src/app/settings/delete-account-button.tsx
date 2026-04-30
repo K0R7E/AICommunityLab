@@ -41,7 +41,7 @@ export function DeleteAccountButton() {
 
   return (
     <div className="flex items-center gap-3">
-      <span className="text-sm text-zinc-300">Biztosan törlöd a fiókodat?</span>
+      <span className="text-sm text-zinc-300">Are you sure you want to delete your account?</span>
       <button
         type="button"
         onClick={onConfirm}

@@ -523,6 +523,6 @@ export async function signOut(): Promise<void> {
     void logUserActivity(userId, "logout", undefined, ipAddress);
   }
 
-  redirect("/");
+  redirect("/?signed_out=1");
 }
 

@@ -6,6 +6,9 @@ import type { ListingKind } from "@/lib/constants";
 const DEFAULT_FEED_PAGE_SIZE = 20;
 const MAX_FEED_PAGE_SIZE = 50;
 
+const FEED_POST_COLUMNS =
+  "id, title, url, url_canonical, description, categories, post_kind, rating_sum, rating_count, rating_avg, comments_count, moderation_status, created_at, user_id" as const;
+
 type FeedCursor = {
   createdAt: string;
   id: string;
@@ -132,7 +135,7 @@ export async function getFeedPosts(options: {
 
     let q = supabase
       .from("posts")
-      .select("*")
+      .select(FEED_POST_COLUMNS)
       .in("id", postIds)
       .eq("moderation_status", POST_MODERATION_PUBLISHED);
     if (options.categoryLabels.length > 0) {
@@ -189,7 +192,7 @@ export async function getFeedPosts(options: {
 
   let q = supabase
     .from("posts")
-    .select("*")
+    .select(FEED_POST_COLUMNS)
     .eq("moderation_status", POST_MODERATION_PUBLISHED);
   if (options.categoryLabels.length > 0) {
     q = q.overlaps("categories", options.categoryLabels);

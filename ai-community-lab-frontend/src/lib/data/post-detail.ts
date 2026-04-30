@@ -11,11 +11,14 @@ export type CommentRow = {
   author_avatar_url: string | null;
 };
 
+const POST_DETAIL_COLUMNS =
+  "id, title, url, url_canonical, description, categories, post_kind, rating_sum, rating_count, rating_avg, comments_count, moderation_status, created_at, user_id" as const;
+
 export async function getPostById(id: string): Promise<PostRow | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("posts")
-    .select("*")
+    .select(POST_DETAIL_COLUMNS)
     .eq("id", id)
     .maybeSingle();
 

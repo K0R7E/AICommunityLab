@@ -72,13 +72,14 @@ export async function adminSetPostModerationStatus(
   if (status !== "published" && status !== "rejected" && status !== "pending") {
     return { error: "Invalid status." };
   }
-  const { supabase, userId } = auth;
+  const { userId } = auth;
+  const admin = createAdminClient();
   const trimmed = rejectionReason?.trim() || null;
   const patch =
     status === "rejected"
       ? { moderation_status: status, moderation_rejection_reason: trimmed }
       : { moderation_status: status, moderation_rejection_reason: null };
-  const { error } = await supabase.from("posts").update(patch).eq("id", postId);
+  const { error } = await admin.from("posts").update(patch).eq("id", postId);
   if (error) return { error: "Could not update moderation status." };
   await logAdminAction(userId, "set_moderation_status", "post", postId, {
     status,
@@ -93,8 +94,9 @@ export async function adminSetPostModerationStatus(
 export async function adminDeletePost(postId: string): Promise<{ error?: string }> {
   const auth = await requireAdmin();
   if ("error" in auth) return auth;
-  const { supabase, userId } = auth;
-  const { error } = await supabase.from("posts").delete().eq("id", postId);
+  const { userId } = auth;
+  const admin = createAdminClient();
+  const { error } = await admin.from("posts").delete().eq("id", postId);
   if (error) return { error: "Could not delete post." };
   await logAdminAction(userId, "delete_post", "post", postId);
   revalidatePath("/");
@@ -194,9 +196,10 @@ export async function adminUpdatePost(
     return { error: `Description must be at most ${DESCRIPTION_MAX} characters.` };
   }
 
-  const { supabase, userId } = auth;
+  const { userId } = auth;
+  const admin = createAdminClient();
   const urlCanonical = canonicalToolUrl(urlParsed.url);
-  const { error } = await supabase
+  const { error } = await admin
     .from("posts")
     .update({
       title,

@@ -62,3 +62,7 @@ coverage/
 
 --- Supabase ---
 supabase/migrations/
+
+
+# --- Notes ---
+TODO.md

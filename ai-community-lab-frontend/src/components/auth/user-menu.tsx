@@ -41,7 +41,27 @@ export function UserMenu() {
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
 
+  // Browsers (Safari especially) cache the entire page in their back/forward
+  // cache when navigation happens. If the user clicked Logout and we kicked
+  // off `setLoading(true)` right before `window.location.replace`, the bfcache
+  // snapshot freezes that state. Coming back via the browser's back button
+  // restores the menu with `loading: true`, leaving the Logout button in its
+  // disabled (`opacity-50`) "blurred" state and ignoring further clicks.
+  // `pageshow` with `event.persisted === true` means the page was just
+  // restored from bfcache — reset transient UI state so the menu is usable.
+  useEffect(() => {
+    function onPageShow(event: PageTransitionEvent) {
+      if (event.persisted) {
+        setLoading(false);
+        setOpen(false);
+      }
+    }
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+
   async function signOut() {
+    if (loading) return;
     setLoading(true);
     setOpen(false);
     try {
@@ -56,9 +76,12 @@ export function UserMenu() {
     } catch {
       await supabase.auth.signOut().catch(() => {});
     } finally {
-      setLoading(false);
-      // Always redirect — server cookie may already be cleared even if client signOut threw
-      window.location.assign("/");
+      // `replace` (not `assign`) so the post-logout home page does NOT remain
+      // in the browser history with the now-stale "logged in" UI behind it.
+      // Otherwise hitting Back restores the page from bfcache with this menu
+      // still showing the previous user, and the next Logout click silently
+      // fails because the cookies are already gone.
+      window.location.replace("/");
     }
   }
 

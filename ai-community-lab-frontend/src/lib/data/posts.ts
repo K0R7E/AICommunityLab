@@ -23,8 +23,11 @@ function decodeFeedCursor(rawCursor: string | null | undefined): FeedCursor | nu
   const id = params.get("id")?.trim();
   if (!createdAt || !id) return null;
   if (!UUID_RE.test(id)) return null;
-  if (isNaN(Date.parse(createdAt))) return null;
-  return { createdAt, id };
+  const ts = Date.parse(createdAt);
+  if (isNaN(ts)) return null;
+  // Normalize to strict ISO 8601 so interpolation into PostgREST filters is safe
+  // regardless of what exotic-but-valid format Date.parse() accepted.
+  return { createdAt: new Date(ts).toISOString(), id };
 }
 
 function encodeFeedCursor(post: PostRow): string {

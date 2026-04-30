@@ -1,6 +1,5 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
 import {
   Bell,
   ChevronDown,
@@ -13,7 +12,8 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { useFormStatus } from "react-dom";
+import { signOut } from "@/app/actions";
 import { useAuth } from "./auth-provider";
 import { safeRelativeNextPath } from "@/lib/safe-next-path";
 import { SignInWithGoogle } from "./sign-in-google";
@@ -25,13 +25,31 @@ function initials(email: string | undefined, username: string | undefined) {
   return "?";
 }
 
+/**
+ * Submit button for the sign-out form. Lives inside `<form action={signOut}>`
+ * so React Server Actions wire up the `pending` state automatically — that's
+ * what `useFormStatus()` reads, and it only works when used within a form.
+ */
+function LogoutButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      role="menuitem"
+      disabled={pending}
+      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-200 transition hover:bg-zinc-800/80 disabled:opacity-50"
+    >
+      <LogOut className="size-4 text-zinc-400" />
+      {pending ? "Signing out…" : "Logout"}
+    </button>
+  );
+}
+
 export function UserMenu() {
   const pathname = usePathname();
   const { user, profile } = useAuth();
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
-  const supabase = createClient();
 
   useEffect(() => {
     function onDoc(e: MouseEvent) {
@@ -40,50 +58,6 @@ export function UserMenu() {
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
-
-  // Browsers (Safari especially) cache the entire page in their back/forward
-  // cache when navigation happens. If the user clicked Logout and we kicked
-  // off `setLoading(true)` right before `window.location.replace`, the bfcache
-  // snapshot freezes that state. Coming back via the browser's back button
-  // restores the menu with `loading: true`, leaving the Logout button in its
-  // disabled (`opacity-50`) "blurred" state and ignoring further clicks.
-  // `pageshow` with `event.persisted === true` means the page was just
-  // restored from bfcache — reset transient UI state so the menu is usable.
-  useEffect(() => {
-    function onPageShow(event: PageTransitionEvent) {
-      if (event.persisted) {
-        setLoading(false);
-        setOpen(false);
-      }
-    }
-    window.addEventListener("pageshow", onPageShow);
-    return () => window.removeEventListener("pageshow", onPageShow);
-  }, []);
-
-  async function signOut() {
-    if (loading) return;
-    setLoading(true);
-    setOpen(false);
-    try {
-      const res = await fetch("/auth/sign-out", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { Accept: "application/json" },
-      });
-      const body = (await res.json().catch(() => ({}))) as { ok?: boolean };
-      if (!res.ok || body.ok !== true) throw new Error("Server sign-out failed");
-      await supabase.auth.signOut().catch(() => {});
-    } catch {
-      await supabase.auth.signOut().catch(() => {});
-    } finally {
-      // `replace` (not `assign`) so the post-logout home page does NOT remain
-      // in the browser history with the now-stale "logged in" UI behind it.
-      // Otherwise hitting Back restores the page from bfcache with this menu
-      // still showing the previous user, and the next Logout click silently
-      // fails because the cookies are already gone.
-      window.location.replace("/");
-    }
-  }
 
   if (!user) {
     const next = safeRelativeNextPath(pathname.startsWith("/login") ? "/" : pathname);
@@ -181,16 +155,17 @@ export function UserMenu() {
               Moderation
             </Link>
           ) : null}
-          <button
-            type="button"
-            role="menuitem"
-            disabled={loading}
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); void signOut(); }}
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-200 transition hover:bg-zinc-800/80 disabled:opacity-50"
-          >
-            <LogOut className="size-4 text-zinc-400" />
-            Logout
-          </button>
+          {/*
+            Native <form> + Server Action.
+            This survives stale React state, suspended JS contexts after a
+            tab switch, expired client-side Supabase sessions, and bfcache
+            restoration — the browser submits the form regardless. The
+            `signOut` action clears cookies server-side and returns a
+            redirect to "/", so the post-logout state is guaranteed.
+          */}
+          <form action={signOut}>
+            <LogoutButton />
+          </form>
         </div>
       ) : null}
     </div>

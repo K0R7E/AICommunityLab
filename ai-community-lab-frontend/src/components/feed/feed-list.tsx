@@ -103,13 +103,19 @@ export function FeedList({
       {posts.map((post, i) => {
         const isNew = newItemsStart !== null && i >= newItemsStart;
         const stagger = isNew ? (i - newItemsStart) * 60 : 0;
+        // Always pass `rank` so the trending / On-Fire / Rising badges show
+        // on both the "Top" tab (rank reflects leaderboard ordering) and
+        // the "New" tab (rank reflects chronological ordering — i.e. the
+        // most recent published tool gets the On-Fire badge for its first
+        // 24 hours, which is exactly the visual cue users expect when a
+        // brand-new submission lands on the feed).
         return (
           <ToolCard
             key={post.id}
             post={post}
             myRating={myRatings[post.id] ?? null}
             canVote={canVote}
-            rank={sort === "top" ? i + 1 : undefined}
+            rank={i + 1}
             className={isNew ? "item-enter" : undefined}
             style={isNew ? { animationDelay: `${stagger}ms` } : undefined}
           />

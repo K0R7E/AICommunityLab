@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -448,6 +449,80 @@ export async function deleteAccount(): Promise<{ error: string } | void> {
   }
 
   await supabase.auth.signOut();
+  redirect("/");
+}
+
+/**
+ * Server-side sign-out, invoked from the user menu's `<form action={signOut}>`.
+ *
+ * Why a Server Action and not a fetch + `window.location.replace`?
+ *   The previous client-side flow (fetch /auth/sign-out + then redirect) broke
+ *   in the field after the user switched to another tab and came back: the
+ *   browser had paused the JS context, the supabase client / React listeners
+ *   were in a "frozen" state, and clicking Logout silently did nothing because
+ *   the JS handler never fired. A native `<form>` post is immune to that —
+ *   the browser submits the form even if React is unresponsive — and a server
+ *   redirect (no client navigation) reliably loads the post-logout `/` page.
+ *
+ * Cookie cleanup mirrors the existing /auth/sign-out route handler:
+ *   1. supabase.auth.signOut() clears the tracked session cookies via the
+ *      cookies adapter wired into createClient().
+ *   2. We then explicitly expire any cookie matching `sb-*-auth-token*` —
+ *      @supabase/ssr is known to occasionally miss chunked variants
+ *      (sb-*-auth-token.0, .1, …). Belt-and-suspenders.
+ */
+export async function signOut(): Promise<void> {
+  let userId: string | null = null;
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    userId = user?.id ?? null;
+    await supabase.auth.signOut();
+  } catch {
+    // Even if Supabase reports an error, fall through to cookie cleanup +
+    // redirect so the user always lands on `/` in a signed-out state.
+  }
+
+  try {
+    const cookieStore = await cookies();
+    for (const cookie of cookieStore.getAll()) {
+      if (cookie.name.startsWith("sb-") && cookie.name.includes("auth-token")) {
+        cookieStore.set(cookie.name, "", {
+          maxAge: 0,
+          path: "/",
+          sameSite: "lax",
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+        });
+      }
+    }
+  } catch {
+    // Cookie store mutations can occasionally throw in edge runtimes —
+    // the supabase.auth.signOut() above already cleared the canonical
+    // cookies, so we ignore failures here.
+  }
+
+  if (userId) {
+    let ipAddress: string | null = null;
+    try {
+      const h = await headers();
+      const realIp = h.get("x-real-ip")?.trim();
+      if (realIp) {
+        ipAddress = realIp;
+      } else {
+        const forwarded = h.get("x-forwarded-for");
+        if (forwarded) {
+          ipAddress = forwarded.split(",").at(-1)?.trim() ?? null;
+        }
+      }
+    } catch {
+      // Ignore — IP is best-effort metadata.
+    }
+    void logUserActivity(userId, "logout", undefined, ipAddress);
+  }
+
   redirect("/");
 }
 

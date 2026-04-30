@@ -1,8 +1,9 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
 
 /**
  * Reads one-shot URL params set by server redirects and converts them into
@@ -17,6 +18,7 @@ export function FlashToast() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
+  const supabase = useMemo(() => createClient(), []);
   const fired = useRef(false);
 
   useEffect(() => {
@@ -31,7 +33,10 @@ export function FlashToast() {
     fired.current = true;
 
     if (signedIn) toast.success("Signed in successfully.");
-    if (signedOut) toast.info("You have been signed out.");
+    if (signedOut) {
+      void supabase.auth.signOut();
+      toast.info("You have been signed out.");
+    }
     if (error === "auth") toast.error("Sign-in failed. Please try again.");
 
     // Remove the param without a full navigation
@@ -41,7 +46,7 @@ export function FlashToast() {
     next.delete("error");
     const qs = next.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-  }, [searchParams, pathname, router]);
+  }, [searchParams, pathname, router, supabase]);
 
   return null;
 }

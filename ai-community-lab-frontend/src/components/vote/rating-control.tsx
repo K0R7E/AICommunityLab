@@ -94,7 +94,7 @@ export function RatingControl({
 
   async function pickValue(next: number) {
     if (!canRate) {
-      toast.error("Login to Vote");
+      toast.info("Login to Vote");
       return;
     }
 

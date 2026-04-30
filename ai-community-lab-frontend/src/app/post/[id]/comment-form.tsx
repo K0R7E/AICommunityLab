@@ -20,11 +20,11 @@ export function CommentForm({ postId, canComment, signedIn }: Props) {
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!signedIn) {
-      toast.error("Sign in to comment");
+      toast.info("Sign in to comment");
       return;
     }
     if (!canComment) {
-      toast.error("Comments open after this tool is approved.");
+      toast.info("Comments open after this tool is approved.");
       return;
     }
     startTransition(async () => {

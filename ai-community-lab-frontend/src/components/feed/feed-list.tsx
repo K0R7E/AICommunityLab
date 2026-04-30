@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { ToolCard } from "@/components/feed/tool-card";
 import type { PostRow } from "@/lib/types/post";
 import type { ListingKind } from "@/lib/constants";
@@ -62,6 +63,10 @@ export function FeedList({
     setLoadError(null);
     setLoadingMore(false);
   }, [initialPosts, initialMyRatings, initialNextCursor]);
+
+  useEffect(() => {
+    if (loadError) toast.error(loadError);
+  }, [loadError]);
 
   const postIds = useMemo(() => new Set(posts.map((p) => p.id)), [posts]);
 
@@ -131,11 +136,6 @@ export function FeedList({
           >
             {loadingMore ? "Loading more..." : "Load more"}
           </button>
-          {loadError ? (
-            <p className="mt-2 text-sm text-red-400" role="alert">
-              {loadError}
-            </p>
-          ) : null}
         </div>
       ) : null}
     </div>

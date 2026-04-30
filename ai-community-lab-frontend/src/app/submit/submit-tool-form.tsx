@@ -5,6 +5,7 @@ import { useActionState, useEffect, useMemo, useState } from "react";
 import { submitPost, type SubmitPostState } from "@/app/actions";
 import { CATEGORIES_BY_KIND, LISTING_KINDS, type ListingKind } from "@/lib/constants";
 import { SIMILARITY_BLOCK_THRESHOLD } from "@/lib/duplicate-post-check";
+import { toast } from "sonner";
 
 const initial: SubmitPostState = { error: null };
 
@@ -30,6 +31,20 @@ export function SubmitToolForm() {
     setCategory(defaultCategory);
   }, [defaultCategory]);
   const formKey = snap ? `dup:${JSON.stringify(snap)}` : "form-empty";
+
+  useEffect(() => {
+    if (!state.error) return;
+    if (state.duplicateUrlPostId) {
+      toast.error(state.error, {
+        action: {
+          label: "Open existing listing",
+          onClick: () => { window.location.href = `/post/${state.duplicateUrlPostId}`; },
+        },
+      });
+    } else {
+      toast.error(state.error);
+    }
+  }, [state.error, state.duplicateUrlPostId]);
 
   return (
     <form key={formKey} action={formAction} className="flex max-w-lg flex-col gap-4">
@@ -156,23 +171,6 @@ export function SubmitToolForm() {
           ))}
         </select>
       </div>
-      {state.error ? (
-        <div className="space-y-2">
-          <p className="text-sm text-red-400" role="alert">
-            {state.error}
-          </p>
-          {state.duplicateUrlPostId ? (
-            <p className="text-sm">
-              <Link
-                href={`/post/${state.duplicateUrlPostId}`}
-                className="font-medium text-accent hover:underline"
-              >
-                Open existing listing
-              </Link>
-            </p>
-          ) : null}
-        </div>
-      ) : null}
       <button
         type="submit"
         disabled={pending}

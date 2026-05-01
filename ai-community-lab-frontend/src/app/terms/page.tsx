@@ -1,6 +1,13 @@
+import { Suspense } from "react";
+import { RegistrationBanner } from "@/components/auth/registration-banner";
+
 export default function TermsPage() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10 text-sm leading-6">
+    <>
+      <Suspense>
+        <RegistrationBanner />
+      </Suspense>
+      <main className="mx-auto max-w-3xl px-4 py-10 text-sm leading-6">
       <h1 className="text-2xl font-semibold mb-6">
         Terms of Use
       </h1>
@@ -149,6 +156,7 @@ export default function TermsPage() {
         For any questions about these Terms of Use, please contact:
         aicommunitylab@gmail.com
       </p>
-    </main>
+      </main>
+    </>
   );
 }

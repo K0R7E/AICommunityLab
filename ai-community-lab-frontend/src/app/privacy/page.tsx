@@ -1,6 +1,13 @@
+import { Suspense } from "react";
+import { RegistrationBanner } from "@/components/auth/registration-banner";
+
 export default function PrivacyPage() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10 text-sm leading-6">
+    <>
+      <Suspense>
+        <RegistrationBanner />
+      </Suspense>
+      <main className="mx-auto max-w-3xl px-4 py-10 text-sm leading-6">
       <h1 className="text-2xl font-semibold mb-6">
         Privacy Policy
       </h1>
@@ -205,6 +212,7 @@ export default function PrivacyPage() {
         or in applicable law. The current version is always available on this
         page, with the date of the last update shown at the top.
       </p>
-    </main>
+      </main>
+    </>
   );
 }
